@@ -27,23 +27,24 @@
 ## 140522_Dataset_ws.Rdata - the complete workspace for the dataset analysis
 ## images for the diversity measures
 
-source("C:\\Documents\\Science\\PhD\\Code\\compare.R") # the compare function
-source("C:\\Documents\\Science\\PhD\\Code\\maps.R") # for maps
-source("C:\\Documents\\Science\\PhD\\Code\\palettes.R") # ditto
+source("C:/Documents/Science/PhD/Code/compare.R") # the compare function
+source("C:/Documents/Science/PhD/Code/maps.R") # for maps
+source("C:/Documents/Science/PhD/Code/palettes.R") # ditto
 library(fields) # world map 
 data(world.dat) # load in world data identifying points on land
 library(sp) # point.in.polygon
 library(vegan) # simpsons index
 library(picante) # PSV
 library(FD) # functional diversity measures
-setwd("C:\\Documents\\Science\\PhD\\Work\\1311 LDGPaper\\Reanalysis\\")
+library(colorRamps) # for matlab.like palette
+setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis/")
 
 ## 1. Load in MARGO and correct names ----------------------------------------
 
 ## 1i. Load in the data ----------------------------------------------------
 # load in the bfd and the list of names
-ldg.margo <- read.csv("C:\\Documents\\Science\\PhD\\Project\\MARGO\\IF_data\\MARGO.csv")
-ldg.forams.margo <- read.csv("C:\\Documents\\Science\\PhD\\Project\\MARGO\\IF_data\\margo_names.csv", header = F)
+ldg.margo <- read.csv("C:/Documents/Science/PhD/Project/MARGO/IF_data/MARGO.csv")
+ldg.forams.margo <- read.csv("C:/Documents/Science/PhD/Project/MARGO/IF_data/margo_names.csv", header = F)
 
 ## 1ii. Correct the names --------------------------------------------------
 # run the compare function and check the output
@@ -73,6 +74,8 @@ tmp <- which(ldg.margo.data[, 34] != ldg.margo.data[, 36])
 ldg.margo.data[tmp, c(34, 36)]
 ldg.margo.data[tmp, 35] <- ldg.margo.data[tmp, 36] - ldg.margo.data[tmp, 34] + ldg.margo.data[tmp, 35]
 
+rm(tmp)
+
 ldg.margo.data[, 48] <- ldg.margo.data[, 48] + ldg.margo.data[, 53] + ldg.margo.data[, 54] + ldg.margo.data[, 56] + ldg.margo.data[, 58] # merge micro
 
 # remove columns that are duplicated elsewhere
@@ -85,7 +88,7 @@ ldg.margo.data <- ldg.margo.data[, c(1:40, 42:45, 41, 46:ncol(ldg.margo.data))]
 # check they have replaced correctly
 head(ldg.margo.data)
 
-rm(margo.names, corr.margo.names, ldg.forams.margo)
+rm(ldg.forams.margo, margo.names, corr.margo.names)
 
 ## 1iii. Convert latitude and longitude ------------------------------------
 ldg.margo.data$Longitude[which(ldg.margo.data$Longitude > 180)] <- ldg.margo.data$Longitude[which(ldg.margo.data$Longitude > 180)] - 360
@@ -96,14 +99,83 @@ ldg.margo.data <- ldg.margo.data[-which(point.in.polygon(ldg.margo.data$Longitud
 # Currently leave in points with no water depth as I'm not doing anything with them
 # ldg.margo.data <- ldg.margo.data[-which(is.na(ldg.margo.data$Water.Depth)), ]
 
-# 1v. Calculate total planktics from percent -----------------------------
-summary(factor(ldg.margo.data$percent.1._or_Raw.2.))
-for (i in which(ldg.margo.data$percent.1._or_Raw.2. == 1))
-{
-  ldg.margo.data[i, 13:47]
-}
+## 1v. Calculate total planktics from percent -----------------------------
+# for those points which are percent, but have total PFs, calculate the absolute values
 
-## 1vi. Remove other unnecessary columns ------------------------------------
+# show which datapoints will be lost
+png("Figures/Dat_1v_totalPFs.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, Total))
+dev.off()
+
+# identify rows
+table(ldg.margo.data[, c(49, 51)])
+tmp <- which(ldg.margo.data$percent_or_Raw == "P" & ldg.margo.data$Total == "Y")
+
+# identify the columns with species names
+margo.macro <- colnames(ldg.margo.data)[14:44]
+margo.all.species <- colnames(ldg.margo.data)[14:47]
+
+# divide by current sum & multiply by total
+for(i in tmp) 
+{
+  ldg.margo.data[i, margo.all.species] <- round(ldg.margo.data[i, margo.all.species] / ldg.margo.data$Current_sum[i] * ldg.margo.data$Total_Planktics[i], 0)
+}
+rm(i, tmp)
+
+## 1vi. Compare with the BFD -----------------------------------------------
+# add a column for the BFD
+ldg.margo.data$BFD <- "N"
+ldg.margo.data$BFD[which(ldg.margo.data$Publication == 'Prell_et_al.,_1999_("Brown_Database")')] <- "Y"
+ldg.margo.data$BFD <- factor(ldg.margo.data$BFD)
+
+# plot this up
+png("Figures/Dat_1vi_BFD.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, BFD))
+dev.off()
+
+png("Figures/Dat_1vi_BFD_wo_percent.png", 800, 500)
+with(ldg.margo.data[ldg.margo.data$Total == "Y",], distrib.map(Longitude, Latitude, BFD))
+dev.off()
+
+# check that points from the BFD match those from MARGO
+load("C:/Documents/Science/PhD/Work/1311 LDGPaper/Output/140522_ldg_data.RData")
+
+tmp <- which(as.character(ldg.margo.data$Core) == ldg.data$Core.ID[2]) # first row was from a different source
+# check source
+ldg.margo.data$Publication[tmp]
+# compare
+merge(ldg.margo.data[tmp,], ldg.data[2, ], all = TRUE) # only difference is whether incompta is separated out
+
+rm(tmp, ldg.data)
+
+# 1vii. Check for duplicates ----------------------------------------------
+dim(ldg.margo.data)
+
+# identify exact duplicates
+tmp <- which(duplicated(ldg.margo.data))
+# check for several that these are duplicates
+ldg.margo.data[which(ldg.margo.data$Core == ldg.margo.data$Core[tmp[30]]), ]
+# remove duplicated rows
+ldg.margo.data <- ldg.margo.data[-tmp, ]
+rm(tmp)
+
+# identify duplicates in all the raw data
+tmp <- which(duplicated(ldg.margo.data[, c(3:5, 14:47)]))
+# check these are duplicates
+ldg.margo.data[ldg.margo.data$Core == ldg.margo.data$Core[tmp[5]], ]
+ldg.margo.data <- ldg.margo.data[-tmp, ]
+rm(tmp)
+
+# same core and lat / long / depth but different data
+tmp <- which(duplicated(ldg.margo.data[, c(1, 3:5)]))
+write.csv(ldg.margo.data[ldg.margo.data$Core %in% ldg.margo.data$Core[tmp], c(1, 3:5, 11:13)], file = "duplicates.csv")
+duplicates <- which(ldg.margo.data$Core %in% ldg.margo.data$Core[tmp])
+# to see reasons for choice see "duplicates_edited.csv".
+ldg.margo.data <- ldg.margo.data[-duplicates[c(3:4, 6, 9:106, 108:122, 129:134, 137:143, 145:157, 159:161, 209, 275:280, 308, 310:311)], ]
+
+rm(tmp, duplicates)
+
+## 1vii. Remove unnecessary columns ------------------------------------
 colnames(ldg.margo.data)
 
 # don't need Coring_device, Sample_depth_upper, Sample_depth_lower, chronozone_level, sedimentation_rate, Publication, added_by, date_of_addition, 
@@ -113,14 +185,16 @@ ldg.margo.data <- ldg.margo.data[, -c(2, 7:13)]
 ## 2. Calculate diversity metrics ------------------------------------------
 
 ## 2i. Species Richness ----------------------------------------------------
-# identify the columns with species names
-margo.species <- colnames(ldg.margo.data)[14:44]
 
 # calculate the species richness
-ldg.margo.data$sp.rich <- rowSums(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)] > 0)
+ldg.margo.data$sp.rich <- rowSums(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.macro)] > 0)
 
 png("Figures/Dat_2i_sprich.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich))
+dev.off()
+
+png("Figures/Dat_2i_sprich2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich, palette = "matlab.like"))
 dev.off()
 
 ## 2ii. Simpsons index -----------------------------------------------------
@@ -128,16 +202,24 @@ dev.off()
 # This calculates the sum of the proportions of the square of each species.
 # In this context, we assume the infinite version is valid (i.e. removing a specimen doesn't affect the chances of finding another one of the same species)
 # 1 is equal abundances of all species, small is very unequal abundances
-# 32 species so if equal abundances max would be 0.96875: Actual max = 0.9067952; min = 0
+# 32 species so if equal abundances max would be 0.96875: Actual max = 0.0.9121; min = 0
 
 # calculate simpsons index
-ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.species)], "simpson"))
+ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.macro)], "simpson"))
+# check
+1 - sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)
 
 # calculate simpsons evenness
-ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.species)], "invsimpson") / ldg.margo.data$sp.rich[i])
+ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.macro)], "invsimpson") / ldg.margo.data$sp.rich[i])
+# check
+(1 / sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)) / ldg.margo.data$sp.rich[2]
 
 png("Figures/Dat_2ii_simpson.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson))
+dev.off()
+
+png("Figures/Dat_2ii_simpson2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson, palette= "matlab.like"))
 dev.off()
 
 png("Figures/Dat_2ii_simpsonEve_all.png", 800, 500)
@@ -148,73 +230,92 @@ png("Figures/Dat_2ii_simpsonEve_0.7.png", 800, 500)
 with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve))
 dev.off()
 
+png("Figures/Dat_2ii_simpsonEve_all2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Dat_2ii_simpsonEve_0.7_2.png", 800, 500)
+with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like"))
+dev.off()
+
 ## 2iii. Phylogenetic diversity --------------------------------------------
 # load in the bfd phylogeny
-load("C:\\Documents\\Science\\PhD\\Project\\Foraminifera\\Outputs\\140523_bfd_tree.Rdata")
+load("C:/Documents/Science/PhD/Project/Foraminifera/Outputs/140523_bfd_tree.Rdata")
 
 # calculate helmus psv
-ldg.margo.data$helmus.psv <- psv(as.matrix(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)]), bfd.tree, compute.var=TRUE)$PSV
+ldg.margo.data$helmus.psv <- psv(as.matrix(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.macro)]), bfd.tree, compute.var=TRUE)$PSV
 
 png("Figures/Dat_2iii_helmus_psv.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "matlab.like"))
 dev.off()
 
 ## 2iv. Functional diversity -----------------------------------------------
-# load in the trait data for all the BFD species (from FunctionalDiversity.R)
-load("C:\\Documents\\Science\\PhD\\Project\\BFD\\131120Old\\Datafiles\\130614bfd_traits.Rdata")
+# generate margo.traits
+load("C:/Documents/Science/PhD/Project/Foraminifera/Outputs/150318_pf_traits.RData")
+margo.traits <- pf.traits[match(margo.macro, rownames(pf.traits)), ]
+# check names
+cbind(margo.macro, rownames(margo.traits))
+# no data for N. incompta -> give it data from N. pachyderma
+margo.traits[which(margo.macro == "Neogloboquadrina incompta"), ] <- margo.traits[which(margo.macro == "Neogloboquadrina pachyderma"), ]
+rownames(margo.traits) <- margo.macro
 
-# calculate functional diversity
-# ldg.FD <- dbFD(bfd.traits, ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)], corr = "cailliez")
-## n.b. this wasn't running on this computer for some unknown reason, so I ran it another computer and loaded it in
-load("Output\\ldg_FD.Rdata")
-str(ldg.FD)
-ldg.margo.data$FRic <- ldg.FD$FRic
-ldg.margo.data$FEve <- ldg.FD$FEve
-ldg.margo.data$FDiv <- ldg.FD$FDiv
+# CURRENTLY NOT WORKING
+# # calculate functional diversity
+# #ldg.FD <- dbFD(margo.traits, ldg.margo.data[, margo.macro], corr = "cailliez")
+# 
+# ## n.b. this wasn't running on this computer for some unknown reason, so I ran it another computer and loaded it in
+# load("Output/ldg_FD.Rdata")
+# str(ldg.FD)
+# ldg.margo.data$FRic <- ldg.FD$FRic
+# ldg.margo.data$FEve <- ldg.FD$FEve
+# ldg.margo.data$FDiv <- ldg.FD$FDiv
+# 
+# png("Figures/Dat_2iv_FRic.png", 800, 500)
+# with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic))
+# dev.off()
+# 
+# png("Figures/Dat_2iv_FEve.png", 800, 500)
+# with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve))
+# dev.off()
+# 
+# png("Figures/Dat_2iv_FDiv.png", 800, 500)
+# with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv))
+# dev.off()
+# 
+rm(pf.traits)
 
-png("Figures/Dat_2iv_FRic.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic))
-dev.off()
-
-png("Figures/Dat_2iv_FEve.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve))
-dev.off()
-
-png("Figures/Dat_2iv_FDiv.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv))
-dev.off()
 
 ## 2v. Average clade age ---------------------------------------------------
 # calculate this for the morphospecies
 # morphospecies phylogeny
-load("C:\\Documents\\Science\\PhD\\Project\\Foraminifera\\Data\\2011-04-11 aM.Rdata")
+load("C:/Documents/Science/PhD/Project/Foraminifera/Data/2011-04-11 aM.Rdata")
 str(aM)
 # lineages phylogeny
-load("C:\\Documents\\Science\\PhD\\Project\\Foraminifera\\Data\\2011-04-11 aL.Rdata")
+load("C:/Documents/Science/PhD/Project/Foraminifera/Data/2011-04-11 aL.Rdata")
 str(aL)
 
-# add columns to bfd.traits
-bfd.traits
-bfd.traits$aM.age <- NA
-bfd.traits$aL.age <- NA
+# add columns to margo.traits
+margo.traits
+margo.traits$aM.age <- NA
+margo.traits$aL.age <- NA
 
 # add columns of age (morphospecies) (start date)
-for (i in 1:nrow(bfd.traits)) {
-  bfd.traits$aM.age[i] <- aM$st[which(aM$nm == rownames(bfd.traits)[i])]
+for (i in 1:nrow(margo.traits)) {
+  margo.traits$aM.age[i] <- aM$st[which(aM$nm == rownames(margo.traits)[i])]
 }
-bfd.traits
+margo.traits
 
 # check this matches with start - end
-for (i in 1:nrow(bfd.traits)) {
-  print(paste(aM$en[which(aM$nm == rownames(bfd.traits)[i])], " = ", rownames(bfd.traits)[i]))
+for (i in 1:nrow(margo.traits)) {
+  print(paste(aM$en[which(aM$nm == rownames(margo.traits)[i])], " = ", rownames(margo.traits)[i]))
 }
 # get 2 false's - Truncorotalia crassula and Globorotalia flexuosa
 
 # convert lineages to species names
-Aze_FD <- read.csv("C:\\Documents\\Science\\PhD\\Project\\Foraminifera\\Data\\Aze_functional_data.csv")
+Aze_FD <- read.csv("C:/Documents/Science/PhD/Project/Foraminifera/Data/Aze_functional_data.csv")
 head(Aze_FD)
 
-bfd.traits$lnSpcs <- Aze_FD$lnSpcs[match(rownames(bfd.traits), Aze_FD$specName)]
+margo.traits$lnSpcs <- Aze_FD$lnSpcs[match(rownames(margo.traits), Aze_FD$specName)]
 
 # I have a list of lineage names
 # I want to obtain the information on their start (and end) dates
@@ -222,17 +323,17 @@ bfd.traits$lnSpcs <- Aze_FD$lnSpcs[match(rownames(bfd.traits), Aze_FD$specName)]
 # the names won't be perfect matches, but the last bit of the name (the terminal) should match exactly
 
 # extract this terminal
-bfd.term <- substring(as.character(bfd.traits$lnSpcs), regexpr("T", as.character(bfd.traits$lnSpcs)))
+bfd.term <- substring(as.character(margo.traits$lnSpcs), regexpr("T", as.character(margo.traits$lnSpcs)))
 
 # obtain the label position in aL of the bfd.terms (need to enforce end, $, or T29 gives multiple matches)
 # start time for these, add as column
-bfd.traits$aL.age <- aL$st[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))]
+margo.traits$aL.age <- aL$st[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))]
 
 # end time for these
 aL$en[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))]
 
 # check this matches with start - end
-rownames(bfd.traits)[bfd.traits$aL.age - aL$en[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))] != bfd.traits$aL.age]
+rownames(margo.traits)[margo.traits$aL.age - aL$en[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))] != margo.traits$aL.age]
 # only one that doesn't is Truncorotalia crassula
 
 rm(bfd.term)
@@ -256,17 +357,17 @@ ave.age <- function(names, ages, data, abun = FALSE) {
   return(mean(sp.ages))  
 }
 
-ave.age(rownames(bfd.traits), bfd.traits$aM.age, ldg.margo.data[1, colnames(ldg.margo.data) %in% rownames(bfd.traits)])
+ave.age(rownames(margo.traits), margo.traits$aM.age, ldg.margo.data[1, colnames(ldg.margo.data) %in% rownames(margo.traits)])
 
 # calculate the average age of each site (both lineage and morphospecies)
-ldg.margo.data$MorphoAge <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(bfd.traits), bfd.traits$aM.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(bfd.traits)]))
+ldg.margo.data$MorphoAge <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(margo.traits), margo.traits$aM.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(margo.traits)]))
 
-ldg.margo.data$LinAge <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(bfd.traits), bfd.traits$aL.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(bfd.traits)]))
+ldg.margo.data$LinAge <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(margo.traits), margo.traits$aL.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(margo.traits)]))
 
 # calculate this weighted by evenness
-ldg.margo.data$MorphoAgeAbun <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(bfd.traits), bfd.traits$aM.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(bfd.traits)], abun = T))
+ldg.margo.data$MorphoAgeAbun <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(margo.traits), margo.traits$aM.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(margo.traits)], abun = T))
 
-ldg.margo.data$LinAgeAbun <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(bfd.traits), bfd.traits$aL.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(bfd.traits)], abun = T))
+ldg.margo.data$LinAgeAbun <- sapply(1:nrow(ldg.margo.data), function (i) ave.age(rownames(margo.traits), margo.traits$aL.age, ldg.margo.data[i, colnames(ldg.margo.data) %in% rownames(margo.traits)], abun = T))
 
 # try plotting these up
 summary(ldg.margo.data$MorphoAge)
@@ -297,6 +398,8 @@ dev.off()
 png("Figures/Dat_2v_LinAgeAbun.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "rainbow"))
 dev.off()
+
+# remove bfd.tree
 
 
 ## 3. Add environmental variables --------------------------------------------
@@ -415,4 +518,3 @@ save.image(file = "Output/140522_Dataset_ws.Rdata")
 # save ldg.margo.data & ldg.m.data
 save(ldg.margo.data, file = "Output/140522_ldg_data.Rdata")
 save(ldg.m.data, file = "Output/140522_ldg_m_data.Rdata")
-
