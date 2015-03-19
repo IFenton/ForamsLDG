@@ -93,26 +93,34 @@ ldg.margo.data$Longitude[which(ldg.margo.data$Longitude > 180)] <- ldg.margo.dat
 ## 1iv. Check and remove points on land / without water depth --------------
 ldg.margo.data <- ldg.margo.data[-which(point.in.polygon(ldg.margo.data$Longitude, ldg.margo.data$Latitude, world.dat$x, world.dat$y) != 0), ]
 
-ldg.margo.data <- ldg.margo.data[-which(is.na(ldg.margo.data$Water.Depth)), ]
+# Currently leave in points with no water depth as I'm not doing anything with them
+# ldg.margo.data <- ldg.margo.data[-which(is.na(ldg.margo.data$Water.Depth)), ]
 
-## 1v. Remove other unnecessary columns ------------------------------------
+# 1v. Calculate total planktics from percent -----------------------------
+summary(factor(ldg.margo.data$percent.1._or_Raw.2.))
+for (i in which(ldg.margo.data$percent.1._or_Raw.2. == 1))
+{
+  ldg.margo.data[i, 13:47]
+}
+
+## 1vi. Remove other unnecessary columns ------------------------------------
 colnames(ldg.margo.data)
 
-# don't need Core.Device, Split.Fraction, Microperforate, Other.ID, Other.UnID, Menardii.Fragments, Benthics, Radiolarians, Pteropods
-ldg.margo.data <- ldg.margo.data[, -c(4, 6, 39:41, 44:47)]
+# don't need Coring_device, Sample_depth_upper, Sample_depth_lower, chronozone_level, sedimentation_rate, Publication, added_by, date_of_addition, 
+ldg.margo.data <- ldg.margo.data[, -c(2, 7:13)]
 
 
 ## 2. Calculate diversity metrics ------------------------------------------
 
 ## 2i. Species Richness ----------------------------------------------------
 # identify the columns with species names
-bfd.species <- colnames(ldg.margo.data)[7:36]
+margo.species <- colnames(ldg.margo.data)[14:44]
 
 # calculate the species richness
-ldg.margo.data$sp.rich <- rowSums(ldg.margo.data[, which(colnames(ldg.margo.data) %in% bfd.species)] > 0)
+ldg.margo.data$sp.rich <- rowSums(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)] > 0)
 
 png("Figures/Dat_2i_sprich.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, sp.rich))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich))
 dev.off()
 
 ## 2ii. Simpsons index -----------------------------------------------------
@@ -123,21 +131,21 @@ dev.off()
 # 32 species so if equal abundances max would be 0.96875: Actual max = 0.9067952; min = 0
 
 # calculate simpsons index
-ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% bfd.species)], "simpson"))
+ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.species)], "simpson"))
 
 # calculate simpsons evenness
-ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% bfd.species)], "invsimpson") / ldg.margo.data$sp.rich[i])
+ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.species)], "invsimpson") / ldg.margo.data$sp.rich[i])
 
 png("Figures/Dat_2ii_simpson.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, simpson))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson))
 dev.off()
 
 png("Figures/Dat_2ii_simpsonEve_all.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, simpsonEve))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve))
 dev.off()
 
 png("Figures/Dat_2ii_simpsonEve_0.7.png", 800, 500)
-with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Long, Lat, simpsonEve))
+with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve))
 dev.off()
 
 ## 2iii. Phylogenetic diversity --------------------------------------------
@@ -145,10 +153,10 @@ dev.off()
 load("C:\\Documents\\Science\\PhD\\Project\\Foraminifera\\Outputs\\140523_bfd_tree.Rdata")
 
 # calculate helmus psv
-ldg.margo.data$helmus.psv <- psv(as.matrix(ldg.margo.data[, which(colnames(ldg.margo.data) %in% bfd.species)]), bfd.tree, compute.var=TRUE)$PSV
+ldg.margo.data$helmus.psv <- psv(as.matrix(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)]), bfd.tree, compute.var=TRUE)$PSV
 
 png("Figures/Dat_2iii_helmus_psv.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, helmus.psv, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "rainbow"))
 dev.off()
 
 ## 2iv. Functional diversity -----------------------------------------------
@@ -156,7 +164,7 @@ dev.off()
 load("C:\\Documents\\Science\\PhD\\Project\\BFD\\131120Old\\Datafiles\\130614bfd_traits.Rdata")
 
 # calculate functional diversity
-# ldg.FD <- dbFD(bfd.traits, ldg.margo.data[, which(colnames(ldg.margo.data) %in% bfd.species)], corr = "cailliez")
+# ldg.FD <- dbFD(bfd.traits, ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.species)], corr = "cailliez")
 ## n.b. this wasn't running on this computer for some unknown reason, so I ran it another computer and loaded it in
 load("Output\\ldg_FD.Rdata")
 str(ldg.FD)
@@ -165,15 +173,15 @@ ldg.margo.data$FEve <- ldg.FD$FEve
 ldg.margo.data$FDiv <- ldg.FD$FDiv
 
 png("Figures/Dat_2iv_FRic.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, FRic))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic))
 dev.off()
 
 png("Figures/Dat_2iv_FEve.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, FEve))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve))
 dev.off()
 
 png("Figures/Dat_2iv_FDiv.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, FDiv))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv))
 dev.off()
 
 ## 2v. Average clade age ---------------------------------------------------
@@ -267,27 +275,27 @@ summary(ldg.margo.data$MorphoAgeAbun)
 summary(ldg.margo.data$LinAgeAbun)
 
 png("Figures/Dat_2v_MorphoAge.png", 700, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, MorphoAge - min(MorphoAge), key = FALSE, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge - min(MorphoAge), key = FALSE, palette = "rainbow"))
 dev.off()
 
 png("Figures/Dat_2v_MorphoAge_key.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, MorphoAge, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge, palette = "rainbow"))
 dev.off()
 
 png("Figures/Dat_2v_MorphoAgeAbun.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, MorphoAgeAbun, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "rainbow"))
 dev.off()
 
 png("Figures/Dat_2v_LinAge.png", 700, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, LinAge - min(LinAge), key = FALSE, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge - min(LinAge), key = FALSE, palette = "rainbow"))
 dev.off()
 
 png("Figures/Dat_2v_LinAge_key.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, LinAge, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge, palette = "rainbow"))
 dev.off()
 
 png("Figures/Dat_2v_LinAgeAbun.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, LinAgeAbun, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "rainbow"))
 dev.off()
 
 
@@ -296,7 +304,7 @@ dev.off()
 load("Output/140522_ldg_env.Rdata")
 
 # check they match (should be FALSE)
-which(ldg.margo.data$Lat != ldg.env$Lat)
+which(ldg.margo.data$Latitude != ldg.env$Latitude)
 
 
 ## 4. Produce a dataset without dissolved sites ----------------------------
@@ -329,15 +337,15 @@ plot(sort(ldg.margo.data$dissolution))
 dev.off()
 
 png("Figures/Dat_4ii_dissolution.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, dissolution))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, dissolution))
 dev.off()
 
 png("Figures/Dat_4ii_u15dissolution.png", 800, 500)
-with(ldg.margo.data[ldg.margo.data$dissolution < 15, ], distrib.map(Long, Lat, dissolution)) # based on De Villiers (2003) A 425 kyr record of foraminiferal shell weight variability in the western equatorial Pacific
+with(ldg.margo.data[ldg.margo.data$dissolution < 15, ], distrib.map(Longitude, Latitude, dissolution)) # based on De Villiers (2003) A 425 kyr record of foraminiferal shell weight variability in the western equatorial Pacific
 dev.off()
 
 png("Figures/Dat_4ii_u6dissolution.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, as.factor(dissolution < 6)))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, as.factor(dissolution < 6)))
 dev.off()
 dim(ldg.margo.data[ldg.margo.data$dissolution < 6, ]) # gives us 965 poinst with a spread across all Oceans
 
@@ -362,36 +370,36 @@ ldg.margo.data[which(is.na(ldg.margo.data$rarefy.sr)), ]
 
 # plot this up and compare with species richness
 png("Figures/Dat_5_rarefySR.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, rarefy.sr))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, rarefy.sr))
 dev.off()
 
 png("Figures/Dat_5_F_rarefySR.png", 800, 500)
-with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Long, Lat, rarefy.sr))
+with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, rarefy.sr))
 dev.off()
 
 png("Figures/Dat_5_F_SR.png", 800, 500)
-with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Long, Lat, sp.rich))
+with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, sp.rich))
 dev.off()
 
 png("Figures/Dat_5_rarefySRmSR.png", 800, 500)
-with(ldg.margo.data, distrib.map(Long, Lat, sp.rich - rarefy.sr))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich - rarefy.sr))
 dev.off()
 
 png("Figures/Dat_5_F_rarefySRmSR.png", 800, 500)
-with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Long, Lat, sp.rich - rarefy.sr, nlevels = 100))
+with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, sp.rich - rarefy.sr, nlevels = 100))
 dev.off()
 
 png("Figures/Dat_5_SRLat.png")
-with(ldg.margo.data, plot(Lat, sp.rich, pch = 16, col = Ocean))
+with(ldg.margo.data, plot(Latitude, sp.rich, pch = 16, col = Ocean))
 dev.off()
 
 png("Figures/Dat_5_rarefySRLat.png")
-with(ldg.margo.data, plot(Lat, rarefy.sr, pch = 16, col = Ocean))
+with(ldg.margo.data, plot(Latitude, rarefy.sr, pch = 16, col = Ocean))
 dev.off()
 
 
 ## 6. Create a dataframe for modelling -------------------------------------
-tmp <- c("Core.ID", "Lat", "Long", "Ocean", "Water.Depth", "dissolution", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "MorphoAge", "MorphoAgeAbun")
+tmp <- c("Core.ID", "Latitude", "Longitude", "Ocean", "Water.Depth", "dissolution", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "MorphoAge", "MorphoAgeAbun")
 ldg.m.data <- ldg.margo.data[, tmp]
 
 tmp <- c("meanSST.4km", "sdSST.4km", "meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.pt", "sd.pt", "mld.exact", "depth10deg", "meanChla.4km", "sdChla.4km", "meanChla.1deg", "sdChla.1deg",  "mean.logChla.1deg", "sd.logChla.1deg", "chl.exact", "meanSal.0m", "sdSal.0m", "sal.exact")
