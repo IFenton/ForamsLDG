@@ -36,7 +36,6 @@ library(sp) # point.in.polygon
 library(vegan) # simpsons index
 library(picante) # PSV
 library(FD) # functional diversity measures
-library(colorRamps) # for matlab.like palette
 setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis/")
 
 ## 1. Load in MARGO and correct names ----------------------------------------
@@ -283,7 +282,6 @@ rownames(margo.traits) <- margo.macro
 # dev.off()
 # 
 rm(pf.traits)
-
 
 ## 2v. Average clade age ---------------------------------------------------
 # calculate this for the morphospecies
