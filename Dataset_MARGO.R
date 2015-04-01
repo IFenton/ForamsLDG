@@ -1,4 +1,5 @@
-## 11 / 3 / 2015
+## Created: 11 / 3 / 2015
+## Last edited: 25 / 3 / 2015
 ## Isabel Fenton
 ## creation of a dataset for the LDG paper from MARGO
 ##
@@ -11,21 +12,29 @@
 ## N.B. based on Dataset.R (for LDG analysis from BFD)
 ## 
 ## Inputs:
-## bfdt.txt - bfd file
-## 120126 bfdnames.csv - list of the names from bfd
-## 130614bfd_traits.Rdata - trait data from FunctionalDiversity.R
-## ldg_FD.Rdata - functional diversity metrics for BFD
-## 2011-04-11 aM.Rdata - phylogeny of morphospecies
-## 2011-04-11 aL.Rdata - phylogeny of lineages
-## 140523_bfd_tree.Rdata - ape phylogeny with corrected names
-## 140522_ldg_env.Rdata - environmental variables from Environment.R
-## Aze_functional_data.csv - for getting lineage names for species
+## MARGO.csv - the combined MARGO dataset
+## margo_names.csv - the species names found in the MARGO dataset
+## 140522_ldg_data.RData - the bfd dataset
+## 140523_bfd_tree.Rdata - phylogeny of bfd species for calculating PSV
+## 150318_pf_traits.RData - traits of all pfs
 ##
 ## Outputs:
-## 140522_ldg_m_data.Rdata - all the relevant data to run the models for the ldg analysis
-## 140522_ldg_data.Rdata - diversity measures and abundance data for BFd
-## 140522_Dataset_ws.Rdata - the complete workspace for the dataset analysis
-## images for the diversity measures
+## 
+## Figures:
+## Dat_1v_totalPFs.png - figure showing which sites have a value for the total PF count
+## Dat_1vi_BFD.png - figure showing which sites are in BFD (at least approximately)
+## Dat_1vi_BFD_wo_percent.png - figure showing which sites are in BFD and have a value of the total PF count
+## Dat_1vi_MARGO_cf_BFD.png - how does the BFD data compare to the MARGO data
+## Dat_2i_sprich.png & Dat_2i_sprich2.png - species richness maps with two different palettes
+## Dat_2ii_simpson.png & Dat_2ii_simpson2.png - simpsons diversity maps with two different palettes
+## Dat_2ii_simpsonEve_all.png & Dat_2ii_simpsonEve_all2.png - simpsons eveness maps with two different palettes
+## Dat_2ii_simpsonEve_0.7.png & Dat_2ii_simpsonEve_0.7_2.png - simpsons eveness maps with two different palettes, with only values < 0.7
+## Dat_2iii_helmus_psv.png - helmus PSV map
+## Dat_2v_MorphoAge.png - average community morphospecies age
+## Dat_2v_MorphoAgeAbun.png - average community morphospecies age weighted by abundance
+## Dat_2v_LinAge.png - average community lineage age
+## Dat_2v_LinAgeAbun.png - average community lineage age weighted by abundance
+
 
 source("C:/Documents/Science/PhD/Code/compare.R") # the compare function
 source("C:/Documents/Science/PhD/Code/maps.R") # for maps
@@ -36,7 +45,7 @@ library(sp) # point.in.polygon
 library(vegan) # simpsons index
 library(picante) # PSV
 library(FD) # functional diversity measures
-library(colorRamps) # for matlab.like palette
+library(colorRamps) # matlab colours
 setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis/")
 
 ## 1. Load in MARGO and correct names ----------------------------------------
@@ -88,16 +97,13 @@ ldg.margo.data <- ldg.margo.data[, c(1:40, 42:45, 41, 46:ncol(ldg.margo.data))]
 # check they have replaced correctly
 head(ldg.margo.data)
 
-rm(ldg.forams.margo, margo.names, corr.margo.names)
+rm(ldg.forams.margo, margo.names, corr.margo.names, ldg.margo)
 
 ## 1iii. Convert latitude and longitude ------------------------------------
 ldg.margo.data$Longitude[which(ldg.margo.data$Longitude > 180)] <- ldg.margo.data$Longitude[which(ldg.margo.data$Longitude > 180)] - 360
 
-## 1iv. Check and remove points on land / without water depth --------------
+## 1iv. Check and remove points on land --------------
 ldg.margo.data <- ldg.margo.data[-which(point.in.polygon(ldg.margo.data$Longitude, ldg.margo.data$Latitude, world.dat$x, world.dat$y) != 0), ]
-
-# Currently leave in points with no water depth as I'm not doing anything with them
-# ldg.margo.data <- ldg.margo.data[-which(is.na(ldg.margo.data$Water.Depth)), ]
 
 ## 1v. Calculate total planktics from percent -----------------------------
 # for those points which are percent, but have total PFs, calculate the absolute values
@@ -145,6 +151,13 @@ tmp <- which(as.character(ldg.margo.data$Core) == ldg.data$Core.ID[2]) # first r
 ldg.margo.data$Publication[tmp]
 # compare
 merge(ldg.margo.data[tmp,], ldg.data[2, ], all = TRUE) # only difference is whether incompta is separated out
+
+# not all bfd points are in the MARGO dataset. To see which are missing
+png("Figures/Dat_1vi_MARGO_cf_BFD.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, Total, key = FALSE))
+with(ldg.data, points(Long, Lat))
+text(0, -97, "red - total PFs, yellow - percentages, black - BFD")
+dev.off()
 
 rm(tmp, ldg.data)
 
@@ -209,18 +222,18 @@ ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(
 # check
 1 - sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)
 
-# calculate simpsons evenness
-ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.macro)], "invsimpson") / ldg.margo.data$sp.rich[i])
-# check
-(1 / sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)) / ldg.margo.data$sp.rich[2]
-
 png("Figures/Dat_2ii_simpson.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson))
 dev.off()
 
 png("Figures/Dat_2ii_simpson2.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson, palette= "matlab.like"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson, palette = "matlab.like"))
 dev.off()
+
+# calculate simpsons evenness
+ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversity(ldg.margo.data[i, which(colnames(ldg.margo.data) %in% margo.macro)], "invsimpson") / ldg.margo.data$sp.rich[i])
+# check
+(1 / sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)) / ldg.margo.data$sp.rich[2]
 
 png("Figures/Dat_2ii_simpsonEve_all.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve))
@@ -249,15 +262,14 @@ png("Figures/Dat_2iii_helmus_psv.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "matlab.like"))
 dev.off()
 
+rm(bfd.tree)
+
 ## 2iv. Functional diversity -----------------------------------------------
 # generate margo.traits
 load("C:/Documents/Science/PhD/Project/Foraminifera/Outputs/150318_pf_traits.RData")
 margo.traits <- pf.traits[match(margo.macro, rownames(pf.traits)), ]
 # check names
 cbind(margo.macro, rownames(margo.traits))
-# no data for N. incompta -> give it data from N. pachyderma
-margo.traits[which(margo.macro == "Neogloboquadrina incompta"), ] <- margo.traits[which(margo.macro == "Neogloboquadrina pachyderma"), ]
-rownames(margo.traits) <- margo.macro
 
 # CURRENTLY NOT WORKING
 # # calculate functional diversity
@@ -284,59 +296,25 @@ rownames(margo.traits) <- margo.macro
 # 
 rm(pf.traits)
 
-
 ## 2v. Average clade age ---------------------------------------------------
-# calculate this for the morphospecies
-# morphospecies phylogeny
-load("C:/Documents/Science/PhD/Project/Foraminifera/Data/2011-04-11 aM.Rdata")
-str(aM)
-# lineages phylogeny
-load("C:/Documents/Science/PhD/Project/Foraminifera/Data/2011-04-11 aL.Rdata")
-str(aL)
+# as MARGO data is from the present day, then we can calculate morphospecies and lineage ages as values relative to recent
 
 # add columns to margo.traits
-margo.traits
-margo.traits$aM.age <- NA
-margo.traits$aL.age <- NA
+head(margo.traits)
 
-# add columns of age (morphospecies) (start date)
-for (i in 1:nrow(margo.traits)) {
-  margo.traits$aM.age[i] <- aM$st[which(aM$nm == rownames(margo.traits)[i])]
-}
-margo.traits
+## morphospecies age
+# check that all species are extant 
+margo.traits$mEn 
+rownames(margo.traits)[which(margo.traits$mEn != 0)] # get 2 false's, Truncorotalia crassula and Globorotalia flexuosa. Don't do anything about this
 
-# check this matches with start - end
-for (i in 1:nrow(margo.traits)) {
-  print(paste(aM$en[which(aM$nm == rownames(margo.traits)[i])], " = ", rownames(margo.traits)[i]))
-}
-# get 2 false's - Truncorotalia crassula and Globorotalia flexuosa
+margo.traits$aM.age <- margo.traits$mSt
 
-# convert lineages to species names
-Aze_FD <- read.csv("C:/Documents/Science/PhD/Project/Foraminifera/Data/Aze_functional_data.csv")
-head(Aze_FD)
+## lineage age
+# check that all species are extant 
+margo.traits$aL.end 
+rownames(margo.traits)[which(margo.traits$aL.end != 0)] # Truncorotalia crassula - don't do anything about this
 
-margo.traits$lnSpcs <- Aze_FD$lnSpcs[match(rownames(margo.traits), Aze_FD$specName)]
-
-# I have a list of lineage names
-# I want to obtain the information on their start (and end) dates
-# therefore need to work out which row of aL each name applies to
-# the names won't be perfect matches, but the last bit of the name (the terminal) should match exactly
-
-# extract this terminal
-bfd.term <- substring(as.character(margo.traits$lnSpcs), regexpr("T", as.character(margo.traits$lnSpcs)))
-
-# obtain the label position in aL of the bfd.terms (need to enforce end, $, or T29 gives multiple matches)
-# start time for these, add as column
-margo.traits$aL.age <- aL$st[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))]
-
-# end time for these
-aL$en[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))]
-
-# check this matches with start - end
-rownames(margo.traits)[margo.traits$aL.age - aL$en[unlist(sapply(paste(bfd.term, "$", sep = ""), grep, aL$label))] != margo.traits$aL.age]
-# only one that doesn't is Truncorotalia crassula
-
-rm(bfd.term)
+margo.traits$aL.age <- margo.traits$aL.start
 
 # generate a function to calculate average age
 ave.age <- function(names, ages, data, abun = FALSE) {
@@ -357,6 +335,7 @@ ave.age <- function(names, ages, data, abun = FALSE) {
   return(mean(sp.ages))  
 }
 
+# example
 ave.age(rownames(margo.traits), margo.traits$aM.age, ldg.margo.data[1, colnames(ldg.margo.data) %in% rownames(margo.traits)])
 
 # calculate the average age of each site (both lineage and morphospecies)
@@ -375,31 +354,26 @@ summary(ldg.margo.data$LinAge)
 summary(ldg.margo.data$MorphoAgeAbun)
 summary(ldg.margo.data$LinAgeAbun)
 
-png("Figures/Dat_2v_MorphoAge.png", 700, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge - min(MorphoAge), key = FALSE, palette = "rainbow"))
-dev.off()
-
-png("Figures/Dat_2v_MorphoAge_key.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge, palette = "rainbow"))
+png("Figures/Dat_2v_MorphoAge.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Dat_2v_MorphoAgeAbun.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Dat_2v_LinAge.png", 700, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge - min(LinAge), key = FALSE, palette = "rainbow"))
-dev.off()
-
-png("Figures/Dat_2v_LinAge_key.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge, palette = "rainbow"))
+png("Figures/Dat_2v_LinAge.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Dat_2v_LinAgeAbun.png", 800, 500)
-with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "rainbow"))
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-# remove bfd.tree
+## 2vi. percent symbionts -------------------------------------------------------
+
+
+
 
 
 ## 3. Add environmental variables --------------------------------------------
