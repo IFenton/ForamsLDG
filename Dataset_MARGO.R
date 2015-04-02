@@ -1,5 +1,5 @@
 ## Created: 11 / 3 / 2015
-## Last edited: 25 / 3 / 2015
+## Last edited: 2 / 4 / 2015
 ## Isabel Fenton
 ## creation of a dataset for the LDG paper from MARGO
 ##
@@ -25,11 +25,14 @@
 ## Dat_1vi_BFD.png - figure showing which sites are in BFD (at least approximately)
 ## Dat_1vi_BFD_wo_percent.png - figure showing which sites are in BFD and have a value of the total PF count
 ## Dat_1vi_MARGO_cf_BFD.png - how does the BFD data compare to the MARGO data
-## Dat_2i_sprich.png & Dat_2i_sprich2.png - species richness maps with two different palettes
-## Dat_2ii_simpson.png & Dat_2ii_simpson2.png - simpsons diversity maps with two different palettes
-## Dat_2ii_simpsonEve_all.png & Dat_2ii_simpsonEve_all2.png - simpsons eveness maps with two different palettes
-## Dat_2ii_simpsonEve_0.7.png & Dat_2ii_simpsonEve_0.7_2.png - simpsons eveness maps with two different palettes, with only values < 0.7
+## Dat_2i_sprich.png - species richness maps with different colour schemes
+## Dat_2ii_simpson.png - simpsons diversity maps with different colour schemes
+## Dat_2ii_simpsonEve_all.png - simpsons eveness maps with different colour schemes
+## Dat_2ii_simpsonEve_0.7.png - simpsons eveness maps with different colour schemes, with only values < 0.7
 ## Dat_2iii_helmus_psv.png - helmus PSV map
+## Dat_2iv_FRic.png - functional richness maps with different colour schemes
+## Dat_2iv_FEve.png - functional evenness maps with different colour schemes
+## Dat_2iv_FDiv.png - functional divergence maps with different colour schemes
 ## Dat_2v_MorphoAge.png - average community morphospecies age
 ## Dat_2v_MorphoAgeAbun.png - average community morphospecies age weighted by abundance
 ## Dat_2v_LinAge.png - average community lineage age
@@ -109,7 +112,7 @@ ldg.margo.data <- ldg.margo.data[-which(point.in.polygon(ldg.margo.data$Longitud
 # for those points which are percent, but have total PFs, calculate the absolute values
 
 # show which datapoints will be lost
-png("Figures/Dat_1v_totalPFs.png", 800, 500)
+png("Figures/Dataset/Dat_1v_totalPFs.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, Total))
 dev.off()
 
@@ -135,11 +138,11 @@ ldg.margo.data$BFD[which(ldg.margo.data$Publication == 'Prell_et_al.,_1999_("Bro
 ldg.margo.data$BFD <- factor(ldg.margo.data$BFD)
 
 # plot this up
-png("Figures/Dat_1vi_BFD.png", 800, 500)
+png("Figures/Dataset/Dat_1vi_BFD.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, BFD))
 dev.off()
 
-png("Figures/Dat_1vi_BFD_wo_percent.png", 800, 500)
+png("Figures/Dataset/Dat_1vi_BFD_wo_percent.png", 800, 500)
 with(ldg.margo.data[ldg.margo.data$Total == "Y",], distrib.map(Longitude, Latitude, BFD))
 dev.off()
 
@@ -153,7 +156,7 @@ ldg.margo.data$Publication[tmp]
 merge(ldg.margo.data[tmp,], ldg.data[2, ], all = TRUE) # only difference is whether incompta is separated out
 
 # not all bfd points are in the MARGO dataset. To see which are missing
-png("Figures/Dat_1vi_MARGO_cf_BFD.png", 800, 500)
+png("Figures/Dataset/Dat_1vi_MARGO_cf_BFD.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, Total, key = FALSE))
 with(ldg.data, points(Long, Lat))
 text(0, -97, "red - total PFs, yellow - percentages, black - BFD")
@@ -161,7 +164,7 @@ dev.off()
 
 rm(tmp, ldg.data)
 
-# 1vii. Check for duplicates ----------------------------------------------
+## 1vii. Check for duplicates ----------------------------------------------
 dim(ldg.margo.data)
 
 # identify exact duplicates
@@ -202,12 +205,16 @@ ldg.margo.data <- ldg.margo.data[, -c(2, 7:13)]
 # calculate the species richness
 ldg.margo.data$sp.rich <- rowSums(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.macro)] > 0)
 
-png("Figures/Dat_2i_sprich.png", 800, 500)
+png("Figures/Diversity/Dat_2i_sprich.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich))
 dev.off()
 
-png("Figures/Dat_2i_sprich2.png", 800, 500)
+png("Figures/Diversity/Dat_2i_sprich2.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2i_sprich3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich, palette = "matlab.like", col.land = "black", col.water = "white"))
 dev.off()
 
 ## 2ii. Simpsons index -----------------------------------------------------
@@ -222,12 +229,16 @@ ldg.margo.data$simpson <- sapply(1:nrow(ldg.margo.data), function (i) diversity(
 # check
 1 - sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)
 
-png("Figures/Dat_2ii_simpson.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpson.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson))
 dev.off()
 
-png("Figures/Dat_2ii_simpson2.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpson2.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2ii_simpson3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpson, palette = "matlab.like", col.land = "black", col.water = "white"))
 dev.off()
 
 # calculate simpsons evenness
@@ -235,20 +246,28 @@ ldg.margo.data$simpsonEve <- sapply(1:nrow(ldg.margo.data), function (i) diversi
 # check
 (1 / sum(ldg.margo.data[2, margo.macro]^2/sum(ldg.margo.data[2, margo.macro])^2)) / ldg.margo.data$sp.rich[2]
 
-png("Figures/Dat_2ii_simpsonEve_all.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpsonEve_all.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve))
 dev.off()
 
-png("Figures/Dat_2ii_simpsonEve_0.7.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpsonEve_0.7.png", 800, 500)
 with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve))
 dev.off()
 
-png("Figures/Dat_2ii_simpsonEve_all2.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpsonEve_all2.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like"))
 dev.off()
 
-png("Figures/Dat_2ii_simpsonEve_0.7_2.png", 800, 500)
+png("Figures/Diversity/Dat_2ii_simpsonEve_0.7_2.png", 800, 500)
 with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2ii_simpsonEve_all3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", col.land = "black", col.water = "white"))
+dev.off()
+
+png("Figures/Diversity/Dat_2ii_simpsonEve_0.7_3.png", 800, 500)
+with(ldg.margo.data[ldg.margo.data$simpsonEve < 0.7, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", col.land = "black", col.water = "white"))
 dev.off()
 
 ## 2iii. Phylogenetic diversity --------------------------------------------
@@ -258,8 +277,16 @@ load("C:/Documents/Science/PhD/Project/Foraminifera/Outputs/140523_bfd_tree.Rdat
 # calculate helmus psv
 ldg.margo.data$helmus.psv <- psv(as.matrix(ldg.margo.data[, which(colnames(ldg.margo.data) %in% margo.macro)]), bfd.tree, compute.var=TRUE)$PSV
 
-png("Figures/Dat_2iii_helmus_psv.png", 800, 500)
+png("Figures/Diversity/Dat_2iii_helmus_psv.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv))
+dev.off()
+
+png("Figures/Diversity/Dat_2iii_helmus_psv2.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iii_helmus_psv3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, helmus.psv, palette = "matlab.like", col.land = "black", col.water = "white"))
 dev.off()
 
 rm(bfd.tree)
@@ -271,50 +298,87 @@ margo.traits <- pf.traits[match(margo.macro, rownames(pf.traits)), ]
 # check names
 cbind(margo.macro, rownames(margo.traits))
 
-# CURRENTLY NOT WORKING
-# # calculate functional diversity
-# #ldg.FD <- dbFD(margo.traits, ldg.margo.data[, margo.macro], corr = "cailliez")
-# 
-# ## n.b. this wasn't running on this computer for some unknown reason, so I ran it another computer and loaded it in
-# load("Output/ldg_FD.Rdata")
-# str(ldg.FD)
-# ldg.margo.data$FRic <- ldg.FD$FRic
-# ldg.margo.data$FEve <- ldg.FD$FEve
-# ldg.margo.data$FDiv <- ldg.FD$FDiv
-# 
-# png("Figures/Dat_2iv_FRic.png", 800, 500)
-# with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic))
-# dev.off()
-# 
-# png("Figures/Dat_2iv_FEve.png", 800, 500)
-# with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve))
-# dev.off()
-# 
-# png("Figures/Dat_2iv_FDiv.png", 800, 500)
-# with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv))
-# dev.off()
-# 
-rm(pf.traits)
+# traits for dbFD - only those that are useful for trait comparisons
+db.traits <- margo.traits[, c("spinose", "structure", "mph", "eco", "sqrt.area", "symbionts_R", "depth_R", "dissolution_R")]
+
+# convert characters and integers (i.e. mph / eco) to factors (need to do this to use dbFD)
+str(db.traits)
+for (i in colnames(db.traits)) 
+{
+  if (is.character(db.traits[, i]) | is.integer(db.traits[, i])) {
+    db.traits[, i] <- factor(db.traits[, i])
+  }
+}
+rm(i)
+
+str(db.traits)
+
+# calculate functional diversity
+ldg.FD <- dbFD(db.traits, ldg.margo.data[, margo.macro], corr = "cailliez")
+
+str(ldg.FD)
+
+ldg.margo.data$FRic <- ldg.FD$FRic
+ldg.margo.data$FEve <- ldg.FD$FEve
+ldg.margo.data$FDiv <- ldg.FD$FDiv
+
+png("Figures/Diversity/Dat_2iv_FRic.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FRic2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FRic3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FRic, col.water = "white", col.land = "black", palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FEve.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FEve2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FEve3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FEve, col.water = "white", col.land = "black", palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FDiv.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FDiv2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2iv_FDiv3.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, FDiv, col.water = "white", col.land = "black", palette = "matlab.like"))
+dev.off()
+
+rm(pf.traits, ldg.FD)
 
 ## 2v. Average clade age ---------------------------------------------------
 # as MARGO data is from the present day, then we can calculate morphospecies and lineage ages as values relative to recent
 
 # add columns to margo.traits
-head(margo.traits)
+colnames(margo.traits)
 
 ## morphospecies age
 # check that all species are extant 
 margo.traits$mEn 
 rownames(margo.traits)[which(margo.traits$mEn != 0)] # get 2 false's, Truncorotalia crassula and Globorotalia flexuosa. Don't do anything about this
 
-margo.traits$aM.age <- margo.traits$mSt
+margo.traits$aM.age <- margo.traits$mSt - margo.traits$mEn
 
 ## lineage age
 # check that all species are extant 
 margo.traits$aL.end 
 rownames(margo.traits)[which(margo.traits$aL.end != 0)] # Truncorotalia crassula - don't do anything about this
 
-margo.traits$aL.age <- margo.traits$aL.start
+margo.traits$aL.age <- margo.traits$aL.start -  margo.traits$aL.end
 
 # generate a function to calculate average age
 ave.age <- function(names, ages, data, abun = FALSE) {
@@ -354,25 +418,76 @@ summary(ldg.margo.data$LinAge)
 summary(ldg.margo.data$MorphoAgeAbun)
 summary(ldg.margo.data$LinAgeAbun)
 
-png("Figures/Dat_2v_MorphoAge.png", 800, 500)
+png("Figures/Diversity/Dat_2v_MorphoAge.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_MorphoAge2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_MorphoAge3.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAge, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Dat_2v_MorphoAgeAbun.png", 800, 500)
+png("Figures/Diversity/Dat_2v_MorphoAgeAbun.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_MorphoAgeAbun2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_MorphoAgeAbun3.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Dat_2v_LinAge.png", 800, 500)
+png("Figures/Diversity/Dat_2v_LinAge.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_LinAge2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_LinAge3.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAge, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Dat_2v_LinAgeAbun.png", 800, 500)
+png("Figures/Diversity/Dat_2v_LinAgeAbun.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_LinAgeAbun2.png", 800, 500)
+with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like"))
+dev.off()
+
+png("Figures/Diversity/Dat_2v_LinAgeAbun3.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-## 2vi. percent symbionts -------------------------------------------------------
+## 2vi. Percent symbionts ---------------------------------------------------
+colnames(margo.traits)
+
+## how do I define symbionts?
+summary(margo.traits$symbionts_R)
+# probably want two percentages, one for faculative and one for obligatory
+# assume that ?None is equivalent to None
+
+# generate a function for calculating traits
+# worth checking how I did the other stuff for BFD
+
+## calculate the percent of symbiotic species by site
+# all symbionts
 
 
+ldg.margo.data$all_symb <- 
+  
+  # for each row
+  # which species are symbionts (nchar > 5)
+  # sum that, or multiply by abundance
+
+# calculate the abundance weighted percent symbionts
 
 
 
@@ -409,25 +524,25 @@ ldg.env$dissolution <- ldg.margo.data$dissolution
 ## 4ii. Look at the nature of the dissolution values -----------------------
 summary(ldg.margo.data$dissolution)
 
-png("Figures/Dat_4ii_sortDissol.png")
+png("Figures/Diversity/Dat_4ii_sortDissol.png")
 plot(sort(ldg.margo.data$dissolution))
 dev.off()
 
-png("Figures/Dat_4ii_dissolution.png", 800, 500)
+png("Figures/Diversity/Dat_4ii_dissolution.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, dissolution))
 dev.off()
 
-png("Figures/Dat_4ii_u15dissolution.png", 800, 500)
+png("Figures/Diversity/Dat_4ii_u15dissolution.png", 800, 500)
 with(ldg.margo.data[ldg.margo.data$dissolution < 15, ], distrib.map(Longitude, Latitude, dissolution)) # based on De Villiers (2003) A 425 kyr record of foraminiferal shell weight variability in the western equatorial Pacific
 dev.off()
 
-png("Figures/Dat_4ii_u6dissolution.png", 800, 500)
+png("Figures/Diversity/Dat_4ii_u6dissolution.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, as.factor(dissolution < 6)))
 dev.off()
 dim(ldg.margo.data[ldg.margo.data$dissolution < 6, ]) # gives us 965 poinst with a spread across all Oceans
 
 # how does dissolution correlate with depth?
-png("Figures/Dat_4ii_dissolDepth.png")
+png("Figures/Diversity/Dat_4ii_dissolDepth.png")
 with(ldg.margo.data, plot(dissolution, Water.Depth, pch = 16, col = Ocean))
 dev.off()
 
@@ -446,31 +561,31 @@ summary(ldg.margo.data$rarefy.sr)
 ldg.margo.data[which(is.na(ldg.margo.data$rarefy.sr)), ]
 
 # plot this up and compare with species richness
-png("Figures/Dat_5_rarefySR.png", 800, 500)
+png("Figures/Diversity/Dat_5_rarefySR.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, rarefy.sr))
 dev.off()
 
-png("Figures/Dat_5_F_rarefySR.png", 800, 500)
+png("Figures/Diversity/Dat_5_F_rarefySR.png", 800, 500)
 with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, rarefy.sr))
 dev.off()
 
-png("Figures/Dat_5_F_SR.png", 800, 500)
+png("Figures/Diversity/Dat_5_F_SR.png", 800, 500)
 with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, sp.rich))
 dev.off()
 
-png("Figures/Dat_5_rarefySRmSR.png", 800, 500)
+png("Figures/Diversity/Dat_5_rarefySRmSR.png", 800, 500)
 with(ldg.margo.data, distrib.map(Longitude, Latitude, sp.rich - rarefy.sr))
 dev.off()
 
-png("Figures/Dat_5_F_rarefySRmSR.png", 800, 500)
+png("Figures/Diversity/Dat_5_F_rarefySRmSR.png", 800, 500)
 with(ldg.margo.data[!is.na(ldg.margo.data$rarefy.sr), ], distrib.filled(Longitude, Latitude, sp.rich - rarefy.sr, nlevels = 100))
 dev.off()
 
-png("Figures/Dat_5_SRLat.png")
+png("Figures/Diversity/Dat_5_SRLat.png")
 with(ldg.margo.data, plot(Latitude, sp.rich, pch = 16, col = Ocean))
 dev.off()
 
-png("Figures/Dat_5_rarefySRLat.png")
+png("Figures/Diversity/Dat_5_rarefySRLat.png")
 with(ldg.margo.data, plot(Latitude, rarefy.sr, pch = 16, col = Ocean))
 dev.off()
 
