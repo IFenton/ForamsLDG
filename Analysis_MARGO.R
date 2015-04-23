@@ -10,7 +10,7 @@
 ## Images saved into Figures with prefix Ana
 
 
-# libraries ---------------------------------------------------------------
+## libraries ---------------------------------------------------------------
 library(spdep) # for SAR models
 library(HH) # for vif
 library(ncf) # for Moran's I
@@ -209,6 +209,7 @@ summary(mod.sar.opW$obj)
 op.nb <- dnearneigh(ldg.coords, 0, mod.sar.opW$dist, longlat = TRUE)
 op.w <- nb2listw(op.nb, glist = NULL, style = "W", zero.policy = TRUE)
 mod.sar.op0 <- errorsarlm(mod.sar.opW$mod, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18)
+rm(op.nb)
 
 # start model simplification
 summary(mod.sar.op0, Nagelkerke = TRUE) # 
@@ -421,7 +422,7 @@ tmp.x <- barplot(abs(ms.coef$coef.sar), names = ms.coef$names, las = 2, ylim = c
 text(tmp.x, abs(ms.coef$coef.sar) + 50, ms.coef$stars)
 par(plt = plt.def)
 dev.off()
-rm(plt.def, tmp.x)
+rm(plt.def, tmp.x, ms.coef)
 
 ## 2vi. Calculate likelihood ratios for the SAR model ----------------------
 # best model is
@@ -667,15 +668,18 @@ table(ldg.margo.mod$Ocean2) # should do
 # run model based on best model for complete data with only Atlantic
 atl.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Atlantic", ], 0, mod.sar.opW$dist, longlat = TRUE)
 atl.w <- nb2listw(atl.nb, glist = NULL, style = "W", zero.policy = TRUE)
+rm(atl.nb)
 
 ## 3ii. set up model for Indian -----------------------------------
 # run model based on best model for complete data with only Indian
 ind.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Indian", ], 0, mod.sar.opW$dist, longlat = TRUE)
 ind.w <- nb2listw(ind.nb, glist = NULL, style = "W", zero.policy = TRUE)
+rm(ind.nb)
 
 ## 3iii. set up model for Pacific  ---------------------------
 pac.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Pacific", ], 0, mod.sar.opW$dist, longlat = TRUE)
 pac.w <- nb2listw(pac.nb, glist = NULL, style = "W", zero.policy = TRUE)
+rm(pac.nb)
 
 # n.b. removed the simplification in 3i-3iii as I'm only simplifying from the model with significant interactions (see 3vii). Therefore, also didn't need 3iv - vi
 
@@ -688,6 +692,7 @@ op.formula <- update(mod.sar.opf$call$formula, ~.-Ocean2 - poly(meanSST.1deg, 3)
 # create a model with only significant values
 mod.sar.atlI <- errorsarlm(op.formula, listw = atl.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", ])
 sar.plot(mod.sar.atlI)
+rm(atl.w)
 
 # try adding in the other interactions
 
@@ -790,6 +795,7 @@ rm(mod.sar.atlI20)
 
 ## adding back in finds poly(meanSST.1deg, 2):meanSal.0m should be included in the model, also potentially sdSST.1deg:carb_ion and depth10deg:logProd.mn.ann
 mod.sar.atlI1. <- mod.sar.atlI6
+rm(mod.sar.atlI6)
 
 # check whether any of the interactions are now significant
 mod.sar.atlI1.1 <- update(mod.sar.atlI1., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -885,6 +891,7 @@ rm(mod.sar.atlI1.20)
 
 ## adding back in finds depth10deg:logProd.mn.ann should be included in the model, also potentially sdSST.1deg:carb_ion
 mod.sar.atlI2. <- mod.sar.atlI1.16
+rm(mod.sar.atlI1.16)
 
 # check whether any of the interactions are now significant
 mod.sar.atlI2.1 <- update(mod.sar.atlI2., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -974,6 +981,7 @@ rm(mod.sar.atlI2.20)
 
 ## adding back in finds sdSST.1deg:carb_ion should be included in the model
 mod.sar.atlI3. <- mod.sar.atlI2.10
+rm(mod.sar.atlI2.10)
 
 # check whether any of the interactions are now significant
 mod.sar.atlI3.1 <- update(mod.sar.atlI3., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1090,6 +1098,9 @@ png("Figures/Ana_3vii_LRatio_g_atlIf.png", width = 800)
 lr.plot(lr.sar.atlIfg, order = c(6, 2, 1, 3:5), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 7)
 dev.off()
 
+save(mod.sar.atlI, mod.sar.atlI1., mod.sar.atlI2., mod.sar.atlI3., file = "Outputs/Atlantic_simplification.RData")
+rm(env.var.atl, mod.sar.atlI, mod.sar.atlI1., mod.sar.atlI2., mod.sar.atlI3.)
+
 ## 3viii. Only significant interactions for Indian -------------------------
 summary(mod.sar.op0)
 summary(mod.sar.opf)
@@ -1099,6 +1110,7 @@ mod.sar.indI <- errorsarlm(op.formula, listw = ind.w, zero.policy = TRUE, tol.so
 sar.plot(mod.sar.indI)
 summary(mod.sar.indI, Nagelkerke = TRUE) # 0.789 
 AIC(mod.sar.indI) # 1516.811
+rm(ind.w)
 
 # try adding in the other interactions
 mod.sar.indI2 <- update(mod.sar.indI, ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1198,6 +1210,7 @@ rm(mod.sar.indI20)
 
 # carb_ion:poly(meanSST.1deg, 3) is significant at the 0.05 level, so add it in and recheck
 mod.sar.indI1. <- mod.sar.indI8
+rm(mod.sar.indI8)
 
 mod.sar.indI1.2 <- update(mod.sar.indI1., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.indI1.2)
@@ -1321,6 +1334,9 @@ png("Figures/Ana_3viii_LRatio_g_indIf.png", width = 800)
 lr.plot(lr.sar.indIfg, order = c(6, 2, 1, 3:5), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 3)
 dev.off()
 
+save(mod.sar.indI, mod.sar.indI1., file = "Outputs/Indian_simplification.RData")
+rm(env.var.ind, mod.sar.indI, mod.sar.indI1.)
+
 ## 3ix. Only significant interactions for Pacific --------------------------
 summary(mod.sar.op0)
 summary(mod.sar.opf)
@@ -1328,6 +1344,7 @@ summary(mod.sar.opf)
 # create a model with only significant values
 mod.sar.pacI <- errorsarlm(op.formula, listw = pac.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", ])
 sar.plot(mod.sar.pacI)
+rm(pac.w)
 
 # try adding in the other interactions
 mod.sar.pacI2 <- update(mod.sar.pacI, ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1431,6 +1448,7 @@ rm(mod.sar.pacI20)
 
 # multiple interactions were significant. Add in the most significant and then recalculate
 mod.sar.pacI1. <- mod.sar.pacI16
+rm(mod.sar.pacI16)
 
 # try adding in the other interactions
 mod.sar.pacI1.2 <- update(mod.sar.pacI1., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1528,6 +1546,7 @@ rm(mod.sar.pacI1.20)
 
 # add in poly(meanSST.1deg, 3):mean.mld.t and recalculate
 mod.sar.pacI2. <- mod.sar.pacI1.3
+rm(mod.sar.pacI1.3)
 
 # try adding in the other interactions
 mod.sar.pacI2.2 <- update(mod.sar.pacI2., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1621,6 +1640,7 @@ rm(mod.sar.pacI2.20)
 
 # add in poly(meanSST.1deg, 3):logProd.mn.ann and recalculate
 mod.sar.pacI3. <- mod.sar.pacI2.5
+rm(mod.sar.pacI2.5)
 
 # try adding in the other interactions
 mod.sar.pacI3.2 <- update(mod.sar.pacI3., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1708,6 +1728,7 @@ rm(mod.sar.pacI3.20)
 
 # add in sdSST.1deg:logProd.mn.ann and recalculate
 mod.sar.pacI4. <- mod.sar.pacI3.9
+rm(mod.sar.pacI3.9)
 
 # try adding in the other interactions
 mod.sar.pacI4.2 <- update(mod.sar.pacI4., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1788,6 +1809,7 @@ rm(mod.sar.pacI4.20)
 
 # add in depth10deg:meanSal.0m and recalculate
 mod.sar.pacI5. <- mod.sar.pacI4.17
+rm(mod.sar.pacI4.17)
 
 # try adding in the other interactions
 mod.sar.pacI5.2 <- update(mod.sar.pacI5., ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1893,6 +1915,9 @@ png("Figures/Ana_3ix_LRatio_g_pacIf.png", width = 800)
 lr.plot(lr.sar.pacIfg, order = c(6, 2, 1, 3:5), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 7)
 dev.off()
 
+save(mod.sar.pacI, mod.sar.pacI1., mod.sar.pacI2., mod.sar.pacI3., mod.sar.pacI4., mod.sar.pacI5., file = "Outputs/Pacific_simplification.RData")
+rm(env.var.pac, mod.sar.pacI, mod.sar.pacI1., mod.sar.pacI2., mod.sar.pacI3., mod.sar.pacI4., mod.sar.pacI5.)
+
 ## 3x. Comparison of the oceans --------------------------------------------
 png("Figures/Ana_3x_LRatio_oceIf.png", width = 800)
 lr.plot(lr.sar.op0, lr.sar.atlIf, lr.sar.indIf, lr.sar.pacIf, order = c(7:9, 4, 2, 11:10, 3, 5, 1, 6), leg.txt = c("Full", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 5)
@@ -1902,6 +1927,12 @@ dev.off()
 png("Figures/Ana_3x_LRatio_g_OceIf.png", width = 8, height = 6, units = 'in', res = 300)
 tmp <- lr.plot(lr.sar.op0g, lr.sar.atlIfg, lr.sar.indIfg, lr.sar.pacIfg, order = c(6:7, 5, 3, 4, 1:2), leg.txt = c("All", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 8, srt = 50)
 dev.off()
+
+save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, file = "Outputs/Atlantic_simplified.RData")
+save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, file = "Outputs/Indian_simplified.RData")
+save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, file = "Outputs/Pacific_simplified.RData")
+
+rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula)
 
 
 ## 4. Does resolution of variables matter? ---------------------------------
@@ -1925,6 +1956,9 @@ rm(tmp)
 png("Figures/Ana_4iii_LRatio_g_ophresop0.png", width = 800)
 lr.plot(lr.sar.op0g, lr.hres.op0g, order = c(6:7, 5, 3, 4, 2:1), leg.x = 17, leg.y = 275, leg.txt = c("Coarser resolution", "Finer resolution"), ylab = "Log Likelihood ratio")
 dev.off()
+
+save(mod.hres.op0, lr.hres.op0, lr.hres.op0g, file = "Outputs/mod_hres.RData")
+rm(mod.hres.op0, lr.hres.op0, lr.hres.op0g)
 
 
 ## 5. Does carb_ion cut-off matter? -------------------------------------
@@ -1975,6 +2009,10 @@ AIC(mod.sar.eveS$obj) # -4655.743
 eve.nb <- dnearneigh(ldg.coords, 0, mod.sar.eveS$dist, longlat = TRUE)
 eve.s <- nb2listw(eve.nb, glist = NULL, style = "S", zero.policy = TRUE)
 mod.sar.eve0 <- errorsarlm(mod.sar.eveS$mod, listw = eve.s, zero.policy = TRUE, tol.solve = 1e-18)
+rm(eve.nb, eve.s)
+
+save(mod.sar.eveB, mod.sar.eveS, mod.sar.eveW, file = "Outputs/Evenness_coding.RData")
+rm(mod.sar.eveB, mod.sar.eveS, mod.sar.eveW)
 
 ## 8ii. Run model simplification -------------------------------------------
 
@@ -1997,7 +2035,7 @@ tmp.x <- barplot(abs(m.eve.coef$coef.sar), names = m.eve.coef$names, las = 2, yl
 text(tmp.x, abs(m.eve.coef$coef.sar) + 10, m.eve.coef$stars)
 par(plt = plt.def)
 dev.off()
-rm(plt.def, tmp.x)
+rm(plt.def, tmp.x, m.eve.coef)
 
 ## 8iv. Calculate likelihood ratios for the SAR model ----------------------
 # full model is
@@ -2051,6 +2089,10 @@ lna.nb <- dnearneigh(ldg.coords, 0, mod.sar.lnaW$dist, longlat = TRUE)
 lna.w <- nb2listw(lna.nb, glist = NULL, style = "W", zero.policy = TRUE)
 mod.sar.lna0 <- errorsarlm(mod.sar.lnaS$mod, listw = lna.w, zero.policy = TRUE, tol.solve = 1e-18)
 summary(mod.sar.lna0, Nagelkerke = TRUE) # 0.58086
+rm(lna.nb, lna.w)
+
+save(mod.sar.lnaB, mod.sar.lnaS, mod.sar.lnaW, file = "Outputs/Lineage_coding.RData")
+rm(lna.nb, lna.w, mod.sar.lnaB, mod.sar.lnaS, mod.sar.lnaW)
 
 lr.sar.lna0 <- lr.calc(mod.sar.lna0)
 
@@ -2099,6 +2141,7 @@ rm(i)
 
 # write to csv
 write.csv(op0.summary, "op0_summary.csv")
+rm(op0.summary)
 
 # for evenness
 eve0.summary <- as.data.frame(summary(mod.sar.eve0, Nagelkerke = T)$Coef)
@@ -2120,6 +2163,7 @@ rm(i)
 
 # write to csv
 write.csv(eve0.summary, "eve0_summary.csv")
+rm(eve0.summary)
 
 # for community age
 lna0.summary <- as.data.frame(summary(mod.sar.lna0, Nagelkerke = T)$Coef)
@@ -2141,7 +2185,7 @@ rm(i)
 
 # write to csv
 write.csv(lna0.summary, "lna0_summary.csv")
-
+rm(lna0.summary)
 
 ## likelihood ratios for the models ----------------------------------------
 (lr.out <- cbind(lr.sar.op0, lr.sar.eve0[2:4], lr.sar.lna0[2:4]))
@@ -2150,6 +2194,7 @@ names(lr.out)[5:7] <- paste("eve", names(lr.out)[5:7], sep = "_")
 names(lr.out)[8:10] <- paste("lna", names(lr.out)[8:10], sep = "_")
 
 write.csv(lr.out, "lr_out.csv")
+rm(lr.out)
 
 # (lr.oce.out <- merge(lr.sar.op0, lr.sar.atlf, by = "names", all = T))
 # (lr.oce.out <- merge(lr.oce.out, lr.sar.indf, by = "names", all = T))
@@ -2548,3 +2593,17 @@ with(ldg.margo.mod, plot(rarefy.sr ~ meanSST.1deg, pch = 16, col = ldg.margo.mod
 points((1 / (8.6173324E−5 * p.MTE_SST) - 273.15), exp(mte.Ln_SR), type = "l", lwd = 2)
 legend(0, 24, levels(ldg.margo.mod$Ocean2)[1:3], pch = 16, col = 1:3)
 dev.off()
+
+save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/Metabolic_hypothesis.RData")
+rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST)
+
+
+# 13. Tidy up -------------------------------------------------------------
+save(ldg.margo.mod, file = "Outputs/ldg_margo_mod.RData")
+save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, file = "Outputs/Richness_model.RData")
+save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/Richness_model_simplified.RData")
+save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, file = "Outputs/Evenness_model.RData")
+save(lr.sar.lna0, lr.sar.lna0g, mod.sar.lna0, file = "Outputs/Lineage_model.RData")
+
+rm(ldg.coords, stars, env.var, op.w)
+
