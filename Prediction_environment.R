@@ -171,19 +171,21 @@ save(SST.4km.p, file = "150423_SST_4km_p.RData")
 rm(SST.4km.p)
 
 
-## 4. meanSST.1deg ---------------------------------------------------------
-# temperature
-load("")
-sum(mean.t.depth$Longitude[order(mean.t.depth$Latitude, mean.t.depth$Longitude)] != ldg.p.margo$Longitude)
-sum(mean.t.depth$Latitude[order(mean.t.depth$Latitude, mean.t.depth$Longitude)] != ldg.p.margo$Latitude)
-ldg.p.margo$meanSST.1deg <- mean.t.depth$depth0m[order(mean.t.depth$Latitude, mean.t.depth$Longitude)]
+## 4. SST.1deg ---------------------------------------------------------
+# load in the data
+setwd("../SST_1deg_SD")
+load("150414_Temperature_1deg.RData")
+
+# check that the lat / long match in length (n.b. the values are out by 0.5 degrees, so the data is the equivalent of rounded)
+sum(mean.t.depth$Long[order(mean.t.depth$Lat, mean.t.depth$Long)] != ldg.p.margo$Long)
+sum(mean.t.depth$Lat[order(mean.t.depth$Lat, mean.t.depth$Long)] != ldg.p.margo$Lat)
+
+# add a column for mean SST
+ldg.p.margo$meanSST.1deg <- mean.t.depth$depth0m[order(mean.t.depth$Lat, mean.t.depth$Long)]
 with(ldg.p.margo, distrib.map(Longitude, Latitude, meanSST.1deg))
 
-
-# 6. sdSST.1deg --------------------------------------------------------------
-sum(sd.t.depth$Longitude[order(sd.t.depth$Latitude, sd.t.depth$Longitude)] != ldg.p.margo$Longitude)
-sum(sd.t.depth$Latitude[order(sd.t.depth$Latitude, sd.t.depth$Longitude)] != ldg.p.margo$Latitude)
-ldg.p.margo$sdSST.1deg <- sd.t.depth$depth0m[order(sd.t.depth$Latitude, sd.t.depth$Longitude)]
+# add a column for sd SST
+ldg.p.margo$sdSST.1deg <- sd.t.depth$depth0m[order(sd.t.depth$Lat, sd.t.depth$Long)]
 with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSST.1deg))
 
 
