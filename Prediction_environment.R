@@ -205,28 +205,16 @@ ldg.p.margo <- cbind(ldg.p.margo, mld.2deg[mld.long[1, ] + length(unique(mld.2de
 rm(mld.long, mld.lat, mld.2deg, mld.margo)
 
 
-# 8. sd.mld.t -------------------------------------------------------------
+## 6. depth10deg ----------------------------------------------------------
+setwd("../SST_1deg_Mean/")
+load("150414_Strat.RData")
 
+# check that the lat / long match in length
+sum(strat.1deg$Long[order(strat.1deg$Lat, strat.1deg$Long)] != ldg.p.margo$Long)
+sum(strat.1deg$Lat[order(strat.1deg$Lat, strat.1deg$Long)] != ldg.p.margo$Lat)
 
-# 9. mean.mld.d -----------------------------------------------------------
-
-
-# 10. sd.mld.d ------------------------------------------------------------
-
-
-# 11. mean.mld.v ----------------------------------------------------------
-
-
-# 12. sd.mld.v ------------------------------------------------------------
-
-rm(mld.2deg, mld.margo)
-
-# 13. depth10deg ----------------------------------------------------------
-# depth10deg
-head(strat)
-sum(strat$Longitude[order(strat$Latitude, strat$Longitude)] != ldg.p.margo$Longitude)
-sum(strat$Latitude[order(strat$Latitude, strat$Longitude)] != ldg.p.margo$Latitude)
-ldg.p.margo$depth10deg <- strat$depth10deg[order(strat$Latitude, strat$Longitude)]
+# add a column for mean SST
+ldg.p.margo$depth10deg <- strat.1deg$depth10deg[order(strat.1deg$Lat, strat.1deg$Long)]
 with(ldg.p.margo, distrib.map(Longitude, Latitude, depth10deg))
 
 
