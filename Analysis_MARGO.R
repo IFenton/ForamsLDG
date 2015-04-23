@@ -1,14 +1,28 @@
 ## Created: 15 / 4 / 2015
-## Last edited: 15 / 4 / 2015
+## Last edited: 23 / 4 / 2015
 ## Isabel Fenton
 ## Reanalysis for LDG paper
-##
-## Inputs:
-## ldg.margo.mod - from Dataset.R (& Environment.R)
-##
-## Outputs:
-## Images saved into Figures with prefix Ana
 
+## Inputs ------------------------------------------------------------------
+## Environmental_variables.Rdata - containing ldg.margo.data, ldg.margo.env
+
+## Outputs ----------------------------------------------------------------
+## ldg_margo_mod.RData - The modelling dataframe
+## Images saved into Figures with prefix Ana
+## Atlantic_simplification.RData - models enroute to simplification
+## Indian_simplification.RData - models enroute to simplification
+## Pacific_simplification.RData - models enroute to simplification
+## Atlantic_simplified.RData - Simplified model
+## Indian_simplified.RData - Simplified model
+## Pacific_simplified.RData - simplified model
+## mod_hres.RData - models for comparing data resolution
+## Evenness_coding.RData - testing different coding styles for evenness
+## Lineage_coding.RData - testing different coding styles for lineage age
+## Metabolic_hypothesis.RData - testing the metabolic hypothesis
+## Richness_model.RData - the final (complete) model for richness
+## Richness_model_simplified.RData - the final simplified model for richness
+## Evenness_model.RData - the final (complete) model for evenness
+## Lineage_model.RData - the final (complete) model for lineage age
 
 ## libraries ---------------------------------------------------------------
 library(spdep) # for SAR models
@@ -25,7 +39,7 @@ source("../../../Code/maps.R") # for maps
 source("../../../Code/palettes.R") # ditto
 source("../../../Code/lr_calculations.R") # code for calculating likelihood ratios
 source("../../../Code/sar_predict.R") # for predicting with poly
-load("C:/Documents/Science/PhD/Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
+load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
 
 
 ## 0. Setting up the dataset -----------------------------------------------
@@ -1970,7 +1984,7 @@ rm(mod.hres.op0, lr.hres.op0, lr.hres.op0g)
 
 ## 8. Evenness -------------------------------------------------------------
 
-# 8i. Create an OLS model ------------------------------------------------
+## 8i. Create an OLS model ------------------------------------------------
 mod.eve.l0 <- lm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + meanSal.0m + sdSal.0m + Ocean2 + carb_ion)^2, data = ldg.margo.mod)
 
 # check model plots
@@ -2063,12 +2077,12 @@ dev.off()
 
 # full model lr plots for each ocean? map differences of RV between simplified model with and without ocean (by points not by layer) - Supplementary info
 
-# 8vi. Effect of carb_ion ----------------------------------------------
+## 8vi. Effect of carb_ion ----------------------------------------------
 
 
 ## 9. Lineage age -------------------------------------------------------------
 
-##  9i. Lineage age models -------------------------------------------------
+## 9i. Lineage age models -------------------------------------------------
 mod.sar.lnaW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + meanSal.0m + sdSal.0m + Ocean2 + carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaW$obj, Nagelkerke = TRUE) # 0.58086
 AIC(mod.sar.lnaW$obj) # 7506.566
@@ -2114,7 +2128,7 @@ dev.off()
 
 ## 10. Paper outputs -------------------------------------------------------
 
-## Table of full model cofficients for the models -----------
+## 10i. Table of full model cofficients for the models -----------
 # for rarefied species richness
 # create table
 op0.summary <- as.data.frame(summary(mod.sar.op0, Nagelkerke = T)$Coef)
@@ -2187,7 +2201,7 @@ rm(i)
 write.csv(lna0.summary, "lna0_summary.csv")
 rm(lna0.summary)
 
-## likelihood ratios for the models ----------------------------------------
+## 10ii. likelihood ratios for the models ----------------------------------------
 (lr.out <- cbind(lr.sar.op0, lr.sar.eve0[2:4], lr.sar.lna0[2:4]))
 names(lr.out)[2:4] <- paste("sr", names(lr.out)[2:4], sep = "_")
 names(lr.out)[5:7] <- paste("eve", names(lr.out)[5:7], sep = "_")
@@ -2206,13 +2220,13 @@ rm(lr.out)
 
 # write.csv(lr.oce.out, "Output/lr_oce_out.csv")
 
-## log likelihood ratio plot for full vs simplified model rarified SR --------
+## 10iii. log likelihood ratio plot for full vs simplified model rarified SR --------
 
 png("Figures/Ana_10_LRatio_op0f.png", width = 10, height = 6, units = 'in', res = 300)
 lr.plot(lr.sar.op0g, lr.sar.opfg, order = c(5, 7, 6, 3:4, 2:1), ylab = "Log Likelihood ratio", leg.txt = c("Full", "Simplified"), cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-## log likelihood ratio plot comparing different carb_ion cut-of --------
+## 10iv. log likelihood ratio plot comparing different carb_ion cut-of --------
 # (tmp <- data.frame(names = model.evs(mod.sar.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
 # lr.sar.op0g <- lr.calc(mod.sar.op0, tmp)
 # rm(tmp)
@@ -2241,8 +2255,8 @@ dev.off()
 # png("Figures/Ana_10_LRatio_g_lna46.png", width = 10, height = 6, units = 'in', res = 300)
 # lr.plot(lr.sar.lna0g, lr.sar4.lna0g, order = c(5, 7, 6, 3:4, 2:1), leg.txt = c("6%", "4%"), ylab = "Log Likelihood ratio", star.pos = 7, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 # dev.off()
-# 
-## residuals map for full model --------------------------------------------
+
+## 10v. residuals map for full model --------------------------------------------
 png("Figures/Ana_10_rsp_res.png", 700, 500)
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.sar.op0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -8, max.col = 8, maintitle = "Residuals for rarefied richness"))
 dev.off()
@@ -2255,11 +2269,11 @@ png("Figures/Ana_10_lna_res.png", 700, 500)
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.sar.lna0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -6, max.col = 6, maintitle = "Residuals for average community age"))
 dev.off()
 
-## coplot ------------------------------------------------------------------
+## 10vi. coplot ------------------------------------------------------------------
 
 # plot marginal effects (hold all else constant) of coefficients of T polynomial in oceans. Plot across temperature range observed in the oceans (3 colours / plotting symbols)
 
-# comparing all the models ------------------------------------------------
+## 10vii. comparing all the models ------------------------------------------------
 png("Figures/Ana_10_LRatio_REM.png", width = 800)
 lr.plot(lr.sar.op0, lr.sar.eve0, lr.sar.lna0, order = c(7:9, 4, 1, 11:10, 3, 5, 2, 6), ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age"))
 dev.off()
@@ -2268,7 +2282,7 @@ png("Figures/Ana_10_LRatio_g_REM.png", width = 10, height = 6, units = 'in', res
 lr.plot(lr.sar.op0g, lr.sar.eve0g, lr.sar.lna0g, order = c(6:7, 5, 3:4, 2:1),  ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age"), srt = 45)
 dev.off()
 
-# compare this to a random model ----------------------------------------
+## 10viii. compare this to a random model ----------------------------------------
 # rdm.vals <- data.frame(model = rep(NA, 1000 * 7), names = NA, lr = NA, p = NA, stars = NA)
 # tmp <- data.frame(names = model.evs(mod.rdm), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature"))
 # 
@@ -2544,7 +2558,6 @@ head(pred.data.max)
 oce.plt(pred.data.max, "Figures/Ana_11vi_rsr_max_", mod.sar.op0, data.xlab, "Rarefied species richness", data.max, "Maximum")
 oce.plt(pred.data.max, "Figures/Ana_11vi_eve_max_", mod.sar.eve0, data.xlab, "Simpsons evenness", data.max, "Maximum")
 oce.plt(pred.data.max, "Figures/Ana_11vi_lna_max_", mod.sar.lna0, data.xlab, "Average community age", data.max, "Maximum")
-
 
 
 # 12. Metabolic theory of ecology -----------------------------------------
