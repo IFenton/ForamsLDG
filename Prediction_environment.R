@@ -176,7 +176,7 @@ rm(SST.4km.p)
 setwd("../SST_1deg_SD")
 load("150414_Temperature_1deg.RData")
 
-# check that the lat / long match in length (n.b. the values are out by 0.5 degrees, so the data is the equivalent of rounded)
+# check that the lat / long match in length
 sum(mean.t.depth$Long[order(mean.t.depth$Lat, mean.t.depth$Long)] != ldg.p.margo$Long)
 sum(mean.t.depth$Lat[order(mean.t.depth$Lat, mean.t.depth$Long)] != ldg.p.margo$Lat)
 
@@ -188,8 +188,21 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, meanSST.1deg))
 ldg.p.margo$sdSST.1deg <- sd.t.depth$depth0m[order(sd.t.depth$Lat, sd.t.depth$Long)]
 with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSST.1deg))
 
+rm(mean.t.depth, sd.t.depth, temp.margo)
 
-# 7. mean.mld.t ------------------------------------------------------------
+
+## 5. Mixed layer depth ------------------------------------------------------------
+setwd("../MLD_montegut/")
+load("150414_mld.RData")
+
+# identify lat / long
+mld.long <- sapply(ldg.p.margo$Longitude, match.2deg, unique(mld.2deg$Long))
+mld.lat <- sapply(ldg.p.margo$Latitude, match.2deg, unique(mld.2deg$Lat))
+
+# add columns
+ldg.p.margo <- cbind(ldg.p.margo, mld.2deg[mld.long[1, ] + length(unique(mld.2deg$Long)) * (mld.lat[1, ] - 1), grep("\\.mld", names(mld.2deg))])
+
+rm(mld.long, mld.lat, mld.2deg, mld.margo)
 
 
 # 8. sd.mld.t -------------------------------------------------------------
@@ -206,6 +219,7 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSST.1deg))
 
 # 12. sd.mld.v ------------------------------------------------------------
 
+rm(mld.2deg, mld.margo)
 
 # 13. depth10deg ----------------------------------------------------------
 # depth10deg
@@ -259,16 +273,6 @@ save(ldg.p.margo, file = "Outputs/ldg_p_margo.RData")
 
 
 
-
-
-
-# mld
-ldg.p.margo$mean.mld.t <- NA
-for (i in 1:nrow(mld.ann)) {
-  ldg.p.margo$mean.mld.t[mld.ann$Longitude[i] == ldg.p.margo$Longitude & mld.ann$Latitude[i] == ldg.p.margo$Latitude] <- mld.ann$mean.mld.t[i]
-}
-rm(i)
-with(ldg.p.margo, distrib.map(Longitude, Latitude, mean.mld.t))
 
 
 # productivity
