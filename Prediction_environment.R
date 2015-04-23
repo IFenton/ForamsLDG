@@ -1,19 +1,21 @@
 ## Creating a dataset for prediction with values every degree
 ## Created: 16 / 4 / 15
-## Last edited: 21 / 4 / 15
+## Last edited: 23 / 4 / 15
 ## Isabel Fenton
 
 ## Based on the code from Analysis_MARGO.R
 
-# Inputs ------------------------------------------------------------------
+## Inputs ------------------------------------------------------------------
+# requires ldg.margo.mod
 
-# Outputs -----------------------------------------------------------------
+## Outputs -----------------------------------------------------------------
+# 150421_OceanBoundaries.RData - points for defining the ocean boundaries
 
-# Libraries ---------------------------------------------------------------
+## Libraries ---------------------------------------------------------------
 library(fields) # map
 data(world.dat) # map
-source("../../../Code/maps.R") # for maps
 library(sp) # point.in.polygon
+source("../../../Code/maps.R") # for maps
 
 
 ## 1. Generate dataframe for predicting ------------------------------------
@@ -25,9 +27,9 @@ names(ldg.margo.mod)
 ## 2. Ocean2 ---------------------------------------------------------------
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 
+## 2i. Create polygons of the ocean boundaries -----------------------------
 # Each ocean is defined using the locator() function. Save these results
-# save(pacific, atlantic, atlantic.2, indian, pacific.2, file = "150421_OceanBoundaries.RData")
-
+# save(pacific, atlantic, atlantic.2, indian, pacific.2, file = "Outputs/150421_OceanBoundaries.RData")
 # with these boundaries, then define polygons of the oceans. Exclude the Mediterranean and the Gulf of Mexico, and high northern latitudes where I have no data
 pacific.1 <- pacific
 pacific.1$x <- c(pacific$x[length(pacific$x)], -180, -180, pacific$x[2:length(pacific$x)])
@@ -51,6 +53,7 @@ points(pacific.3$x, pacific.3$y, type = "l", col = "green")
 
 rm(pacific, atlantic, atlantic.2, indian, pacific.2)
 
+## 2ii. Add column to ldg.p.margo ------------------------------------------
 # calculate the ocean for each point
 ldg.p.margo$Ocean2 <- NA
 ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, pacific.1$x, pacific.1$y) == 1)] <- "Pacific"
@@ -74,11 +77,14 @@ ldg.p.margo$Ocean2 <- as.factor(ldg.p.margo$Ocean2)
 points(land$x, land$y, type = "l", col = "green")
 
 ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+
+## 2iii. Check and tidy up -------------------------------------------------
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Atlantic", ], points(Longitude, Latitude, col = "red"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Indian", ], points(Longitude, Latitude, col = "orange"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific", ], points(Longitude, Latitude, col = "yellow"))
 
+rm(tmp, land, atlantic.1, indian.1, pacific.1, pacific.3)
 
 
 ## 3. meanSST.4km -------------------------------------------------------------
@@ -167,6 +173,9 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSal.0m))
 # carb_ion
 ldg.p.margo$carb_ion <- 0
 
+
+# 21. Save the data -------------------------------------------------------
+save(ldg.p.margo, file = "Outputs/ldg_p_margo.RData")
 
 
 
