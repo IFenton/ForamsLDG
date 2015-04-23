@@ -23,6 +23,10 @@
 ## Richness_model_simplified.RData - the final simplified model for richness
 ## Evenness_model.RData - the final (complete) model for evenness
 ## Lineage_model.RData - the final (complete) model for lineage age
+## op0_summary.csv - table of full model cofficients for richness
+## eve0_summary.csv - table of full model cofficients for evenness
+## lna0_summary.csv - table of full model cofficients for lineage age
+## lr_out.csv - likelihood ratios for the richness model
 
 ## libraries ---------------------------------------------------------------
 library(spdep) # for SAR models
@@ -2154,7 +2158,7 @@ for (i in 1:length(stars)) {
 rm(i)
 
 # write to csv
-write.csv(op0.summary, "op0_summary.csv")
+write.csv(op0.summary, "Outputs/op0_summary.csv")
 rm(op0.summary)
 
 # for evenness
@@ -2176,7 +2180,7 @@ for (i in 1:length(stars)) {
 rm(i)
 
 # write to csv
-write.csv(eve0.summary, "eve0_summary.csv")
+write.csv(eve0.summary, "Outputs/eve0_summary.csv")
 rm(eve0.summary)
 
 # for community age
@@ -2198,7 +2202,7 @@ for (i in 1:length(stars)) {
 rm(i)
 
 # write to csv
-write.csv(lna0.summary, "lna0_summary.csv")
+write.csv(lna0.summary, "Outputs/lna0_summary.csv")
 rm(lna0.summary)
 
 ## 10ii. likelihood ratios for the models ----------------------------------------
@@ -2207,7 +2211,7 @@ names(lr.out)[2:4] <- paste("sr", names(lr.out)[2:4], sep = "_")
 names(lr.out)[5:7] <- paste("eve", names(lr.out)[5:7], sep = "_")
 names(lr.out)[8:10] <- paste("lna", names(lr.out)[8:10], sep = "_")
 
-write.csv(lr.out, "lr_out.csv")
+write.csv(lr.out, "Outputs/lr_out.csv")
 rm(lr.out)
 
 # (lr.oce.out <- merge(lr.sar.op0, lr.sar.atlf, by = "names", all = T))
@@ -2218,7 +2222,7 @@ rm(lr.out)
 # names(lr.oce.out)[8:10] <- paste("ind", names(lr.sar.op0)[2:4], sep = "_")
 # names(lr.oce.out)[11:13] <- paste("pac", names(lr.sar.op0)[2:4], sep = "_")
 
-# write.csv(lr.oce.out, "Output/lr_oce_out.csv")
+# write.csv(lr.oce.out, "Outputs/lr_oce_out.csv")
 
 ## 10iii. log likelihood ratio plot for full vs simplified model rarified SR --------
 
