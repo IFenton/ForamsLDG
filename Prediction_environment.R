@@ -15,6 +15,8 @@
 library(fields) # map
 data(world.dat) # map
 library(sp) # point.in.polygon
+library("rhdf5") # for processing h5 files
+library(colorRamps) # for matlab.like colours
 source("../../../Code/maps.R") # for maps
 
 
@@ -24,7 +26,7 @@ ldg.p.margo <- data.frame(Longitude = rep(-179.5:179.5, 180), Latitude = rep(-89
 names(ldg.margo.mod)
 
 
-## 2. Ocean2 ---------------------------------------------------------------
+## 2. Ocean ---------------------------------------------------------------
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 
 ## 2i. Create polygons of the ocean boundaries -----------------------------
@@ -87,13 +89,89 @@ with(ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific", ], points(Longitude, Latitude,
 rm(tmp, land, atlantic.1, indian.1, pacific.1, pacific.3)
 
 
-## 3. meanSST.4km -------------------------------------------------------------
+## 3. SST.4km -------------------------------------------------------------
+setwd("../../../Project/BFD/Environmental/SST_4km/")
+
+## 3i. Extract data for lat / long -----------------------------------------
+# extract the lat/long values (this is the same for all months)
+lon <- h5read("month01_combined.h5", "Longitude")
+lat <- h5read("month01_combined.h5", "Latitude")
+
+# calculate the closest coordinates for each margo site
+long.margo <- sapply(ldg.p.margo$Longitude, match.4km, lon)
+lat.margo <- sapply(ldg.p.margo$Latitude, match.4km, lat)
+
+# set up a dataframe to hold the values
+SST.4km.p <- ldg.p.margo
+
+# for each month
+for (i in 1:12) {
+  # read in the file
+  if (i < 10) {
+    file.nm <- paste("month0", i, "_combined.h5", sep = "")
+  } else {
+    file.nm <- paste("month", i, "_combined.h5", sep = "")
+  }
+  sst <- as.vector(h5read(file.nm, "Clim_SST_Filled"))
+  # extract the data for the margo sites
+  SST.4km.p <- cbind(SST.4km.p, sst[long.margo + length(lon) * (lat.margo - 1)])
+  colnames(SST.4km.p)[ncol(SST.4km.p)] <- paste("sst.", i, sep = "")
+}
+rm(i, file.nm, sst, lat, lon, lat.margo, long.margo)
+# save this out so that I can come back to it if necessary
+save(SST.4km.p, file = "150423_SST.4km.p_working.RData")
+
+## convert to SST
+# 0 is missing data, 1 is land. Set both of these to NA
+for (i in 1:12) {
+  SST.4km.p[which(SST.4km.p[, paste("sst.", i, sep = "")] == 0), paste("sst.", i, sep = "")] <- NA
+  SST.4km.p[which(SST.4km.p[, paste("sst.", i, sep = "")] == 1), paste("sst.", i, sep = "")] <- NA
+}
+rm(i)
+
+# check this has worked
+head(SST.4km.p)
+
+# convert to actual values
+# scale * pixel_Value + offset
+# scale = 0.075 and offset = - 3.0
+SST.4km.p[, grep("sst", names(SST.4km.p))] <- SST.4km.p[, grep("sst", names(SST.4km.p))] * 0.075 - 3
+
+## 3ii. Calculate mean and SD ----------------------------------------------
+SST.4km.p$meanSST <- rowMeans(SST.4km.p[, grep("sst", names(SST.4km.p))], na.rm = T)
+SST.4km.p$sdSST <- apply(SST.4km.p[, grep("sst", names(SST.4km.p))], 1, sd, na.rm = T)
+# check these
+head(SST.4km.p)
+
+## 3iii. Images ------------------------------------------------------------
+# create maps of monthly sst
+for (i in 1:12) 
+{
+  png(paste("SST_4km_", i, ".png", sep = ""), 800, 500)
+  distrib.map(SST.4km.p$Longitude, SST.4km.p$Latitude, SST.4km.p[, paste("sst.", i, sep = "")], palette = "matlab.like", col.land = "black", col.water = "white", pch = 15, cex = 0.4, max.col = 36)
+  dev.off()
+}
+rm(i)
+
+# map of mean SST
+png(file = "meanSST_4km.png", width = 800, height = 500)
+with(SST.4km.p, distrib.map(Longitude, Latitude, meanSST, palette = "matlab.like", col.land = "black", col.water = "white", pch = 15, cex = 0.4))
+dev.off()
+
+# map of sd SST
+png(file = "sdSST_4km.png", width = 800, height = 500)
+with(SST.4km.p, distrib.map(Longitude, Latitude, sdSST, palette = "matlab.like", col.land = "black", col.water = "white", pch = 15, cex = 0.4))
+dev.off()
+
+## 3iv. Add data to ldg.p.margo --------------------------------------------
+ldg.p.margo$meanSST.4km <- SST.4km.p$meanSST
+ldg.p.margo$sdSST.4km <- SST.4km.p$sdSST
+
+save(SST.4km.p, file = "150423_SST_4km_p.RData")
+rm(SST.4km.p)
 
 
-## 4. sdSST.4km ------------------------------------------------------------
-
-
-# 5. meanSST.1deg ---------------------------------------------------------
+## 4. meanSST.1deg ---------------------------------------------------------
 # temperature
 load("")
 sum(mean.t.depth$Longitude[order(mean.t.depth$Latitude, mean.t.depth$Longitude)] != ldg.p.margo$Longitude)
