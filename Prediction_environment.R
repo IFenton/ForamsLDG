@@ -218,19 +218,135 @@ ldg.p.margo$depth10deg <- strat.1deg$depth10deg[order(strat.1deg$Lat, strat.1deg
 with(ldg.p.margo, distrib.map(Longitude, Latitude, depth10deg))
 
 
-# 14. prod.mn.ann ---------------------------------------------------------
+## 7. Productivity ---------------------------------------------------------
+setwd("../Productivity/")
+
+## 7i. Extract data for each site ---------------------------------------
+lon <- seq(-180, 179 + 5/6, 1/6)
+lat <- seq(90, -89 - 5/6, -1/6)
+
+# calculate the closest coordinates for each p site
+long.p <- sapply(ldg.p.margo$Longitude, match.4km, lon)
+lat.p <- sapply(ldg.p.margo$Latitude, match.4km, lat)
+
+# set up a dataframe to hold the values
+prod.p <- ldg.p.margo[,1:2]
+# for 2002, we don't have complete data, therefore
+j <- 2
+for (i in 7:12) {
+  # read in the file
+  if (i < 10) {
+    file.nm <- paste("data_by_month/npp.0", j, "0", i, ".h5", sep = "")
+  } else {
+    file.nm <- paste("data_by_month/npp.0", j, i, ".h5", sep = "")
+  }
+  prod <- as.vector(h5read(file.nm, "npp"))
+  # extract the data for the p sites
+  prod.p <- cbind(prod.p, prod[long.p + length(lon) * (lat.p - 1)])
+  colnames(prod.p)[ncol(prod.p)] <- paste("prod.", j, ".", i, sep = "")
+}
+
+# for each year between
+for (j in 3:14) {
+  # for each month
+  for (i in 1:12) {
+    # read in the file
+    if (i < 10) {
+      file.nm <- paste("data_by_month/npp.0", j, "0", i, ".h5", sep = "")
+    } else {
+      file.nm <- paste("data_by_month/npp.0", j, i, ".h5", sep = "")
+    }
+    prod <- as.vector(h5read(file.nm, "npp"))
+    # extract the data for the p sites
+    prod.p <- cbind(prod.p, prod[long.p + length(lon) * (lat.p - 1)])
+    colnames(prod.p)[ncol(prod.p)] <- paste("prod.", j, ".", i, sep = "")
+  }
+}
+
+# for 2015
+j <- 15
+i <- 1
+file.nm <- paste("data_by_month/npp.0", j, "0", i, ".h5", sep = "")
+prod <- as.vector(h5read(file.nm, "npp"))
+# extract the data for the p sites
+prod.p <- cbind(prod.p, prod[long.p + length(lon) * (lat.p - 1)])
+colnames(prod.p)[ncol(prod.p)] <- paste("prod.", j, ".", i, sep = "")
+
+rm(i, j, file.nm, prod, lat, lon, lat.p, long.p)
+# save this out so that I can come back to it if necessary
+save(prod.p, file = "150423_prod.p_working.RData")
+
+## convert to SST
+# -9999 is missing data, set to NA
+for (i in 3:ncol(prod.p)) {
+  prod.p[which(prod.p[, i] == -9999), i] <- NA
+}
+rm(i)
+# check this has worked
+head(prod.p)
+
+## 7ii. Calculate monthly averages across all years ------------------------
+prod.month.p <- ldg.p.margo[,1:2]
+
+for (i in 1:12) {
+  prod.month.p <- cbind(prod.month.p, NA)
+  prod.month.p[ncol(prod.month.p)] <- rowMeans(prod.p[, grep(paste("\\.", i, "$", sep = ""), names(prod.p))], na.rm = TRUE)
+  names(prod.month.p)[ncol(prod.month.p)] <- paste("prod.mn.", i, sep = "")
+}
+rm(i)
+
+for (i in 1:12) {
+  prod.month.p <- cbind(prod.month.p, NA)
+  prod.month.p[ncol(prod.month.p)] <- apply(prod.p[, grep(paste("\\.", i, "$", sep = ""), names(prod.p))], 1, sd, na.rm = T)
+  names(prod.month.p)[ncol(prod.month.p)] <- paste("prod.sd.", i, sep = "")
+}
+rm(i)
+
+## 7iii. Plot these productivity data ----------------------------------------
+# the data follows an exponential distribution, so plot < 1000 to see the major patterns
+# plot these up
+for (i in 1:12) 
+{
+  col <- grep(paste(".mn.", i, "$", sep = ""), names(prod.month.p))
+  sites1000 <- prod.month.p[, col] < 1000
+  png(paste("prodMn_", i, "_1000.png", sep = ""), 800, 500)
+  with(prod.month.p[sites1000, ], distrib.map(Longitude, Latitude, prod.month.p[sites1000, col], palette = "matlab.like", col.land = "black", col.water = "white"))
+  dev.off()
+  col <- grep(paste(".sd.", i, "$", sep = ""), names(prod.month.p))
+  sites1000 <- prod.month.p[, col] < 1000
+  png(paste("prodSd_", i, "_1000.png", sep = ""), 800, 500)
+  with(prod.month.p[sites1000, ], distrib.map(Longitude, Latitude, prod.month.p[sites1000, col], palette = "matlab.like", col.land = "black", col.water = "white"))
+  dev.off()
+}
+rm(i, col, sites1000)
+
+## 7iv. Calculate mean and sd for these ------------------------------------
+prod.month.p$prod.mn.ann <- rowMeans(prod.month.p[, grep("mn", names(prod.month.p))], na.rm = T)
+prod.month.p$prod.sd.ann <- rowMeans(prod.month.p[, grep("sd", names(prod.month.p))], na.rm = T)
+
+# due to the spread of productivity, also calculate logs
+prod.month.p$logProd.mn.ann <- rowMeans(log(prod.month.p[, grep("mn", names(prod.month.p))][-13]), na.rm = T)
+prod.month.p$logProd.sd.ann <- rowMeans(log(prod.month.p[, grep("sd", names(prod.month.p))][-13]), na.rm = T)
+
+# plot these
+for (i in grep("ann", names(prod.month.p))) {
+  png(paste(names(prod.month.p)[i], ".png", sep = ""), width = 800, height = 500)
+  with(prod.month.p[prod.month.p$prod.mn.ann < 1000, ], distrib.map(Longitude, Latitude, prod.month.p[prod.month.p$prod.mn.ann < 1000, i], palette = "matlab.like", col.land = "black", col.water = "white"))
+  dev.off()
+}
+
+## 7v. add these to ldg.p.margo -----------------------------------------------
+ldg.p.margo$prod.mn.ann <- prod.month.p$prod.mn.ann
+ldg.p.margo$prod.sd.ann <- prod.month.p$prod.sd.ann
+ldg.p.margo$logProd.mn.ann <- prod.month.p$logProd.mn.ann
+ldg.p.margo$logProd.sd.ann <- prod.month.p$logProd.sd.ann
+
+# tidy up
+save(prod.p, prod.month.p, file = "150423_productivity_p.RData")
+rm(prod.p, prod.month.p)
 
 
-# 15. prod.sd.ann ---------------------------------------------------------
-
-
-# 16. logProd.mn.ann ------------------------------------------------------
-
-
-# 17. ldgProd.sd.ann ------------------------------------------------------
-
-
-# 18. meanSal.0m ----------------------------------------------------------
+## 8. meanSal.0m ----------------------------------------------------------
 head(sal.mean.depth)
 ldg.p.margo$meanSal.0m <- NA
 for (i in 1:nrow(sal.mean.depth)) {
