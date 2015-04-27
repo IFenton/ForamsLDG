@@ -18,6 +18,7 @@ library(sp) # point.in.polygon
 library("rhdf5") # for processing h5 files
 library(colorRamps) # for matlab.like colours
 source("../../../Code/maps.R") # for maps
+setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis/")
 
 
 ## 1. Generate dataframe for predicting ------------------------------------
@@ -228,6 +229,7 @@ ldg.p.margo$depth10deg[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo
 with(ldg.p.margo[is.na(ldg.p.margo$depth10deg),], distrib.map(Longitude, Latitude, Longitude))
 
 rm(strat.1deg)
+
 
 ## 7. Productivity ---------------------------------------------------------
 setwd("../Productivity/")
