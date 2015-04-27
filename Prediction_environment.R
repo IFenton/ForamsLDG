@@ -227,6 +227,7 @@ ldg.p.margo$depth10deg[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo
 
 with(ldg.p.margo[is.na(ldg.p.margo$depth10deg),], distrib.map(Longitude, Latitude, Longitude))
 
+rm(strat.1deg)
 
 ## 7. Productivity ---------------------------------------------------------
 setwd("../Productivity/")
@@ -379,16 +380,17 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSal.0m))
 
 rm(sal.mean.depth, sal.sd.depth)
 
-# 20. carb_ion ------------------------------------------------------------
+
+# 9. carb_ion ------------------------------------------------------------
 # carb_ion
 hist(sort(ldg.margo.mod$carb_ion))
 ldg.p.margo$carb_ion <- 100
 # pick this as high values of carbonate ion saturation indicate no dissolution
 
-ldg.p.margo$depth10deg[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+ldg.p.margo$carb_ion[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
 
 
-# 21. Save the data -------------------------------------------------------
+# 10. Save the data -------------------------------------------------------
 save(ldg.p.margo, file = "../../../../Work/1311 LDGPaper/Reanalysis/Outputs/ldg_p_margo.RData")
 
 rm(land)
