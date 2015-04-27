@@ -87,7 +87,7 @@ with(ldg.p.margo[ldg.p.margo$Ocean2 == "Atlantic", ], points(Longitude, Latitude
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Indian", ], points(Longitude, Latitude, col = "orange"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific", ], points(Longitude, Latitude, col = "yellow"))
 
-rm(tmp, land, atlantic.1, indian.1, pacific.1, pacific.3)
+rm(tmp, atlantic.1, indian.1, pacific.1, pacific.3)
 
 
 ## 3. SST.4km -------------------------------------------------------------
@@ -217,6 +217,15 @@ sum(strat.1deg$Lat[order(strat.1deg$Lat, strat.1deg$Long)] != ldg.p.margo$Lat)
 # add a column for mean SST
 ldg.p.margo$depth10deg <- strat.1deg$depth10deg[order(strat.1deg$Lat, strat.1deg$Long)]
 with(ldg.p.margo, distrib.map(Longitude, Latitude, depth10deg))
+
+# set the ocean points depth10deg NAs to 0
+with(ldg.p.margo[is.na(ldg.p.margo$depth10deg),], distrib.map(Longitude, Latitude, Longitude))
+ldg.p.margo$depth10deg[is.na(ldg.p.margo$depth10deg)] <- 0
+
+# identify points on land
+ldg.p.margo$depth10deg[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+
+with(ldg.p.margo[is.na(ldg.p.margo$depth10deg),], distrib.map(Longitude, Latitude, Longitude))
 
 
 ## 7. Productivity ---------------------------------------------------------
@@ -376,7 +385,10 @@ hist(sort(ldg.margo.mod$carb_ion))
 ldg.p.margo$carb_ion <- 100
 # pick this as high values of carbonate ion saturation indicate no dissolution
 
+ldg.p.margo$depth10deg[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+
 
 # 21. Save the data -------------------------------------------------------
 save(ldg.p.margo, file = "../../../../Work/1311 LDGPaper/Reanalysis/Outputs/ldg_p_margo.RData")
 
+rm(land)
