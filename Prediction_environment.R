@@ -1,6 +1,6 @@
 ## Creating a dataset for prediction with values every degree
 ## Created: 16 / 4 / 15
-## Last edited: 23 / 4 / 15
+## Last edited: 27 / 4 / 15
 ## Isabel Fenton
 
 ## Based on the code from Analysis_MARGO.R
@@ -32,6 +32,7 @@ with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 ## 2i. Create polygons of the ocean boundaries -----------------------------
 # Each ocean is defined using the locator() function. Save these results
 # save(pacific, atlantic, atlantic.2, indian, pacific.2, file = "Outputs/150421_OceanBoundaries.RData")
+load("Outputs/150421_OceanBoundaries.RData")
 # with these boundaries, then define polygons of the oceans. Exclude the Mediterranean and the Gulf of Mexico, and high northern latitudes where I have no data
 pacific.1 <- pacific
 pacific.1$x <- c(pacific$x[length(pacific$x)], -180, -180, pacific$x[2:length(pacific$x)])
@@ -44,9 +45,9 @@ atlantic.1$y <- c(atlantic$y, pacific$y[9:length(pacific$x)], rev(atlantic.2$y),
 points(atlantic.1$x, atlantic.1$y, type = "l", col = "yellow")
 
 indian.1 <- indian
-indian.1$x <- c(indian$x[length(indian$x)], rev(atlantic.2$x)[1:3], indian$x)
-indian.1$y <- c(indian$y[length(indian$y)],rev(atlantic.2$y)[1:3], indian$y)
-points(indian.1$x, indian.1$y, type = "l", col = "blue")
+indian.1$x <- c(indian$x[length(indian$x)], rev(atlantic.2$x)[1:5], indian$x)
+indian.1$y <- c(indian$y[length(indian$y)],rev(atlantic.2$y)[1:5], indian$y)
+points(indian.1$x, indian.1$y, type = "l", col = "purple")
 
 pacific.3 <- pacific.2
 pacific.3$x <- c(180, rev(indian$x)[1:(length(indian$x) - 7)], rev(pacific.2$x), 180)
@@ -346,7 +347,11 @@ save(prod.p, prod.month.p, file = "150423_productivity_p.RData")
 rm(prod.p, prod.month.p)
 
 
-## 8. meanSal.0m ----------------------------------------------------------
+## 8. Salinity ----------------------------------------------------------
+setwd("../Salinity")
+load("150414_salinity.RData")
+
+## 8i. mean Salinity -------------------------------------------------------
 head(sal.mean.depth)
 ldg.p.margo$meanSal.0m <- NA
 for (i in 1:nrow(sal.mean.depth)) {
@@ -355,10 +360,7 @@ for (i in 1:nrow(sal.mean.depth)) {
 rm(i)
 with(ldg.p.margo, distrib.map(Longitude, Latitude, meanSal.0m))
 
-
-# 19. sdSal.0m ------------------------------------------------------------
-# salinity
-
+## 8ii. sd Salinity -------------------------------------------------------
 ldg.p.margo$sdSal.0m <- NA
 for (i in 1:nrow(sal.sd.depth)) {
   ldg.p.margo$sdSal.0m[sal.sd.depth$Longitude[i] == ldg.p.margo$Longitude & sal.sd.depth$Latitude[i] == ldg.p.margo$Latitude] <- sal.sd.depth$Depth0m[i]
@@ -366,25 +368,15 @@ for (i in 1:nrow(sal.sd.depth)) {
 rm(i)
 with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSal.0m))
 
+rm(sal.mean.depth, sal.sd.depth)
 
 # 20. carb_ion ------------------------------------------------------------
 # carb_ion
-ldg.p.margo$carb_ion <- 0
+hist(sort(ldg.margo.mod$carb_ion))
+ldg.p.margo$carb_ion <- 100
+# pick this as high values of carbonate ion saturation indicate no dissolution
 
 
 # 21. Save the data -------------------------------------------------------
-save(ldg.p.margo, file = "Outputs/ldg_p_margo.RData")
-
-
-
-
-
-# productivity
-head(chla.1deg)
-sum(chla.1deg$Longitude[order(chla.1deg$Latitude, chla.1deg$Longitude)] != ldg.p.margo$Longitude)
-sum(chla.1deg$Latitude[order(chla.1deg$Latitude, chla.1deg$Longitude)] != ldg.p.margo$Latitude)
-ldg.p.margo$logProd.mn.ann <- chla.1deg$mean.logChl[order(chla.1deg$Latitude, chla.1deg$Longitude)]
-ldg.p.margo$logProd.sd.ann <- chla.1deg$sd.logChl[order(chla.1deg$Latitude, chla.1deg$Longitude)]
-with(ldg.p.margo, distrib.map(Longitude, Latitude, logProd.mn.ann))
-with(ldg.p.margo, distrib.map(Longitude, Latitude, logProd.sd.ann))
+save(ldg.p.margo, file = "../../../../Work/1311 LDGPaper/Reanalysis/Outputs/ldg_p_margo.RData")
 
