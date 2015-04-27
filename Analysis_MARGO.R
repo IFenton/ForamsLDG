@@ -1,5 +1,5 @@
 ## Created: 15 / 4 / 2015
-## Last edited: 23 / 4 / 2015
+## Last edited: 27 / 4 / 2015
 ## Isabel Fenton
 ## Reanalysis for LDG paper
 
@@ -29,6 +29,7 @@
 ## lr_out.csv - likelihood ratios for the richness model
 
 ## libraries ---------------------------------------------------------------
+setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis")
 library(spdep) # for SAR models
 library(HH) # for vif
 library(ncf) # for Moran's I
@@ -56,6 +57,9 @@ rm(ldg.margo.data, ldg.margo.env)
 
 # set NAs in 10 deg depth to 0, so it can be modelled
 ldg.margo.mod$depth10deg[is.na(ldg.margo.mod$depth10deg)] <- 0
+
+# remove the extra factor level of the mediterranean
+ldg.margo.mod$Ocean2 <- droplevels(ldg.margo.mod$Ocean2)
 
 # remove other NAs
 summary(ldg.margo.mod)
@@ -2306,61 +2310,54 @@ dev.off()
 
 
 ## 11. Predicting models ---------------------------------------------------
+
+## 11i. Set up the dataset for prediction ----------------------------------
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, predict(mod.sar.op0)))
 
-
-# calculate values for sites - do this before removing those that are onland
-ldg.no.data <- rep(0, 8)
-names(ldg.no.data) <- names(ldg.p.data)[3:10]
-for (i in 1:nrow(ldg.margo.mod)) {
-  long <- matching(ldg.margo.mod$Longitude[i], ldg.p.data$Longitude)
-  lat <- matching(ldg.margo.mod$Latitude[i], ldg.p.data$Latitude)
-  ldg.no.data <- ldg.no.data + is.na(ldg.p.data[ldg.p.data$Longitude == long & ldg.p.data$Latitude == lat, 3:10])
+# check NAs and remove them
+summary(ldg.p.margo)
+par(ask = TRUE)
+for (i in 3:ncol(ldg.p.margo))
+{
+  with(ldg.p.margo[is.na(ldg.p.margo[,i]), ], distrib.map(Longitude, Latitude, Longitude, main = names(ldg.p.margo)[i]))
 }
+par(ask = FALSE)
 rm(i)
 
+ldg.p.margo <- na.omit(ldg.p.margo)
 
-# remove those points on the continents
-ldg.p.data <- ldg.p.data[which(point.in.polygon(ldg.p.data$Longitude, ldg.p.data$Latitude, world.dat$x, world.dat$y) == 0), ]
-with(ldg.p.data, plot(Longitude, Latitude, col = Ocean2, pch = 15, cex = 0.5))
-
-
-# set the points depth10deg NAs to 0
-ldg.p.data$depth10deg[is.na(ldg.p.data$depth10deg)] <- 0
-
-# check other NAs and remove them
-summary(ldg.p.data)
-ldg.p.data <- na.omit(ldg.p.data)
-
-# don't predict outside the range of the bfd data
+# don't predict outside the range of the margo data
 # if I don't do this, get predictions of -500 species in the north of Russia
-for (i in 3:10) {
-  tmp.col <- which(names(ldg.margo.mod) == names(ldg.p.data)[i])
-  ldg.p.data[ldg.p.data[, i] < min(ldg.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.data[, i] > max(ldg.margo.mod[, tmp.col], na.rm = TRUE), i] <- NA
-  with(ldg.p.data[!is.na(ldg.p.data[,i]), ], plot(Longitude, Latitude, col = Ocean2, pch = 15, cex = 0.5))
+par(ask = TRUE)
+for (i in 4:(ncol(ldg.p.margo) - 1)) {
+  tmp.col <- which(names(ldg.margo.mod) == names(ldg.p.margo)[i])
+  ldg.p.margo[which(ldg.p.margo[, i] < min(ldg.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.margo[, i] > max(ldg.margo.mod[, tmp.col], na.rm = TRUE)), i] <- NA
+  if (length(pts) > 0)
+    with(ldg.p.margo[pts, ], distrib.map(Longitude, Latitude, Ocean2, pch = 15, cex = 0.5, main = names(ldg.p.margo)[i]))
 }
+par(ask = FALSE)
 rm(i)
-ldg.p.data <- na.omit(ldg.p.data)
+ldg.p.margo <- na.omit(ldg.p.margo)
 
 # plot these up
-for (i in env.var[1:7]) {
+for (i in env.var) {
   png(paste("Figures/map_", i, ".png", sep = ""), width = 800, height = 450)
-  with(ldg.p.data, distrib.map(Longitude, Latitude, ldg.p.data[, i], palette = "matlab.like", pch = 15, cex = 0.5, main = i, col.land = "black", col.water = "white"))
+  with(ldg.p.margo, distrib.map(Longitude, Latitude, ldg.p.margo[, i], palette = "matlab.like", pch = 15, cex = 0.5, main = i, col.land = "black", col.water = "white"))
   dev.off()
 }
 rm(i)
 
 ## 11ii. predict species richness for this dataset -------------------------------
 # necessary to use sar.predict not predict as the ordinary predict.sarlm function cannot cope with poly variables
-ldg.p.data$rarefy.sr <- sar.predict(mod.sar.op0, newdata = ldg.p.data, olddata = ldg.margo.mod)
-summary(ldg.p.data$rarefy.sr)
+ldg.p.margo$rarefy.sr <- sar.predict(mod.sar.op0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+summary(ldg.p.margo$rarefy.sr)
 
-with(ldg.p.data, distrib.map(Longitude, Latitude, rarefy.sr, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with negative richness - where are these
-with(ldg.p.data[ldg.p.data$rarefy.sr <= 0, ], distrib.map(Longitude, Latitude, rarefy.sr, pch = 15, cex = 0.4)) # around coastlines
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with negative richness - where are these
+with(ldg.p.margo[ldg.p.margo$rarefy.sr <= 0, ], distrib.map(Longitude, Latitude, rarefy.sr, pch = 15, cex = 0.4)) # around coastlines
 
 # compare with observed
 png("Figures/Ana_11_rsr_pred.png", 700, 500)
-with(ldg.p.data[ldg.p.data$rarefy.sr > 0, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", min.col = 0, max.col = 27))
+with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", min.col = 0, max.col = 27))
 dev.off()
 
 png("Figures/Ana_11_rsr_obs.png", 700, 500)
@@ -2368,17 +2365,17 @@ with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "rainb
 dev.off()
 
 ## 11iii. predict evenness for this dataset ---------------------------------------
-ldg.p.data$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.data, olddata = ldg.margo.mod)
-summary(ldg.p.data$simpsonEve)
+ldg.p.margo$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+summary(ldg.p.margo$simpsonEve)
 
-with(ldg.p.data, distrib.map(Longitude, Latitude, simpsonEve, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
-with(ldg.p.data[ldg.p.data$simpsonEve < 0, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around coastlines - maybe slightly more of a problem
-with(ldg.p.data[ldg.p.data$simpsonEve > 1, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around antarctica coastlines - not a problem
+with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
+with(ldg.p.margo[ldg.p.margo$simpsonEve < 0, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around coastlines - maybe slightly more of a problem
+with(ldg.p.margo[ldg.p.margo$simpsonEve > 1, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around antarctica coastlines - not a problem
 
 
 # compare with observed
 png("Figures/Ana_11_eve_pred.png", 700, 500)
-with(ldg.p.data[ldg.p.data$simpsonEve >= 0 & ldg.p.data$simpsonEve <= 1, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$simpsonEve >= 0 & ldg.p.margo$simpsonEve <= 1, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_11_eve_obs.png", 700, 500)
@@ -2386,18 +2383,18 @@ with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "rain
 dev.off()
 
 ## 11iv. predict average community age for this dataset --------------------
-ldg.p.data$MorphoAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.data, olddata = ldg.margo.mod)
-summary(ldg.p.data$MorphoAgeAbun)
+ldg.p.margo$MorphoAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+summary(ldg.p.margo$MorphoAgeAbun)
 
-with(ldg.p.data, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
-plot(sort(ldg.p.data$MorphoAgeAbun))
+with(ldg.p.margo, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "rainbow", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
+plot(sort(ldg.p.margo$MorphoAgeAbun))
 summary(ldg.margo.mod$MorphoAgeAbun)
-with(ldg.p.data[ldg.p.data$MorphoAgeAbun < 5, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
-with(ldg.p.data[ldg.p.data$MorphoAgeAbun > 17, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # ditto
+with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun < 5, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
+with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun > 17, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # ditto
 
 # compare with observed
 png("Figures/Ana_11_lna_pred.png", 700, 500)
-with(ldg.p.data[ldg.p.data$MorphoAgeAbun >= 5 & ldg.p.data$MorphoAgeAbun <= 17, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun >= 5 & ldg.p.margo$MorphoAgeAbun <= 17, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_11_lna_obs.png", 700, 500)
@@ -2410,9 +2407,9 @@ ldg.margo.mod$rarefy.sr.cs <- (ldg.margo.mod$rarefy.sr - mean(ldg.margo.mod$rare
 ldg.margo.mod$simpsonEve.cs <- (ldg.margo.mod$simpsonEve - mean(ldg.margo.mod$simpsonEve)) / sd(ldg.margo.mod$simpsonEve)
 ldg.margo.mod$MorphoAgeAbun.cs <- (ldg.margo.mod$MorphoAgeAbun - mean(ldg.margo.mod$MorphoAgeAbun)) / sd(ldg.margo.mod$MorphoAgeAbun)
 
-ldg.p.data$rarefy.sr.cs <- (ldg.p.data$rarefy.sr - mean(ldg.p.data$rarefy.sr)) / sd(ldg.p.data$rarefy.sr)
-ldg.p.data$simpsonEve.cs <- (ldg.p.data$simpsonEve - mean(ldg.p.data$simpsonEve)) / sd(ldg.p.data$simpsonEve)
-ldg.p.data$MorphoAgeAbun.cs <- (ldg.p.data$MorphoAgeAbun - mean(ldg.p.data$MorphoAgeAbun)) / sd(ldg.p.data$MorphoAgeAbun)
+ldg.p.margo$rarefy.sr.cs <- (ldg.p.margo$rarefy.sr - mean(ldg.p.margo$rarefy.sr)) / sd(ldg.p.margo$rarefy.sr)
+ldg.p.margo$simpsonEve.cs <- (ldg.p.margo$simpsonEve - mean(ldg.p.margo$simpsonEve)) / sd(ldg.p.margo$simpsonEve)
+ldg.p.margo$MorphoAgeAbun.cs <- (ldg.p.margo$MorphoAgeAbun - mean(ldg.p.margo$MorphoAgeAbun)) / sd(ldg.p.margo$MorphoAgeAbun)
 
 ## differences
 # b/w sr and eve
@@ -2441,28 +2438,28 @@ dev.off()
 # red - high sr & low eve
 # blue - low sr & high eve
 png("Figures/Ana_11v_sr_eve_pred.png", 700, 500)
-with(ldg.p.data, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -15, max.col = 15, pch = 15, cex = 0.4))
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -15, max.col = 15, pch = 15, cex = 0.4))
 dev.off()
 
 # b/w sr and lna
 # red - high sr & low lna
 # blue - low sr & high lna
 png("Figures/Ana_11v_sr_lna_pred.png", 700, 500)
-with(ldg.p.data, distrib.map(Longitude, Latitude, rarefy.sr.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -15, max.col = 15))
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -15, max.col = 15))
 dev.off()
 
 # b/w eve and lna
 # red - high eve & low lna
 # blue - low eve & high lna
 png("Figures/Ana_11v_eve_lna_pred.png", 700, 500)
-with(ldg.p.data[abs(ldg.p.data$simpsonEve.cs - ldg.p.data$MorphoAgeAbun.cs) <= 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4))
+with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$MorphoAgeAbun.cs) <= 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4))
 dev.off()
 # n.b. excluding points greater than abs(15)
-with(ldg.p.data[abs(ldg.p.data$simpsonEve.cs - ldg.p.data$MorphoAgeAbun.cs) > 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 1.4))
+with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$MorphoAgeAbun.cs) > 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 1.4))
 
 ## 11vi. Comparison plots --------------------------------------------------
 # generate the mean values for the data
-data.names <- names(ldg.p.data)
+data.names <- names(ldg.p.margo)
 data.names <- data.names[-c(1:2, 11:18)]
 data.means <- colMeans(ldg.margo.mod[, data.names], na.rm = TRUE)
 
