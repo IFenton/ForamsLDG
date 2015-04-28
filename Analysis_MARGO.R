@@ -164,14 +164,14 @@ png("Figures/Ana_2ii_modg0.png")
 gam.check(mod.g0) # n.b. this gives an error for factors
 dev.off()
 
-## calculate SAC
-# haven't run this
-# using spline.correlog
-mod.g0.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.g0$residuals, latlon = TRUE))
-summary(mod.g0.SAC)
-png("Figures/Ana_2ii_modg0SAC.png")
-plot.spline.correlog.n(mod.g0.SAC, xlab = "Distance / km")
-dev.off()
+# ## calculate SAC
+# # haven't run this
+# # using spline.correlog
+# mod.g0.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.g0$residuals, latlon = TRUE))
+# summary(mod.g0.SAC)
+# png("Figures/Ana_2ii_modg0SAC.png")
+# plot.spline.correlog.n(mod.g0.SAC, xlab = "Distance / km")
+# dev.off()
 
 # using correlog
 mod.g0.SACcor <- with(ldg.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.g0), na.rm = T, increment = 100, resamp = 1, latlon = T))
@@ -194,11 +194,11 @@ summary(mod.sar.opW$obj)
 ## check SAC has been removed
 # using spline.correlog
 # haven't run this
-mod.sar.opW.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.sar.opW$obj$residuals, latlon = TRUE))
-summary(mod.sar.opW.SAC)
-png("Figures/Ana_2iii_modSarOp0SAC.png")
-plot.spline.correlog.n(mod.sar.opW.SAC, xlab = "Distance / km")
-dev.off()
+# mod.sar.opW.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.sar.opW$obj$residuals, latlon = TRUE))
+# summary(mod.sar.opW.SAC)
+# png("Figures/Ana_2iii_modSarOp0SAC.png")
+# plot.spline.correlog.n(mod.sar.opW.SAC, xlab = "Distance / km")
+# dev.off()
 
 # using correlog
 mod.sar.opW.SACcor <- with(ldg.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.sar.opW$obj), na.rm = T, increment = 100, resamp = 1, latlon = T))
@@ -714,7 +714,6 @@ op.formula <- update(mod.sar.opf$call$formula, ~.-Ocean2 - poly(meanSST.1deg, 3)
 # create a model with only significant values
 mod.sar.atlI <- errorsarlm(op.formula, listw = atl.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", ])
 sar.plot(mod.sar.atlI)
-rm(atl.w)
 
 # try adding in the other interactions
 
@@ -1132,7 +1131,6 @@ mod.sar.indI <- errorsarlm(op.formula, listw = ind.w, zero.policy = TRUE, tol.so
 sar.plot(mod.sar.indI)
 summary(mod.sar.indI, Nagelkerke = TRUE) # 0.789 
 AIC(mod.sar.indI) # 1516.811
-rm(ind.w)
 
 # try adding in the other interactions
 mod.sar.indI2 <- update(mod.sar.indI, ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1357,7 +1355,7 @@ lr.plot(lr.sar.indIfg, order = c(6, 2, 1, 3:5), legend = FALSE, ylab = "Log Like
 dev.off()
 
 save(mod.sar.indI, mod.sar.indI1., file = "Outputs/Indian_simplification.RData")
-rm(env.var.ind, mod.sar.indI, mod.sar.indI1.)
+rm(ind.w, env.var.ind, mod.sar.indI, mod.sar.indI1.)
 
 ## 3ix. Only significant interactions for Pacific --------------------------
 summary(mod.sar.op0)
@@ -1366,7 +1364,6 @@ summary(mod.sar.opf)
 # create a model with only significant values
 mod.sar.pacI <- errorsarlm(op.formula, listw = pac.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", ])
 sar.plot(mod.sar.pacI)
-rm(pac.w)
 
 # try adding in the other interactions
 mod.sar.pacI2 <- update(mod.sar.pacI, ~. + poly(meanSST.1deg, 3):sdSST.1deg)
@@ -1445,7 +1442,6 @@ rm(mod.sar.pacI15)
 mod.sar.pacI16 <- update(mod.sar.pacI, ~. + depth10deg:logProd.mn.ann )
 summary(mod.sar.pacI16)
 anova(mod.sar.pacI, mod.sar.pacI16) # 0.00045056
-
 
 # significant at the 0.05 level
 mod.sar.pacI17 <- update(mod.sar.pacI, ~. + depth10deg:meanSal.0m)
@@ -1954,7 +1950,7 @@ save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, file = "Outputs/Atlantic_simpli
 save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, file = "Outputs/Indian_simplified.RData")
 save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, file = "Outputs/Pacific_simplified.RData")
 
-rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula)
+rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula, atl.nb, atl.w, pac.w)
 
 
 ## 4. Does resolution of variables matter? ---------------------------------
@@ -2031,10 +2027,10 @@ AIC(mod.sar.eveS$obj) # -4655.743
 eve.nb <- dnearneigh(ldg.coords, 0, mod.sar.eveS$dist, longlat = TRUE)
 eve.s <- nb2listw(eve.nb, glist = NULL, style = "S", zero.policy = TRUE)
 mod.sar.eve0 <- errorsarlm(mod.sar.eveS$mod, listw = eve.s, zero.policy = TRUE, tol.solve = 1e-18)
-rm(eve.nb, eve.s)
+rm(eve.nb)
 
 save(mod.sar.eveB, mod.sar.eveS, mod.sar.eveW, file = "Outputs/Evenness_coding.RData")
-rm(mod.sar.eveB, mod.sar.eveS, mod.sar.eveW)
+rm(mod.sar.eveB, mod.sar.eveW)
 
 ## 8ii. Run model simplification -------------------------------------------
 
@@ -2114,7 +2110,7 @@ summary(mod.sar.lna0, Nagelkerke = TRUE) # 0.58086
 rm(lna.nb, lna.w)
 
 save(mod.sar.lnaB, mod.sar.lnaS, mod.sar.lnaW, file = "Outputs/Lineage_coding.RData")
-rm(lna.nb, lna.w, mod.sar.lnaB, mod.sar.lnaS, mod.sar.lnaW)
+rm(lna.nb, mod.sar.lnaB, mod.sar.lnaW)
 
 lr.sar.lna0 <- lr.calc(mod.sar.lna0)
 
@@ -2336,7 +2332,7 @@ for (i in 4:(ncol(ldg.p.margo) - 1)) {
     with(ldg.p.margo[pts, ], distrib.map(Longitude, Latitude, Ocean2, pch = 15, cex = 0.5, main = names(ldg.p.margo)[i]))
 }
 par(ask = FALSE)
-rm(i)
+rm(i, tmp.col)
 ldg.p.margo <- na.omit(ldg.p.margo)
 
 # plot these up
@@ -2609,7 +2605,7 @@ legend(0, 24, levels(ldg.margo.mod$Ocean2)[1:3], pch = 16, col = 1:3)
 dev.off()
 
 save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/Metabolic_hypothesis.RData")
-rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST)
+rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, p.ocean)
 
 
 # 13. Tidy up -------------------------------------------------------------
@@ -2619,5 +2615,5 @@ save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/R
 save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, file = "Outputs/Evenness_model.RData")
 save(lr.sar.lna0, lr.sar.lna0g, mod.sar.lna0, file = "Outputs/Lineage_model.RData")
 
-rm(ldg.coords, stars, env.var, op.w)
+rm(ldg.coords, stars, env.var, op.w, eve.s, lna.w, mod.sar.eveS, mod.sar.lnaS)
 
