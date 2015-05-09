@@ -2449,7 +2449,6 @@ with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$MorphoAgeAbun.cs) <
 dev.off()
 
 ## 11vi. Comparison plots --------------------------------------------------
-
 load("Outputs/Atlantic_simplified.RData")
 load("Outputs/Indian_simplified.RData")
 load("Outputs/Pacific_simplified.RData")
