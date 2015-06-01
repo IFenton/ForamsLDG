@@ -223,7 +223,7 @@ vif(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var], )
 
 ## 2i. Create an OLS model and check for SAC --------------------------------
 # an OLS model
-mod.l0 <- lm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, data = ldg.margo.mod)
+mod.l0 <- lm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = ldg.margo.mod)
 
 # check model plots
 png("Figures/Ana_2i_modl0.png", 600, 600)
@@ -292,10 +292,11 @@ ldg.coords <- as.matrix(ldg.coords)
 # getting problems with Error in solve.default(asyvar, tol = tol.solve) : 
 # system is computationally singular: reciprocal condition number = 8.20242e-19 
 # The suggested answer is to rescale if the variables are on very different scales, so go from
-# mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+# mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 # to
 summary(ldg.margo.mod) # check that ranges are roughly equivalent after scaling
-mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+# reckon that delta_carb_ion should not interact with things as its relationship with species richness (at least the bit we care about) shouldn't depend on anything else
 summary(mod.sar.opW$obj, Nagelkerke = TRUE)
 
 ## check SAC has been removed
@@ -316,11 +317,11 @@ dev.off()
 rm(mod.sar.opW.SACcor)
 
 # check whether different coding methods improve the AIC
-mod.sar.opB <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.opB <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 AIC(mod.sar.opW$obj) # 4670.103
 AIC(mod.sar.opB$obj) # 4700.27
 
-mod.sar.opS <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.opS <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 AIC(mod.sar.opW$obj) # 4670.103
 AIC(mod.sar.opS$obj) # 4676.461
 
@@ -2705,7 +2706,7 @@ rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.
 ## 4. Does resolution of variables matter? ---------------------------------
 
 ## 4i. Run full model for higher resolution ----------------------
-mod.hres.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.4km, 3) + sdSST.4km + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion)^2, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod)
+mod.hres.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.4km, 3) + sdSST.4km + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod)
 
 ## 4iii. Compare LRs -------------------------------------------------------
 lr.hres.op0 <- lr.calc(mod.hres.op0)
@@ -2787,7 +2788,7 @@ ldg.coords.10 <- as.matrix(ldg.coords.10)
 op10.nb <- dnearneigh(ldg.coords.10, 0, mod.sar.opW$dist, longlat = TRUE)
 op10.w <- nb2listw(op10.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis10.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion)^2, listw = op10.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod10)
+mod.dis10.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op10.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod10)
 
 # -20
 ldg.coords.20 <- cbind(ldg.margo.mod20$Long,ldg.margo.mod20$Lat)
@@ -2795,7 +2796,7 @@ ldg.coords.20 <- as.matrix(ldg.coords.20)
 op20.nb <- dnearneigh(ldg.coords.20, 0, mod.sar.opW$dist, longlat = TRUE)
 op20.s <- nb2listw(op20.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis20.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion)^2, listw = op20.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod20)
+mod.dis20.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op20.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod20)
 
 ## 5iii. Compare LRs -------------------------------------------------------
 lr.dis10.op0 <- lr.calc(mod.dis10.op0)
@@ -2829,7 +2830,7 @@ ldg.coords.ran <- as.matrix(ldg.coords.ran)
 opran.nb <- dnearneigh(ldg.coords.ran, 0, mod.sar.opW$dist, longlat = TRUE)
 opran.s <- nb2listw(opran.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.disran.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion)^2, listw = opran.s, zero.policy = TRUE, tol.solve = 1e-18, data = tmp7)
+mod.disran.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = opran.s, zero.policy = TRUE, tol.solve = 1e-18, data = tmp7)
 
 ## 6iii. Compare LRs -------------------------------------------------------
 lr.dis.ran.op0 <- lr.calc(mod.disran.op0)
@@ -2859,7 +2860,7 @@ rm(ldg.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran
 ## 8. Evenness -------------------------------------------------------------
 
 ## 8i. Create an OLS model ------------------------------------------------
-mod.eve.l0 <- lm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, data = ldg.margo.mod)
+mod.eve.l0 <- lm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = ldg.margo.mod)
 
 # check model plots
 png("Figures/Ana_8i_modevel0.png", 600, 600)
@@ -2879,16 +2880,16 @@ plot.spline.correlog.n(mod.eve.l0.sac, xlab = "Distance / km")
 dev.off()
 
 ## 8ii. Run model optimisation ----------------------------------------------
-mod.sar.eveW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveW$obj, Nagelkerke = TRUE) # 0.47911
 AIC(mod.sar.eveW$obj) # -3860.016
 
 # check other coding styles
-mod.sar.eveB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveB$obj, Nagelkerke = TRUE) # 0.4892
 AIC(mod.sar.eveB$obj) # -3896.698
 
-mod.sar.eveS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveS$obj, Nagelkerke = TRUE) # 0.50095
 AIC(mod.sar.eveS$obj) # -3940.305
 
@@ -2957,16 +2958,16 @@ dev.off()
 ## 9. Lineage age / FRic -------------------------------------------------------------
 
 ## 9i. Lineage age models -------------------------------------------------
-mod.sar.lnaW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaW$obj, Nagelkerke = TRUE) # 0.63489
 AIC(mod.sar.lnaW$obj) # 5565.102
 
 # check other coding styles
-mod.sar.lnaB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaB$obj, Nagelkerke = TRUE) # 0.61397 
 AIC(mod.sar.lnaB$obj) #  5669.584
 
-mod.sar.lnaS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaS$obj, Nagelkerke = TRUE) # 0.63364 
 AIC(mod.sar.lnaS$obj) # 5571.538
 
@@ -2999,16 +3000,16 @@ dev.off()
 ## 9ii. Dissolution cutoffs ------------------------------------------------
 
 ## 9iii. Functional richness -----------------------------------------------
-mod.sar.fricW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricW$obj, Nagelkerke = TRUE) # 0.87776
 AIC(mod.sar.fricW$obj) # -2791.866
 
 # check other coding styles
-mod.sar.fricB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricB$obj, Nagelkerke = TRUE) # 0.87663 
 AIC(mod.sar.fricB$obj) #  -2774.851
 
-mod.sar.fricS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricS$obj, Nagelkerke = TRUE) # 0.88194 
 AIC(mod.sar.fricS$obj) # -2856.622
 
@@ -3203,7 +3204,7 @@ dev.off()
 # 
 # for(i in 1:1000) {
 #   print(i)
-#   mod.rdm <- errorsarlm(rnorm(nrow(ldg.margo.mod)) ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2 + delta_carb_ion)^2, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod)
+#   mod.rdm <- errorsarlm(rnorm(nrow(ldg.margo.mod)) ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod)
 #   tmp.lr <- lr.calc(mod.rdm, tmp)
 #   rdm.vals[1:7 + (i - 1) * 7, 1] <- rep(i, 7)
 #   rdm.vals[1:7 + (i - 1) * 7, 2] <- as.character(tmp.lr[, 1])
@@ -3416,7 +3417,6 @@ lr.hres.op0g <- lr.calc(mod.hres.op0, tmp, plots = TRUE, pred.data = ldg.p.margo
 rm(tmp)
 
 
-
 # 12. Adding error bars ---------------------------------------------------
 
 
@@ -3449,8 +3449,7 @@ tmp7 <- ldg.tmp[!duplicated.random(ldg.tmp$shift), ]
 tmp7[1:10, 50:57]
 
 
-
-# 12. Metabolic theory of ecology -----------------------------------------
+# 13. Metabolic theory of ecology -----------------------------------------
 # log transformed SR
 Ln_SR <- log(ldg.margo.mod$rarefy.sr)
 
@@ -3501,7 +3500,7 @@ save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/M
 rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, p.ocean)
 
 
-# 13. Tidy up -------------------------------------------------------------
+# 14. Tidy up -------------------------------------------------------------
 save(ldg.margo.mod, file = "Outputs/ldg_margo_mod.RData")
 save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, file = "Outputs/Richness_model.RData")
 save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/Richness_model_simplified.RData")
