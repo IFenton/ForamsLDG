@@ -81,7 +81,7 @@ table(ldg.margo.mod$Ocean2)
 ## which points are to be excluded because of delta_carb_ion?
 with(ldg.margo.mod, plot(delta_carb_ion, rarefy.sr, pch = 16, col = Ocean2))
 legend("topleft", levels(ldg.margo.mod$Ocean2), pch = 16, col = 1:3)
-ldg.margo.mod <- ldg.margo.mod[which(ldg.margo.mod$delta_carb_ion >= -14), ]
+ldg.margo.mod <- ldg.margo.mod[which(ldg.margo.mod$delta_carb_ion >= -10.908), ]
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
 table(ldg.margo.mod$Ocean2)
 # based on using a 3500m / 4500m cut-off
@@ -318,12 +318,12 @@ rm(mod.sar.opW.SACcor)
 
 # check whether different coding methods improve the AIC
 mod.sar.opB <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-AIC(mod.sar.opW$obj) # 4670.103
-AIC(mod.sar.opB$obj) # 4700.27
+AIC(mod.sar.opW$obj) # 4659.405
+AIC(mod.sar.opB$obj) # 4689.377
 
 mod.sar.opS <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-AIC(mod.sar.opW$obj) # 4670.103
-AIC(mod.sar.opS$obj) # 4676.461
+AIC(mod.sar.opW$obj) # 4659.405
+AIC(mod.sar.opS$obj) # 4665.91
 
 mod.sar.opW
 # So "W" is the best coding style and the best neighbourhood distance is 553.5048
@@ -339,123 +339,123 @@ mod.sar.op0 <- errorsarlm(mod.sar.opW$mod, listw = op.w, zero.policy = TRUE, tol
 rm(op.nb)
 
 # start model simplification
-summary(mod.sar.op0, Nagelkerke = TRUE) # 
+summary(mod.sar.op0, Nagelkerke = TRUE) # 0.88671
 summary(mod.sar.op0)$Coef[order(summary(mod.sar.op0)$Coef[, 4]),]
-mod.sar.op1 <- update(mod.sar.op0, ~. -I(depth10deg/100):logProd.mn.ann)
+mod.sar.op1 <- update(mod.sar.op0, ~. -I(mean.mld.t/10):I(depth10deg/100))
 anova(mod.sar.op0, mod.sar.op1)
-summary(mod.sar.op1, Nagelkerke = TRUE) # 0.888
-AIC(mod.sar.op1) # 4668.104
+summary(mod.sar.op1, Nagelkerke = TRUE) # 0.88671
+AIC(mod.sar.op1) # 4657.405
 summary(mod.sar.op1)$Coef[order(summary(mod.sar.op1)$Coef[, 4]),]
 
-mod.sar.op2 <- update(mod.sar.op1, ~. -I(mean.mld.t/10):prop2.oxy)
+mod.sar.op2 <- update(mod.sar.op1, ~. -logProd.mn.ann:prop2.oxy)
 anova(mod.sar.op2, mod.sar.op1)
-summary(mod.sar.op2, Nagelkerke = TRUE) #  0.888
-AIC(mod.sar.op2) # 4666.111
+summary(mod.sar.op2, Nagelkerke = TRUE) # 0.88671 
+AIC(mod.sar.op2) # 4655.407
 rm(mod.sar.op1)
 summary(mod.sar.op2)$Coef[order(summary(mod.sar.op2)$Coef[, 4]),]
 
-mod.sar.op3 <- update(mod.sar.op2, ~. -sdSST.1deg:absMnSal.0m)
+mod.sar.op3 <- update(mod.sar.op2, ~. -I(depth10deg/100):logProd.mn.ann)
 anova(mod.sar.op3, mod.sar.op2)
-summary(mod.sar.op3, Nagelkerke = TRUE) # 0.888
-AIC(mod.sar.op3) # 4664.125
+summary(mod.sar.op3, Nagelkerke = TRUE) # 0.88671
+AIC(mod.sar.op3) # 4653.409
 rm(mod.sar.op2)
 summary(mod.sar.op3)$Coef[order(summary(mod.sar.op3)$Coef[, 4]),]
 
-mod.sar.op4 <- update(mod.sar.op3, ~. -sdSal.0m:delta_carb_ion )
+mod.sar.op4 <- update(mod.sar.op3, ~. -)
 anova(mod.sar.op4, mod.sar.op3)
-summary(mod.sar.op4, Nagelkerke = TRUE) # 0.88799
-AIC(mod.sar.op4) # 4662.166
+summary(mod.sar.op4, Nagelkerke = TRUE) # 
+AIC(mod.sar.op4) # 
 rm(mod.sar.op3)
 summary(mod.sar.op4)$Coef[order(summary(mod.sar.op4)$Coef[, 4]),]
 
-mod.sar.op5 <- update(mod.sar.op4, ~. -poly(meanSST.1deg, 3):I(mean.mld.t/10) + poly(meanSST.1deg, 2):I(mean.mld.t/10))
+mod.sar.op5 <- update(mod.sar.op4, ~. -)
 anova(mod.sar.op5, mod.sar.op4)
-summary(mod.sar.op5, Nagelkerke = TRUE) # 0.88798
-AIC(mod.sar.op5) # 4660.31
+summary(mod.sar.op5, Nagelkerke = TRUE) # 
+AIC(mod.sar.op5) # 
 rm(mod.sar.op4)
 summary(mod.sar.op5)$Coef[order(summary(mod.sar.op5)$Coef[, 4]),]
 
-mod.sar.op6 <- update(mod.sar.op5, ~. -I(mean.mld.t/10):I(depth10deg/100))
+mod.sar.op6 <- update(mod.sar.op5, ~. -)
 anova(mod.sar.op6, mod.sar.op5)
-summary(mod.sar.op6, Nagelkerke = TRUE) # 0.88797
+summary(mod.sar.op6, Nagelkerke = TRUE) # 
 AIC(mod.sar.op6) # 4658.373
 rm(mod.sar.op5)
 summary(mod.sar.op6)$Coef[order(summary(mod.sar.op6)$Coef[, 4]),]
 
-mod.sar.op7 <- update(mod.sar.op6, ~. -poly(meanSST.1deg, 3):sdSST.1deg + poly(meanSST.1deg, 2):sdSST.1deg)
+mod.sar.op7 <- update(mod.sar.op6, ~. -)
 anova(mod.sar.op7, mod.sar.op6)
-summary(mod.sar.op7, Nagelkerke = TRUE) # 0.88795
-AIC(mod.sar.op7) # 4656.628
+summary(mod.sar.op7, Nagelkerke = TRUE) # 
+AIC(mod.sar.op7) # 
 rm(mod.sar.op6)
 summary(mod.sar.op7)$Coef[order(summary(mod.sar.op7)$Coef[, 4]),]
 
-mod.sar.op8 <- update(mod.sar.op7, ~. -sdSST.1deg:logProd.mn.ann)
+mod.sar.op8 <- update(mod.sar.op7, ~. -)
 anova(mod.sar.op8, mod.sar.op7)
-summary(mod.sar.op8, Nagelkerke = TRUE) # 0.88793
-AIC(mod.sar.op8) # 4654.842
+summary(mod.sar.op8, Nagelkerke = TRUE) # 
+AIC(mod.sar.op8) # 
 rm(mod.sar.op7)
 summary(mod.sar.op8)$Coef[order(summary(mod.sar.op8)$Coef[, 4]),]
 
-mod.sar.op9 <- update(mod.sar.op8, ~. -sdSST.1deg:poly(meanSST.1deg, 2) + sdSST.1deg:poly(meanSST.1deg, 1))
+mod.sar.op9 <- update(mod.sar.op8, ~. -)
 anova(mod.sar.op9, mod.sar.op8)
-summary(mod.sar.op9, Nagelkerke = TRUE) # 0.8879
-AIC(mod.sar.op9) # 4653.124
+summary(mod.sar.op9, Nagelkerke = TRUE) # 
+AIC(mod.sar.op9) # 
 rm(mod.sar.op8)
 summary(mod.sar.op9)$Coef[order(summary(mod.sar.op9)$Coef[, 4]),]
 
-mod.sar.op10 <- update(mod.sar.op9, ~. -absMnSal.0m:delta_carb_ion)
+mod.sar.op10 <- update(mod.sar.op9, ~. -)
 anova(mod.sar.op10, mod.sar.op9)
-summary(mod.sar.op10, Nagelkerke = TRUE) # 0.88786
-AIC(mod.sar.op10) # 4651.558
+summary(mod.sar.op10, Nagelkerke = TRUE) # 
+AIC(mod.sar.op10) # 
 rm(mod.sar.op9)
 summary(mod.sar.op10)$Coef[order(summary(mod.sar.op10)$Coef[, 4]),]
 
-mod.sar.op11 <- update(mod.sar.op10, ~. -sdSal.0m:Ocean2)
+mod.sar.op11 <- update(mod.sar.op10, ~. -)
 anova(mod.sar.op11, mod.sar.op10)
-summary(mod.sar.op11, Nagelkerke = TRUE) # 0.88778
-AIC(mod.sar.op11) # 4648.398
+summary(mod.sar.op11, Nagelkerke = TRUE) # 
+AIC(mod.sar.op11) # 
 rm(mod.sar.op10)
 summary(mod.sar.op11)$Coef[order(summary(mod.sar.op11)$Coef[, 4]),]
 
-mod.sar.op12 <- update(mod.sar.op11, ~. -absMnSal.0m:sdSal.0m)
+mod.sar.op12 <- update(mod.sar.op11, ~. -)
 anova(mod.sar.op12, mod.sar.op11)
-summary(mod.sar.op12, Nagelkerke = TRUE) # 0.88776
-AIC(mod.sar.op12) # 4646.611
+summary(mod.sar.op12, Nagelkerke = TRUE) # 
+AIC(mod.sar.op12) # 
 rm(mod.sar.op11)
 summary(mod.sar.op12)$Coef[order(summary(mod.sar.op12)$Coef[, 4]),]
 
-mod.sar.op13 <- update(mod.sar.op12, ~. -logProd.mn.ann:prop2.oxy)
+mod.sar.op13 <- update(mod.sar.op12, ~. -)
 anova(mod.sar.op13, mod.sar.op12)
-summary(mod.sar.op13, Nagelkerke = TRUE) # 0.88771
-AIC(mod.sar.op13) #  4645.075
+summary(mod.sar.op13, Nagelkerke = TRUE) # 
+AIC(mod.sar.op13) #  
 rm(mod.sar.op12)
 summary(mod.sar.op13)$Coef[order(summary(mod.sar.op13)$Coef[, 4]),]
 
-mod.sar.op14 <- update(mod.sar.op13, ~. -sdSST.1deg:delta_carb_ion)
+mod.sar.op14 <- update(mod.sar.op13, ~. -)
 anova(mod.sar.op14, mod.sar.op13)
-summary(mod.sar.op14, Nagelkerke = TRUE) # 0.88766
-AIC(mod.sar.op14) # 4643.591
+summary(mod.sar.op14, Nagelkerke = TRUE) # 
+AIC(mod.sar.op14) # 
 rm(mod.sar.op13)
 summary(mod.sar.op14)$Coef[order(summary(mod.sar.op14)$Coef[, 4]),]
 
-mod.sar.op15 <- update(mod.sar.op14, ~. -prop2.oxy:delta_carb_ion)
+mod.sar.op15 <- update(mod.sar.op14, ~. -)
 anova(mod.sar.op15, mod.sar.op14)
-summary(mod.sar.op15, Nagelkerke = TRUE) # 0.88761
-AIC(mod.sar.op15) # 4642.162
+summary(mod.sar.op15, Nagelkerke = TRUE) # 
+AIC(mod.sar.op15) # 
 rm(mod.sar.op14)
 summary(mod.sar.op15)$Coef[order(summary(mod.sar.op15)$Coef[, 4]),]
 
-mod.sar.op16 <- update(mod.sar.op15, ~. -I(mean.mld.t/10):sdSal.0m)
+mod.sar.op16 <- update(mod.sar.op15, ~. -)
 anova(mod.sar.op16, mod.sar.op15)
-summary(mod.sar.op16, Nagelkerke = TRUE) # 0.88755
-AIC(mod.sar.op16) # 4640.703
+summary(mod.sar.op16, Nagelkerke = TRUE) # 
+AIC(mod.sar.op16) # 
 rm(mod.sar.op15)
 summary(mod.sar.op16)$Coef[order(summary(mod.sar.op16)$Coef[, 4]),]
 
-mod.sar.op17 <- update(mod.sar.op16, ~. -poly(meanSST.1deg, 3):absMnSal.0m + poly(meanSST.1deg, 2):absMnSal.0m)
+mod.sar.op17 <- update(mod.sar.op16, ~. -)
 anova(mod.sar.op17, mod.sar.op16)
-summary(mod.sar.op17, Nagelkerke = TRUE) # 0.88749
-AIC(mod.sar.op17) # 4639.367
+summary(mod.sar.op17, Nagelkerke = TRUE) # 
+AIC(mod.sar.op17) # 
 rm(mod.sar.op16)
 summary(mod.sar.op17)$Coef[order(summary(mod.sar.op17)$Coef[, 4]),]
 
@@ -2771,7 +2771,7 @@ ldg.margo.mod10$absMnSal.0m <- abs(ldg.margo.mod10$meanSal.0m - 35.1)
 with(ldg.margo.mod10, distrib.map(Longitude, Latitude, Ocean2))
 table(ldg.margo.mod10$Ocean2)
 
-# -14
+# -10.908
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
 table(ldg.margo.mod$Ocean2)
 
@@ -2804,7 +2804,7 @@ lr.dis20.op0 <- lr.calc(mod.dis20.op0)
 
 png("Figures/Ana_4iii_LRatio_opdis10op0.png", width = 1000)
 # get order from running without order first
-lr.plot(lr.dis10.op0, lr.sar.op0, lr.dis20.op0, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -10", "Cutoff: -14", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
+lr.plot(lr.dis10.op0, lr.sar.op0, lr.dis20.op0, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -10", "Cutoff: -10.908", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 # also for groups of variables
@@ -2814,7 +2814,7 @@ lr.dis20.op0g <- lr.calc(mod.dis20.op0, tmp)
 rm(tmp)
 
 png("Figures/Ana_4iii_LRatio_g_opdis10op0.png", width = 800)
-lr.plot(lr.dis10.op0g, lr.sar.op0g, lr.dis20.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -10", "Cutoff: -14", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
+lr.plot(lr.dis10.op0g, lr.sar.op0g, lr.dis20.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -10", "Cutoff: -10.908", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 save(ldg.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, file = "Outputs/mod_dis10.RData")
