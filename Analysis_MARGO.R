@@ -51,7 +51,7 @@ source("../../../Code/sar_predict.R") # for predicting with poly
 load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
 
 
-## 0i. Setting up the dataset -----------------------------------------------
+## 0i. Setting up the datasets -----------------------------------------------
 rm(db.traits, margo.traits)
 
 # create a dataset for modelling with 
@@ -63,15 +63,7 @@ rm(ldg.margo.data, ldg.margo.env, tmp)
 ldg.margo.mod$depth10deg[is.na(ldg.margo.mod$depth10deg)] <- 0
 # remove Water.Depth again (as it has NAs)
 ldg.margo.mod <- ldg.margo.mod[, -which(names(ldg.margo.mod) == "Water.Depth")]
-# set the FRic NAs to an arbitrary amount, as don't want to remove those rows
-ldg.margo.mod$FRic[is.na(ldg.margo.mod$FRic)] <- 999
-# remove other NAs
-summary(ldg.margo.mod)
-# most of the NAs are in rarefy.SR as it can't be calculated for data without total planktics.
-ldg.margo.mod <- na.omit(ldg.margo.mod)
-# reset these back to NA
-ldg.margo.mod$FRic[ldg.margo.mod$FRic == 999] <- NA
-  
+
 # remove the extra factor level of the mediterranean
 table(ldg.margo.mod$Ocean2)
 ldg.margo.mod <- ldg.margo.mod[ldg.margo.mod$Ocean2 != "Mediterranean", ]
@@ -88,56 +80,6 @@ table(ldg.margo.mod$Ocean2)
 
 dim(ldg.margo.mod)
 
-## 0ii. How to handle multiple points in a grid cell --------------------------
-# calculate the mean for duplicated rows
-head(ldg.margo.mod)
-# n.b. don't want to include the finer resolution SST, and productivity is at 1/6 degree, so exclude that as well
-cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
-dim(unique(ldg.margo.mod[, cols]))
-tmp.1 <- which(duplicated(ldg.margo.mod[, cols]))
-
-ldg.margo.mod$uni <- NA
-
-# add a column for each unique set
-ldg.margo.mod$uni[!duplicated(ldg.margo.mod[, cols])] <- 1:length(ldg.margo.mod$uni[!duplicated(ldg.margo.mod[, cols])])
-
-## the sort through the duplicated rows to match with the unique sets
-# for each row in the data
-for (i in tmp.1) {
-  # identify the matching rows (based on the relevant columns)
-  match.rows <- merge(ldg.margo.mod[i, ], ldg.margo.mod, by.x = cols, by.y = cols)
-  # extract the value for uni for these rows add that value to the duplicated row
-  ldg.margo.mod$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
-}
-rm(i, match.rows)
-# make uni a factor as basically each value represents a unique grid cell
-ldg.margo.mod$uni <- factor(ldg.margo.mod$uni)
-
-ldg.margo.dup <- ldg.margo.mod
-
-# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
-# create a dataframe of the right length
-ldg.margo.mod <- ldg.margo.dup[!duplicated(ldg.margo.dup$uni), ]
-
-# for all the relevant columns calculate means, and replace these in the dataset
-for (i in 1:ncol(ldg.margo.mod)) {
-  if (!is.factor(ldg.margo.mod[,i]) & !is.character(ldg.margo.mod[, i])) {
-    ldg.margo.mod[, i] <- as.numeric(tapply(ldg.margo.dup[, i], ldg.margo.dup$uni, mean, na.rm = TRUE))
-  }
-}
-rm(i)
-save(ldg.margo.dup, file = "150601 ldg_margo_dup.RData")
-rm(ldg.margo.dup, cols, tmp.1)
-
-## 0iii. Consider relationships ---------------------------------------------
-par(ask = TRUE)
-for(i in 5:30) {
-  if (!is.character(ldg.margo.mod[, i]))
-    with(ldg.margo.mod, plot(ldg.margo.mod[, i], rarefy.sr, pch = 16, col = Ocean2, main = names(ldg.margo.mod)[i]))
-}
-par(ask = FALSE)
-rm(i)
-
 # for dissolution, only want to use it to account for dissolution. As there is no dissolution at sites with delta_carb_ion > 0, set all these to zero. It now becomes a measure of delta_carb_ion below zero. 
 ldg.margo.mod$delta_carb_ion[ldg.margo.mod$delta_carb_ion > 0] <- 0
 with(ldg.margo.mod, plot(delta_carb_ion, rarefy.sr, pch = 16, col = Ocean2))
@@ -153,6 +95,170 @@ rm(sal.margo, sal.mean.depth, sal.sd.depth)
 ldg.margo.mod$absMnSal.0m <- abs(ldg.margo.mod$meanSal.0m - 35.1)
 with(ldg.margo.mod, plot(absMnSal.0m, rarefy.sr, pch = 16, col = Ocean2))
 
+
+## create three different datasets for Rarefied, Evenness & LineageAge, & FRic
+## for richness
+cols <- c("simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+rsr.margo.mod <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+# remove other NAs
+summary(rsr.margo.mod)
+rsr.margo.mod <- na.omit(rsr.margo.mod)
+
+## for evenness / lineage age
+cols <- c("sp.rich", "rarefy.sr", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun")
+eve.margo.mod <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+# remove other NAs
+summary(eve.margo.mod)
+eve.margo.mod <- na.omit(eve.margo.mod)
+
+## for FRic
+cols <- c("sp.rich", "rarefy.sr", "simpson", "simpsonEve", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+fric.margo.mod <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+# remove other NAs
+summary(fric.margo.mod)
+fric.margo.mod <- na.omit(fric.margo.mod)
+
+# Consider dimensions
+dim(rsr.margo.mod)
+dim(eve.margo.mod)
+dim(fric.margo.mod)
+
+## 0ii. How to handle multiple points in a grid cell --------------------------
+# for richness
+head(rsr.margo.mod)
+# n.b. don't want to include the finer resolution SST, and productivity is at 1/6 degree, so exclude that as well
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(rsr.margo.mod[, cols]))
+tmp.1 <- which(duplicated(rsr.margo.mod[, cols]))
+
+rsr.margo.mod$uni <- NA
+
+# add a column for each unique set
+rsr.margo.mod$uni[!duplicated(rsr.margo.mod[, cols])] <- 1:length(rsr.margo.mod$uni[!duplicated(rsr.margo.mod[, cols])])
+
+## the sort through the duplicated rows to match with the unique sets
+# for each row in the data
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(rsr.margo.mod[i, ], rsr.margo.mod, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  rsr.margo.mod$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows)
+# make uni a factor as basically each value represents a unique grid cell
+rsr.margo.mod$uni <- factor(rsr.margo.mod$uni)
+
+rsr.margo.dup <- rsr.margo.mod
+
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+# create a dataframe of the right length
+rsr.margo.mod <- rsr.margo.dup[!duplicated(rsr.margo.dup$uni), ]
+
+# for all the relevant columns calculate means, and replace these in the dataset
+for (i in 1:ncol(rsr.margo.mod)) {
+  if (!is.factor(rsr.margo.mod[,i]) & !is.character(rsr.margo.mod[, i])) {
+    rsr.margo.mod[, i] <- as.numeric(tapply(rsr.margo.dup[, i], rsr.margo.dup$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+save(rsr.margo.dup, file = "150601 rsr_margo_dup.RData")
+rm(rsr.margo.dup, cols, tmp.1)
+
+
+# for evenness / lineage age
+head(eve.margo.mod)
+# n.b. don't want to include the finer resolution SST, and productivity is at 1/6 degree, so exclude that as well
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(eve.margo.mod[, cols]))
+tmp.1 <- which(duplicated(eve.margo.mod[, cols]))
+
+eve.margo.mod$uni <- NA
+
+# add a column for each unique set
+eve.margo.mod$uni[!duplicated(eve.margo.mod[, cols])] <- 1:length(eve.margo.mod$uni[!duplicated(eve.margo.mod[, cols])])
+
+## the sort through the duplicated rows to match with the unique sets
+# for each row in the data
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(eve.margo.mod[i, ], eve.margo.mod, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  eve.margo.mod$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows)
+# make uni a factor as basically each value represents a unique grid cell
+eve.margo.mod$uni <- factor(eve.margo.mod$uni)
+
+eve.margo.dup <- eve.margo.mod
+
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+# create a dataframe of the right length
+eve.margo.mod <- eve.margo.dup[!duplicated(eve.margo.dup$uni), ]
+
+# for all the relevant columns calculate means, and replace these in the dataset
+for (i in 1:ncol(eve.margo.mod)) {
+  if (!is.factor(eve.margo.mod[,i]) & !is.character(eve.margo.mod[, i])) {
+    eve.margo.mod[, i] <- as.numeric(tapply(eve.margo.dup[, i], eve.margo.dup$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+save(eve.margo.dup, file = "150601 eve_margo_dup.RData")
+rm(eve.margo.dup, cols, tmp.1)
+
+
+# for FRic
+head(fric.margo.mod)
+# n.b. don't want to include the finer resolution SST, and productivity is at 1/6 degree, so exclude that as well
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(fric.margo.mod[, cols]))
+tmp.1 <- which(duplicated(fric.margo.mod[, cols]))
+
+fric.margo.mod$uni <- NA
+
+# add a column for each unique set
+fric.margo.mod$uni[!duplicated(fric.margo.mod[, cols])] <- 1:length(fric.margo.mod$uni[!duplicated(fric.margo.mod[, cols])])
+
+## the sort through the duplicated rows to match with the unique sets
+# for each row in the data
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(fric.margo.mod[i, ], fric.margo.mod, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  fric.margo.mod$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows)
+# make uni a factor as basically each value represents a unique grid cell
+fric.margo.mod$uni <- factor(fric.margo.mod$uni)
+
+fric.margo.dup <- fric.margo.mod
+
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+# create a dataframe of the right length
+fric.margo.mod <- fric.margo.dup[!duplicated(fric.margo.dup$uni), ]
+
+# for all the relevant columns calculate means, and replace these in the dataset
+for (i in 1:ncol(fric.margo.mod)) {
+  if (!is.factor(fric.margo.mod[,i]) & !is.character(fric.margo.mod[, i])) {
+    fric.margo.mod[, i] <- as.numeric(tapply(fric.margo.dup[, i], fric.margo.dup$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+save(fric.margo.dup, file = "150601 fric_margo_dup.RData")
+rm(fric.margo.dup, cols, tmp.1)
+
+## 0iii. Consider relationships ---------------------------------------------
+# use most complete dataset i.e. ldg.margo.mod
+par(ask = TRUE)
+for(i in 5:30) {
+  if (!is.character(ldg.margo.mod[, i]))
+    with(ldg.margo.mod, plot(ldg.margo.mod[, i], rarefy.sr, pch = 16, col = Ocean2, main = names(ldg.margo.mod)[i]))
+}
+par(ask = FALSE)
+rm(i)
+
 # check whether anything else should be logged (i.e. the histogram of each environmental variable)
 summary(ldg.margo.mod)
 par(ask = TRUE)
@@ -166,56 +272,59 @@ rm(i)
 
 ## 0iv. Create plots ------------------------------------------------------
 png("Figures/Ana_0iii_map_rsr.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", main = "Rarefied species richness", col.water = "white", col.land = "black"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", main = "Rarefied species richness", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_0iii_map_eve.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", main = "Simpson's Evenness", col.water = "white", col.land = "black"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", main = "Simpson's Evenness", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_0iii_map_lna.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", main = "Average Community Age", col.water = "white", col.land = "black"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", main = "Average Community Age", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_0iii_map_fric.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", main = "Functional richness", col.water = "white", col.land = "black"))
+with(fric.margo.mod, distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", main = "Functional richness", col.water = "white", col.land = "black"))
 dev.off()
+
+# tidy up
+rm(ldg.margo.mod)
 
 
 ## 1. Check for correlation between explanatory variables ----------------------
-names(ldg.margo.mod)
+names(rsr.margo.mod)
 
 # variables are: mean/sd SST, mean/sd MLD, 10deg contour, mean/sd logProd, mean/sd Sal, Ocean2, carbonate ion 
 env.var <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "sd.mld.t", "depth10deg", "logProd.mn.ann", "logProd.sd.ann", "absMnSal.0m", "sdSal.0m", "Ocean2", "delta_carb_ion", "meanOxy", "prop2.oxy")
 
 # pairs plot
 png("Figures/Ana_1_pairs.png", 1200, 1200)
-pairs(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var])
+pairs(rsr.margo.mod[, names(rsr.margo.mod) %in% env.var])
 dev.off()
 
 # variance inflation factor
-vif(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var])
+vif(rsr.margo.mod[, names(rsr.margo.mod) %in% env.var])
 
 # currently the only ones that are potentially correlated (VIF > 5 and look correlated on the pairs plot) are mean and sd in Prod, and mean / sd mld, also meanOxy and meanSST.1deg seem to be correlated (as suggested). Look into this in a bit more detail
 png("Figures/Ana_1_mnprodsdprod1deg.png")
-with(ldg.margo.mod, plot(logProd.mn.ann, logProd.sd.ann, pch = 16)) # highly correlated.
+with(rsr.margo.mod, plot(logProd.mn.ann, logProd.sd.ann, pch = 16)) # highly correlated.
 dev.off()
 
 # does the same hold for for the mld
 png("Figures/Ana_1_mnMLDsdMLD.png")
-with(ldg.margo.mod, plot(mean.mld.t, sd.mld.t, pch = 16)) # yes
+with(rsr.margo.mod, plot(mean.mld.t, sd.mld.t, pch = 16)) # yes
 dev.off()
 
 png("Figures/Ana_1_mnSST1degmnOxy.png")
-with(ldg.margo.mod, plot(meanSST.1deg, meanOxy, pch = 16)) # highly correlated.
+with(rsr.margo.mod, plot(meanSST.1deg, meanOxy, pch = 16)) # highly correlated.
 dev.off()
 
 # therefore suggest exclusion of logProd.sd.ann, sd.mld.t and meanOxy from models, so
 env.var <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "depth10deg", "logProd.mn.ann", "absMnSal.0m", "sdSal.0m", "Ocean2", "delta_carb_ion", "prop2.oxy")
 
 # check this has fixed the problem
-pairs(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var], )
-vif(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var], )
+pairs(rsr.margo.mod[, names(rsr.margo.mod) %in% env.var], )
+vif(rsr.margo.mod[, names(rsr.margo.mod) %in% env.var], )
 # it has, so now have new EVs
 
 
@@ -223,7 +332,7 @@ vif(ldg.margo.mod[, names(ldg.margo.mod) %in% env.var], )
 
 ## 2i. Create an OLS model and check for SAC --------------------------------
 # an OLS model
-mod.l0 <- lm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = ldg.margo.mod)
+mod.l0 <- lm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = rsr.margo.mod)
 
 # check model plots
 png("Figures/Ana_2i_modl0.png", 600, 600)
@@ -235,14 +344,14 @@ dev.off()
 # look for spatial autocorrelation in the residuals
 # using spline.correlog
 # haven't run this properly - should be resamp = 1000
-mod.l0.sac <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.l0$residuals, latlon = TRUE, resamp = 1))
+mod.l0.sac <- with(rsr.margo.mod, spline.correlog(Longitude, Latitude, mod.l0$residuals, latlon = TRUE, resamp = 1))
 summary(mod.l0.sac)
 png("Figures/Ana_2i_modl0SAC.png")
 plot.spline.correlog.n(mod.l0.sac, xlab = "Distance / km")
 dev.off()
 
 # using correlog
-mod.l0.SACcor <- with(ldg.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.l0), na.rm = T, increment = 100, resamp = 1, latlon = T))
+mod.l0.SACcor <- with(rsr.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.l0), na.rm = T, increment = 100, resamp = 1, latlon = T))
 png("Figures/Ana_2i_modl0SACcor.png")
 plot(mod.l0.SACcor$correlation, type = "b", pch = 1, cex = 1.2, lwd = 1.5, ylim = c(-0.5, 1), xlab = "distance", ylab = "Moran's I", cex.lab = 1.5, cex.axis = 1.2)
 abline(h = 0)
@@ -251,14 +360,14 @@ rm(mod.l0.SACcor)
 
 ## look at the residuals plots
 png("Figures/Ana_2i_modl0resid.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.l0$residuals, palette = "rwb"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, mod.l0$residuals, palette = "rwb"))
 dev.off()
 
 rm(mod.l0)
 
 ## 2ii. Create a GAM to check complexity / SAC -----------------------------
 # n.b. GAMs can't do interactions (as additive models)
-mod.g0 <- with(ldg.margo.mod, gam(rarefy.sr ~ s(Longitude, Latitude, k = 80, by = Ocean2) + s(meanSST.1deg, by = Ocean2) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion, gamma = 1.4))
+mod.g0 <- with(rsr.margo.mod, gam(rarefy.sr ~ s(Longitude, Latitude, k = 80, by = Ocean2) + s(meanSST.1deg, by = Ocean2) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2 + delta_carb_ion, gamma = 1.4))
 summary(mod.g0)
 
 png("Figures/Ana_2ii_modg0.png")
@@ -268,14 +377,14 @@ par(mfrow = c(1,1))
 
 ## calculate SAC
 # using spline.correlog
-mod.g0.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.g0$residuals, latlon = TRUE, resamp = 1))
+mod.g0.SAC <- with(rsr.margo.mod, spline.correlog(Longitude, Latitude, mod.g0$residuals, latlon = TRUE, resamp = 1))
 summary(mod.g0.SAC)
 png("Figures/Ana_2ii_modg0SAC.png")
 plot.spline.correlog.n(mod.g0.SAC, xlab = "Distance / km")
 dev.off()
 
 # using correlog
-mod.g0.SACcor <- with(ldg.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.g0), na.rm = T, increment = 100, resamp = 1, latlon = T))
+mod.g0.SACcor <- with(rsr.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.g0), na.rm = T, increment = 100, resamp = 1, latlon = T))
 png("Figures/Ana_2ii_modg0SACcor.png")
 plot(mod.g0.SACcor$correlation, type = "b", pch = 1, cex = 1.2, lwd = 1.5, ylim = c(-0.5, 1), xlab = "distance", ylab = "Moran's I", cex.lab = 1.5, cex.axis = 1.2)
 abline(h = 0)
@@ -285,23 +394,23 @@ rm(mod.g0, mod.g0.SAC, mod.g0.SACcor)
 
 ## 2iii. Create an optimised SARerror model --------------------------------
 # Make a matrix of coordinates (X and Y coordinates)
-ldg.coords <- cbind(ldg.margo.mod$Longitude, ldg.margo.mod$Latitude)
+ldg.coords <- cbind(rsr.margo.mod$Longitude, rsr.margo.mod$Latitude)
 ldg.coords <- as.matrix(ldg.coords)
 
 # run model optimisation
 # getting problems with Error in solve.default(asyvar, tol = tol.solve) : 
 # system is computationally singular: reciprocal condition number = 8.20242e-19 
 # The suggested answer is to rescale if the variables are on very different scales, so go from
-# mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+# mod.sar.opW <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + mean.mld.t + depth10deg + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 # to
-summary(ldg.margo.mod) # check that ranges are roughly equivalent after scaling
-mod.sar.opW <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(rsr.margo.mod) # check that ranges are roughly equivalent after scaling
+mod.sar.opW <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 # reckon that delta_carb_ion should not interact with things as its relationship with species richness (at least the bit we care about) shouldn't depend on anything else
 summary(mod.sar.opW$obj, Nagelkerke = TRUE)
 
 ## check SAC has been removed
 # using spline.correlog
-mod.sar.opW.SAC <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.sar.opW$obj$residuals, latlon = TRUE, resamp = 1))
+mod.sar.opW.SAC <- with(rsr.margo.mod, spline.correlog(Longitude, Latitude, mod.sar.opW$obj$residuals, latlon = TRUE, resamp = 1))
 summary(mod.sar.opW.SAC)
 png("Figures/Ana_2iii_modSarOp0SAC.png")
 plot.spline.correlog.n(mod.sar.opW.SAC, xlab = "Distance / km")
@@ -309,7 +418,7 @@ dev.off()
 rm(mod.sar.opW.SAC)
 
 # using correlog
-mod.sar.opW.SACcor <- with(ldg.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.sar.opW$obj), na.rm = T, increment = 100, resamp = 1, latlon = T))
+mod.sar.opW.SACcor <- with(rsr.margo.mod, correlog(Longitude, Latitude, z = residuals(mod.sar.opW$obj), na.rm = T, increment = 100, resamp = 1, latlon = T))
 png("Figures/Ana_2iii_modSarOp0SACcor.png")
 plot(mod.sar.opW.SACcor$correlation, type = "b", pch = 1, cex = 1.2, lwd = 1.5, ylim = c(-0.5, 1), xlab = "distance", ylab = "Moran's I", cex.lab = 1.5, cex.axis = 1.2)
 abline(h = 0)
@@ -317,11 +426,11 @@ dev.off()
 rm(mod.sar.opW.SACcor)
 
 # check whether different coding methods improve the AIC
-mod.sar.opB <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.opB <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 AIC(mod.sar.opW$obj) # 4659.405
 AIC(mod.sar.opB$obj) # 4689.377
 
-mod.sar.opS <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.opS <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 AIC(mod.sar.opW$obj) # 4659.405
 AIC(mod.sar.opS$obj) # 4665.91
 
@@ -852,17 +961,17 @@ lr.plot(lr.sar.op0g, lr.sar.opfg, order = c(6:7, 4:3, 5, 2:1), leg.x = 17, leg.y
 dev.off()
 
 ## 2ix. Does optimisation differ for simplified? ---------------------------
-mod.fw.rop <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.fw.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 mod.fw.rop # 508.5788
 AIC(mod.fw.rop$obj)
 # 4619.581
 
-mod.fb.rop <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.fb.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 mod.fb.rop # 562.59
 AIC(mod.fb.rop$obj)
 # 4669.185
 
-mod.fs.rop <- with(ldg.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.fs.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 mod.fs.rop # 562.3092
 AIC(mod.fs.rop$obj)
 # 4632.595
@@ -877,23 +986,23 @@ summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.86407
 AIC(mod.sar.opf) # 7585.799
 
 # do I have sufficient points for each ocean?
-table(ldg.margo.mod$Ocean2) # should do
+table(rsr.margo.mod$Ocean2) # should do
 # c.f. Atlantic: 372   Indian: 157  Pacific: 146, which were the values for bfd
 
 ## 3i. set up model for Atlantic -----------------------------
 # run model based on best model for complete data with only Atlantic
-atl.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Atlantic", ], 0, mod.sar.opW$dist, longlat = TRUE)
+atl.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Atlantic", ], 0, mod.sar.opW$dist, longlat = TRUE)
 atl.s <- nb2listw(atl.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(atl.nb)
 
 ## 3ii. set up model for Indian -----------------------------------
 # run model based on best model for complete data with only Indian
-ind.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Indian", ], 0, mod.sar.opW$dist, longlat = TRUE)
+ind.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Indian", ], 0, mod.sar.opW$dist, longlat = TRUE)
 ind.s <- nb2listw(ind.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(ind.nb)
 
 ## 3iii. set up model for Pacific  ---------------------------
-pac.nb <- dnearneigh(ldg.coords[ldg.margo.mod$Ocean2 == "Pacific", ], 0, mod.sar.opW$dist, longlat = TRUE)
+pac.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Pacific", ], 0, mod.sar.opW$dist, longlat = TRUE)
 pac.s <- nb2listw(pac.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(pac.nb)
 
@@ -906,7 +1015,7 @@ summary(mod.sar.opf)
 op.formula <- update(mod.sar.opf$call$formula, ~.-Ocean2 - sdSST.1deg:Ocean2 - I(mean.mld.t/10):Ocean2 - logProd.mn.ann:Ocean2 - prop2.oxy:Ocean2 - Ocean2:delta_carb_ion - Ocean2:poly(meanSST.1deg, 2))
 
 # create a model with only significant values
-mod.sar.atlI <- errorsarlm(op.formula, listw = atl.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", ])
+mod.sar.atlI <- errorsarlm(op.formula, listw = atl.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.atlI)
 par(mfrow = c(1, 1))
@@ -1308,12 +1417,12 @@ env.var.atl <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "depth10deg", "logP
 
 # pairs plot
 png("Figures/Ana_3vii_atl_pairs.png", 1200, 1200)
-pairs(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", names(ldg.margo.mod) %in% env.var.atl])
+pairs(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", names(rsr.margo.mod) %in% env.var.atl])
 dev.off()
 
 # variance inflation factor
-vif(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", names(ldg.margo.mod) %in% env.var.atl])
-cor(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Atlantic", names(ldg.margo.mod) %in% env.var.atl])
+vif(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", names(rsr.margo.mod) %in% env.var.atl])
+cor(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", names(rsr.margo.mod) %in% env.var.atl])
 
 lr.sar.atlIf <- lr.calc(mod.sar.atlIf)
 
@@ -1338,7 +1447,7 @@ summary(mod.sar.op0)
 summary(mod.sar.opf)
 
 # create a model with only significant values
-mod.sar.indI <- errorsarlm(op.formula, listw = ind.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Indian", ])
+mod.sar.indI <- errorsarlm(op.formula, listw = ind.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.indI)
 par(mfrow = c(1, 1))
@@ -1984,12 +2093,12 @@ env.var.ind <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "depth10deg", "logP
 
 # pairs plot
 png("Figures/Ana_3viii_ind_pairs.png", 1200, 1200)
-pairs(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Indian", names(ldg.margo.mod) %in% env.var.ind])
+pairs(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", names(rsr.margo.mod) %in% env.var.ind])
 dev.off()
 
 # variance inflation factor
-vif(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Indian", names(ldg.margo.mod) %in% env.var.ind])
-cor(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Indian", names(ldg.margo.mod) %in% env.var.ind])
+vif(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", names(rsr.margo.mod) %in% env.var.ind])
+cor(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", names(rsr.margo.mod) %in% env.var.ind])
 # correlation between SST and MLD
 
 lr.sar.indIf <- lr.calc(mod.sar.indIf)
@@ -2015,7 +2124,7 @@ summary(mod.sar.op0)
 summary(mod.sar.opf)
 
 # create a model with only significant values
-mod.sar.pacI <- errorsarlm(op.formula, listw = pac.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", ])
+mod.sar.pacI <- errorsarlm(op.formula, listw = pac.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.pacI)
 par(mfrow = c(1, 1))
@@ -2661,12 +2770,12 @@ env.var.pac <- c("meanSST.1deg", "sdSST.1deg", "depth10deg", "mean.mld.t", "logP
 
 # pairs plot
 png("Figures/Ana_3ix_pac_pairs.png", 1200, 1200)
-pairs(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", names(ldg.margo.mod) %in% env.var.pac])
+pairs(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", names(rsr.margo.mod) %in% env.var.pac])
 dev.off()
 
 # variance inflation factor
-vif(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", names(ldg.margo.mod) %in% env.var.pac])
-cor(ldg.margo.mod[ldg.margo.mod$Ocean2 == "Pacific", names(ldg.margo.mod) %in% env.var.pac])
+vif(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", names(rsr.margo.mod) %in% env.var.pac])
+cor(rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", names(rsr.margo.mod) %in% env.var.pac])
 
 lr.sar.pacIf <- lr.calc(mod.sar.pacIf)
 
@@ -2706,7 +2815,7 @@ rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.
 ## 4. Does resolution of variables matter? ---------------------------------
 
 ## 4i. Run full model for higher resolution ----------------------
-mod.hres.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.4km, 3) + sdSST.4km + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod)
+mod.hres.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.4km, 3) + sdSST.4km + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod)
 
 ## 4iii. Compare LRs -------------------------------------------------------
 lr.hres.op0 <- lr.calc(mod.hres.op0)
@@ -2755,48 +2864,48 @@ ldg.margo.tmp <- ldg.margo.tmp[ldg.margo.tmp$Ocean2 != "Mediterranean", ]
 ldg.margo.tmp$Ocean2 <- droplevels(ldg.margo.tmp$Ocean2)
 
 ## Set up two different cutoffs, so cutoff of -20
-ldg.margo.mod20 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -20), ]
-ldg.margo.mod20$delta_carb_ion[ldg.margo.mod20$delta_carb_ion > 0] <- 0
+rsr.margo.mod20 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -20), ]
+rsr.margo.mod20$delta_carb_ion[rsr.margo.mod20$delta_carb_ion > 0] <- 0
 # expect salinity to impact both at the top and the bottom of the range. 
-ldg.margo.mod20$absMnSal.0m <- abs(ldg.margo.mod20$meanSal.0m - 35.1)
+rsr.margo.mod20$absMnSal.0m <- abs(rsr.margo.mod20$meanSal.0m - 35.1)
 
 # cutoff of -10
-ldg.margo.mod10 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -10), ]
-ldg.margo.mod10$delta_carb_ion[ldg.margo.mod10$delta_carb_ion > 0] <- 0
+rsr.margo.mod10 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -10), ]
+rsr.margo.mod10$delta_carb_ion[rsr.margo.mod10$delta_carb_ion > 0] <- 0
 # expect salinity to impact both at the top and the bottom of the range. 
-ldg.margo.mod10$absMnSal.0m <- abs(ldg.margo.mod10$meanSal.0m - 35.1)
+rsr.margo.mod10$absMnSal.0m <- abs(rsr.margo.mod10$meanSal.0m - 35.1)
 
 ## compare these different cutoffs
 # -10
-with(ldg.margo.mod10, distrib.map(Longitude, Latitude, Ocean2))
-table(ldg.margo.mod10$Ocean2)
+with(rsr.margo.mod10, distrib.map(Longitude, Latitude, Ocean2))
+table(rsr.margo.mod10$Ocean2)
 
 # -10.908
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
-table(ldg.margo.mod$Ocean2)
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
+table(rsr.margo.mod$Ocean2)
 
 # -20
-with(ldg.margo.mod20, distrib.map(Longitude, Latitude, Ocean2))
-table(ldg.margo.mod20$Ocean2)
+with(rsr.margo.mod20, distrib.map(Longitude, Latitude, Ocean2))
+table(rsr.margo.mod20$Ocean2)
 
 rm(ldg.margo.tmp)
 
 ## 5ii. Run the model with these different cutoffs -------------------------
 # -10
-ldg.coords.10 <- cbind(ldg.margo.mod10$Long,ldg.margo.mod10$Lat)
+ldg.coords.10 <- cbind(rsr.margo.mod10$Long,rsr.margo.mod10$Lat)
 ldg.coords.10 <- as.matrix(ldg.coords.10)
 op10.nb <- dnearneigh(ldg.coords.10, 0, mod.sar.opW$dist, longlat = TRUE)
 op10.w <- nb2listw(op10.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis10.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op10.w, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod10)
+mod.dis10.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op10.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod10)
 
 # -20
-ldg.coords.20 <- cbind(ldg.margo.mod20$Long,ldg.margo.mod20$Lat)
+ldg.coords.20 <- cbind(rsr.margo.mod20$Long,rsr.margo.mod20$Lat)
 ldg.coords.20 <- as.matrix(ldg.coords.20)
 op20.nb <- dnearneigh(ldg.coords.20, 0, mod.sar.opW$dist, longlat = TRUE)
 op20.s <- nb2listw(op20.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis20.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op20.s, zero.policy = TRUE, tol.solve = 1e-18, data = ldg.margo.mod20)
+mod.dis20.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op20.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod20)
 
 ## 5iii. Compare LRs -------------------------------------------------------
 lr.dis10.op0 <- lr.calc(mod.dis10.op0)
@@ -2817,9 +2926,9 @@ png("Figures/Ana_4iii_LRatio_g_opdis10op0.png", width = 800)
 lr.plot(lr.dis10.op0g, lr.sar.op0g, lr.dis20.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -10", "Cutoff: -10.908", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(ldg.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, file = "Outputs/mod_dis10.RData")
-save(ldg.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, file = "Outputs/mod_dis20.RData")
-rm(ldg.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, ldg.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, ldg.coords.10, ldg.coords.20, op10.nb, op20.nb, op10.s, op20.s)
+save(rsr.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, file = "Outputs/mod_dis10.RData")
+save(rsr.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, file = "Outputs/mod_dis20.RData")
+rm(rsr.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, rsr.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, ldg.coords.10, ldg.coords.20, op10.nb, op20.nb, op10.s, op20.s)
 
 
 ## 6. Does averaging explanatory variables matter? -------------------------
@@ -2850,7 +2959,7 @@ lr.plot(lr.dis.ran.op0g, lr.sar.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("
 dev.off()
 
 save(tmp7, mod.ran.op0, lr.ran.op0, lr.ran.op0g, file = "Outputs/mod_ran.RData")
-rm(ldg.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran.nb, opran.s)
+rm(rsr.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran.nb, opran.s)
 
 
 
@@ -2860,7 +2969,7 @@ rm(ldg.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran
 ## 8. Evenness -------------------------------------------------------------
 
 ## 8i. Create an OLS model ------------------------------------------------
-mod.eve.l0 <- lm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = ldg.margo.mod)
+mod.eve.l0 <- lm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = eve.margo.mod)
 
 # check model plots
 png("Figures/Ana_8i_modevel0.png", 600, 600)
@@ -2873,23 +2982,23 @@ summary(mod.eve.l0)
 
 # look for spatial autocorrelation in the residuals
 # using spline.correlog
-mod.eve.l0.sac <- with(ldg.margo.mod, spline.correlog(Longitude, Latitude, mod.eve.l0$residuals, latlon = TRUE, resamp = 1))
+mod.eve.l0.sac <- with(eve.margo.mod, spline.correlog(Longitude, Latitude, mod.eve.l0$residuals, latlon = TRUE, resamp = 1))
 summary(mod.eve.l0.sac)
 png("Figures/Ana_8i_modevel0SAC.png")
 plot.spline.correlog.n(mod.eve.l0.sac, xlab = "Distance / km")
 dev.off()
 
 ## 8ii. Run model optimisation ----------------------------------------------
-mod.sar.eveW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveW$obj, Nagelkerke = TRUE) # 0.47911
 AIC(mod.sar.eveW$obj) # -3860.016
 
 # check other coding styles
-mod.sar.eveB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveB$obj, Nagelkerke = TRUE) # 0.4892
 AIC(mod.sar.eveB$obj) # -3896.698
 
-mod.sar.eveS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.eveS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.eveS$obj, Nagelkerke = TRUE) # 0.50095
 AIC(mod.sar.eveS$obj) # -3940.305
 
@@ -2958,16 +3067,16 @@ dev.off()
 ## 9. Lineage age / FRic -------------------------------------------------------------
 
 ## 9i. Lineage age models -------------------------------------------------
-mod.sar.lnaW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaW$obj, Nagelkerke = TRUE) # 0.63489
 AIC(mod.sar.lnaW$obj) # 5565.102
 
 # check other coding styles
-mod.sar.lnaB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaB$obj, Nagelkerke = TRUE) # 0.61397 
 AIC(mod.sar.lnaB$obj) #  5669.584
 
-mod.sar.lnaS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.lnaS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.lnaS$obj, Nagelkerke = TRUE) # 0.63364 
 AIC(mod.sar.lnaS$obj) # 5571.538
 
@@ -3000,16 +3109,16 @@ dev.off()
 ## 9ii. Dissolution cutoffs ------------------------------------------------
 
 ## 9iii. Functional richness -----------------------------------------------
-mod.sar.fricW <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricW <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricW$obj, Nagelkerke = TRUE) # 0.87776
 AIC(mod.sar.fricW$obj) # -2791.866
 
 # check other coding styles
-mod.sar.fricB <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricB <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricB$obj, Nagelkerke = TRUE) # 0.87663 
 AIC(mod.sar.fricB$obj) #  -2774.851
 
-mod.sar.fricS <- with(ldg.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+mod.sar.fricS <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
 summary(mod.sar.fricS$obj, Nagelkerke = TRUE) # 0.88194 
 AIC(mod.sar.fricS$obj) # -2856.622
 
@@ -3174,15 +3283,15 @@ dev.off()
 
 ## 10v. residuals map for full model --------------------------------------------
 png("Figures/Ana_10v_rsp_res.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.sar.op0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -8, max.col = 8, maintitle = "Residuals for rarefied richness"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, mod.sar.op0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -8, max.col = 8, maintitle = "Residuals for rarefied richness"))
 dev.off()
 
 png("Figures/Ana_10v_eve_res.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.sar.eve0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -0.5, max.col = 0.5, maintitle = "Residuals for evenness"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.eve0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -0.5, max.col = 0.5, maintitle = "Residuals for evenness"))
 dev.off()
 
 png("Figures/Ana_10v_lna_res.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, mod.sar.lna0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -6, max.col = 6, maintitle = "Residuals for average community age"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.lna0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -6, max.col = 6, maintitle = "Residuals for average community age"))
 dev.off()
 
 ## 10vi. coplot ------------------------------------------------------------------
@@ -3220,7 +3329,7 @@ dev.off()
 ## 11. Predicting models ---------------------------------------------------
 
 ## 11i. Set up the dataset for prediction ----------------------------------
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, predict(mod.sar.op0)))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, predict(mod.sar.op0)))
 
 # check NAs and remove them
 summary(ldg.p.margo)
@@ -3238,8 +3347,8 @@ ldg.p.margo <- na.omit(ldg.p.margo)
 # if I don't do this, get predictions of -500 species in the north of Russia
 par(ask = TRUE)
 for (i in 4:(ncol(ldg.p.margo) - 1)) {
-  tmp.col <- which(names(ldg.margo.mod) == names(ldg.p.margo)[i])
-  ldg.p.margo[which(ldg.p.margo[, i] < min(ldg.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.margo[, i] > max(ldg.margo.mod[, tmp.col], na.rm = TRUE)), i] <- NA
+  tmp.col <- which(names(rsr.margo.mod) == names(ldg.p.margo)[i])
+  ldg.p.margo[which(ldg.p.margo[, i] < min(rsr.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.margo[, i] > max(rsr.margo.mod[, tmp.col], na.rm = TRUE)), i] <- NA
   if (sum(is.na(ldg.p.margo[, i])) > 0)
     with(ldg.p.margo[is.na(ldg.p.margo[, i]), ], distrib.map(Longitude, Latitude, Ocean2, pch = 15, cex = 0.5, main = names(ldg.p.margo)[i]))
 }
@@ -3257,7 +3366,7 @@ rm(i)
 
 ## 11ii. predict species richness for this dataset -------------------------------
 # necessary to use sar.predict not predict as the ordinary predict.sarlm function cannot cope with poly variables
-ldg.p.margo$rarefy.sr <- sar.predict(mod.sar.op0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+ldg.p.margo$rarefy.sr <- sar.predict(mod.sar.op0, newdata = ldg.p.margo, olddata = rsr.margo.mod)
 summary(ldg.p.margo$rarefy.sr)
 
 with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with negative richness - where are these
@@ -3269,11 +3378,11 @@ with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0, ], distrib.map(Longitude, Latitude, 
 dev.off()
 
 png("Figures/Ana_11ii_rsr_obs.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", min.col = 0, max.col = 27, col.water = "white", col.land = "black"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", min.col = 0, max.col = 27, col.water = "white", col.land = "black"))
 dev.off()
 
 ## 11iii. predict evenness for this dataset ---------------------------------------
-ldg.p.margo$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+ldg.p.margo$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.margo, olddata = eve.margo.mod)
 summary(ldg.p.margo$simpsonEve)
 
 with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
@@ -3285,16 +3394,16 @@ with(ldg.p.margo[ldg.p.margo$simpsonEve <= 1, ], distrib.map(Longitude, Latitude
 dev.off()
 
 png("Figures/Ana_11iii_eve_obs.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", col.water = "white", col.land = "black"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
 ## 11iv. predict average community age for this dataset --------------------
-ldg.p.margo$MorphoAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = ldg.margo.mod)
+ldg.p.margo$MorphoAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = eve.margo.mod)
 summary(ldg.p.margo$MorphoAgeAbun)
 
 with(ldg.p.margo, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
 plot(sort(ldg.p.margo$MorphoAgeAbun))
-summary(ldg.margo.mod$MorphoAgeAbun)
+summary(eve.margo.mod$MorphoAgeAbun)
 with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun < 5, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
 
 # compare with observed
@@ -3303,14 +3412,14 @@ with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun >= 5 & ldg.p.margo$MorphoAgeAbun <= 1
 dev.off()
 
 png("Figures/Ana_11iv_lna_obs.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
 ## 11v. Difference maps ----------------------------------------------------
 # set up centred and scaled
-ldg.margo.mod$rarefy.sr.cs <- (ldg.margo.mod$rarefy.sr - mean(ldg.margo.mod$rarefy.sr)) / sd(ldg.margo.mod$rarefy.sr)
-ldg.margo.mod$simpsonEve.cs <- (ldg.margo.mod$simpsonEve - mean(ldg.margo.mod$simpsonEve)) / sd(ldg.margo.mod$simpsonEve)
-ldg.margo.mod$MorphoAgeAbun.cs <- (ldg.margo.mod$MorphoAgeAbun - mean(ldg.margo.mod$MorphoAgeAbun)) / sd(ldg.margo.mod$MorphoAgeAbun)
+rsr.margo.mod$rarefy.sr.cs <- (rsr.margo.mod$rarefy.sr - mean(rsr.margo.mod$rarefy.sr)) / sd(rsr.margo.mod$rarefy.sr)
+eve.margo.mod$simpsonEve.cs <- (eve.margo.mod$simpsonEve - mean(eve.margo.mod$simpsonEve)) / sd(eve.margo.mod$simpsonEve)
+eve.margo.mod$MorphoAgeAbun.cs <- (eve.margo.mod$MorphoAgeAbun - mean(eve.margo.mod$MorphoAgeAbun)) / sd(eve.margo.mod$MorphoAgeAbun)
 
 ldg.p.margo$rarefy.sr.cs <- (ldg.p.margo$rarefy.sr - mean(ldg.p.margo$rarefy.sr)) / sd(ldg.p.margo$rarefy.sr)
 ldg.p.margo$simpsonEve.cs <- (ldg.p.margo$simpsonEve - mean(ldg.p.margo$simpsonEve)) / sd(ldg.p.margo$simpsonEve)
@@ -3367,53 +3476,53 @@ load("Outputs/Pacific_simplified.RData")
 load("Outputs/mod_hres.RData")
 
 # for full rarefied model
-lr.calc(mod.sar.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "op0")
+lr.calc(mod.sar.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "op0")
 (tmp <- data.frame(names = model.evs(mod.sar.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.op0g <- lr.calc(mod.sar.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "op0g")
+lr.sar.op0g <- lr.calc(mod.sar.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "op0g")
 rm(tmp)
 
 # for simplified rarefied model
-lr.calc(mod.sar.opf, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "opf")
+lr.calc(mod.sar.opf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "opf")
 (tmp <- data.frame(names = model.evs(mod.sar.opf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.opfg <- lr.calc(mod.sar.opf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "opfg")
+lr.sar.opfg <- lr.calc(mod.sar.opf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "opfg")
 rm(tmp)
 
 # for Atlantic
-lr.sar.atlIf <- lr.calc(mod.sar.atlIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "atlIf")
+lr.sar.atlIf <- lr.calc(mod.sar.atlIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "atlIf")
 # also for groups of variables
 (tmp <- data.frame(names = model.evs(mod.sar.atlIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.atlIfg <- lr.calc(mod.sar.atlIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "atlIfg")
+lr.sar.atlIfg <- lr.calc(mod.sar.atlIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "atlIfg")
 rm(tmp)
 
 # for Indian
-lr.sar.indIf <- lr.calc(mod.sar.indIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "indIf")
+lr.sar.indIf <- lr.calc(mod.sar.indIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "indIf")
 (tmp <- data.frame(names = model.evs(mod.sar.indIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.indIfg <- lr.calc(mod.sar.indIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "indIfg")
+lr.sar.indIfg <- lr.calc(mod.sar.indIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "indIfg")
 rm(tmp)
 
 # for Pacific
-lr.sar.pacIf <- lr.calc(mod.sar.pacIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "pacIf")
+lr.sar.pacIf <- lr.calc(mod.sar.pacIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "pacIf")
 (tmp <- data.frame(names = model.evs(mod.sar.pacIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.pacIfg <- lr.calc(mod.sar.pacIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "pacIfg")
+lr.sar.pacIfg <- lr.calc(mod.sar.pacIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "pacIfg")
 rm(tmp)
 
 # for lineage age
-lr.calc(mod.sar.lna0, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "lna")
+lr.calc(mod.sar.lna0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "lna")
 (tmp <- data.frame(names = model.evs(mod.sar.lna0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.lna0g <- lr.calc(mod.sar.lna0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "lnag")
+lr.sar.lna0g <- lr.calc(mod.sar.lna0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "lnag")
 rm(tmp)
 
 
 # for evenness
-lr.calc(mod.sar.eve0, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "eve")
+lr.calc(mod.sar.eve0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "eve")
 (tmp <- data.frame(names = model.evs(mod.sar.eve0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.eve0g <- lr.calc(mod.sar.eve0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "eveg")
+lr.sar.eve0g <- lr.calc(mod.sar.eve0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "eveg")
 rm(tmp)
 
 # for high resolution
-lr.hres.op0 <- lr.calc(mod.hres.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "hres")
+lr.hres.op0 <- lr.calc(mod.hres.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "hres")
 (tmp <- data.frame(names = model.evs(mod.hres.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.hres.op0g <- lr.calc(mod.hres.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = ldg.margo.mod, file.nm = "hresg")
+lr.hres.op0g <- lr.calc(mod.hres.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "hresg")
 rm(tmp)
 
 
@@ -3451,10 +3560,10 @@ tmp7[1:10, 50:57]
 
 # 13. Metabolic theory of ecology -----------------------------------------
 # log transformed SR
-Ln_SR <- log(ldg.margo.mod$rarefy.sr)
+Ln_SR <- log(rsr.margo.mod$rarefy.sr)
 
 # 1 / kT (boltzman constant in eV K-1) * absolute T
-MTE_SST <- 1 / (8.6173324E−5 * (ldg.margo.mod$meanSST.1deg + 273.15))
+MTE_SST <- 1 / (8.6173324E−5 * (rsr.margo.mod$meanSST.1deg + 273.15))
 
 # calculate the relationship
 mte.mod <- errorsarlm(Ln_SR ~ MTE_SST, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18)
@@ -3471,7 +3580,7 @@ mn.Ln_SR <- mean(Ln_SR)
 mte.Ln_SR <- -0.65 * (p.MTE_SST - mn.MTE_SST) + mn.Ln_SR
 
 # what if we model it separately for the three oceans
-MTE_oce <- ldg.margo.mod$Ocean2
+MTE_oce <- rsr.margo.mod$Ocean2
 mte.oce.mod <- errorsarlm(Ln_SR ~ MTE_SST*MTE_oce, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18)
 summary(mte.oce.mod)
 anova(mte.oce.mod, mte.mod) # significant difference, implying that dropping ocean produces a significantly worse model
@@ -3480,20 +3589,20 @@ p.ocean$p.Ln_SR <- predict(mte.oce.mod, p.ocean)[, 1]
 
 # plot them
 png("Figures/Ana_12_mte_plot.png")
-plot(Ln_SR ~ MTE_SST, pch = 16, col = ldg.margo.mod$Ocean2, xlab = "Temperature (1 / kT)", ylab = "ln (rarefied species richness)", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2)
+plot(Ln_SR ~ MTE_SST, pch = 16, col = rsr.margo.mod$Ocean2, xlab = "Temperature (1 / kT)", ylab = "ln (rarefied species richness)", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2)
 points(p.MTE_SST, p.Ln_SR, type = "l", lwd = 3) # observed
 with(p.ocean[p.ocean$MTE_oce == "Atlantic",], points(MTE_SST, p.Ln_SR, type = "l", col = 1)) # Atlantic
 with(p.ocean[p.ocean$MTE_oce == "Indian",], points(MTE_SST, p.Ln_SR, type = "l", col = 2)) # Indian
 with(p.ocean[p.ocean$MTE_oce == "Pacific",], points(MTE_SST, p.Ln_SR, type = "l", col = 3)) # Pacific
 points(p.MTE_SST, mte.Ln_SR, type = "l", lty = 2, lwd = 3) # predicted
-legend("topright", levels(ldg.margo.mod$Ocean2), pch = 16, col = 1:3)
+legend("topright", levels(rsr.margo.mod$Ocean2), pch = 16, col = 1:3)
 dev.off()
 
 # plot this relationship on the SST ~ SR relationship
 png("Figures/Ana_12_sst_mte_plot.png")
-with(ldg.margo.mod, plot(rarefy.sr ~ meanSST.1deg, pch = 16, col = ldg.margo.mod$Ocean2, xlab = expression(paste("SST / ", degree, "C")), ylab = "Rarefied species richness", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2))
+with(rsr.margo.mod, plot(rarefy.sr ~ meanSST.1deg, pch = 16, col = rsr.margo.mod$Ocean2, xlab = expression(paste("SST / ", degree, "C")), ylab = "Rarefied species richness", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2))
 points((1 / (8.6173324E−5 * p.MTE_SST) - 273.15), exp(mte.Ln_SR), type = "l", lwd = 2)
-legend(0, 24, levels(ldg.margo.mod$Ocean2)[1:3], pch = 16, col = 1:3)
+legend(0, 24, levels(rsr.margo.mod$Ocean2)[1:3], pch = 16, col = 1:3)
 dev.off()
 
 save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/Metabolic_hypothesis.RData")
@@ -3501,7 +3610,7 @@ rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mo
 
 
 # 14. Tidy up -------------------------------------------------------------
-save(ldg.margo.mod, file = "Outputs/ldg_margo_mod.RData")
+save(rsr.margo.mod, eve.margo.mod, lna.margo.mod,file = "Outputs/margo_mod.RData")
 save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, file = "Outputs/Richness_model.RData")
 save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/Richness_model_simplified.RData")
 save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, file = "Outputs/Evenness_model.RData")
