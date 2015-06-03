@@ -396,6 +396,9 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSal.0m))
 
 rm(sal.mean.depth, sal.sd.depth, sal.margo)
 
+## 8iii. abs salinity ------------------------------------------------------
+ldg.p.margo$absMnSal.0m <- abs(ldg.p.margo$meanSal.0m - 35.1)
+
 
 ## 9. Oxygen stress --------------------------------------------------------
 setwd("../Oxygen stress/")
