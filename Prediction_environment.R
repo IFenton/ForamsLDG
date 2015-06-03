@@ -439,6 +439,7 @@ with(ldg.p.margo[!is.na(ldg.p.margo$delta_carb_ion), ], distrib.map(Longitude, L
 
 
 ## 11. Save the data -------------------------------------------------------
-save(ldg.p.margo, file = "../../../../Work/1311 LDGPaper/Reanalysis/Outputs/ldg_p_margo.RData")
+setwd("../../../../Work/1311 LDGPaper/Reanalysis/")
+save(ldg.p.margo, file = "Outputs/ldg_p_margo.RData")
 
 rm(land)
