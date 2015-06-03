@@ -2,8 +2,11 @@
 ## Created: 16 / 4 / 15
 ## Last edited: 27 / 4 / 15
 ## Isabel Fenton
-
+##
 ## Based on the code from Analysis_MARGO.R
+##
+## Previous file: 1311 LDGPaper/Reanalysis/Analysis_MARGO.R
+## Next file: 1311 LDGPaper/Reanalysis/Analysis_MARGO.R
 
 ## Inputs ------------------------------------------------------------------
 # requires ldg.margo.mod
@@ -22,28 +25,35 @@ setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/Reanalysis/")
 
 
 ## 1. Generate dataframe for predicting ------------------------------------
-# meanSST.1deg, sdSST.1deg, mean.mld.t, depth10deg, logProd.mn.ann, meanSal.0m, sdSal.0m, Ocean2, carb_ion
+# meanSST.1deg, sdSST.1deg, mean.mld.t, depth10deg, logProd.mn.ann, meanSal.0m, sdSal.0m, prop2.oxy, Ocean2, delta_carb_ion
 ldg.p.margo <- data.frame(Longitude = rep(-179.5:179.5, 180), Latitude = rep(-89.5:89.5, each = 360))
-names(ldg.margo.mod)
+names(rsr.margo.mod)
 
 
 ## 2. Ocean ---------------------------------------------------------------
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 
 ## 2i. Create polygons of the ocean boundaries -----------------------------
 # Each ocean is defined using the locator() function. Save these results
 # save(pacific, atlantic, atlantic.2, indian, pacific.2, file = "Outputs/150421_OceanBoundaries.RData")
 load("Outputs/150421_OceanBoundaries.RData")
-# with these boundaries, then define polygons of the oceans. Exclude the Mediterranean and the Gulf of Mexico, and high northern latitudes where I have no data
+# with these boundaries, then define polygons of the oceans. Exclude the Mediterranean and high northern latitudes where I have no data
 pacific.1 <- pacific
 pacific.1$x <- c(pacific$x[length(pacific$x)], -180, -180, pacific$x[2:length(pacific$x)])
 pacific.1$y <- c(pacific$y[length(pacific$y)], -90, pacific$y[2], pacific$y[2:length(pacific$y)])
 points(pacific.1$x, pacific.1$y, type = "l", col = "blue")
 
+# without the gulf of mexico
 atlantic.1 <- atlantic
 atlantic.1$x <- c(atlantic$x, pacific$x[9:length(pacific$x)], rev(atlantic.2$x), atlantic$x[1])
 atlantic.1$y <- c(atlantic$y, pacific$y[9:length(pacific$x)], rev(atlantic.2$y), atlantic$y[1])
 points(atlantic.1$x, atlantic.1$y, type = "l", col = "yellow")
+
+# if I want to include the gulf of mexico
+atlantic.3 <- atlantic
+atlantic.3$x <- c(atlantic$x[1:9], pacific$x[4:length(pacific$x)], rev(atlantic.2$x), atlantic$x[1])
+atlantic.3$y <- c(atlantic$y[1:9], pacific$y[4:length(pacific$x)], rev(atlantic.2$y), atlantic$y[1])
+points(atlantic.3$x, atlantic.3$y, type = "l", col = "black")
 
 indian.1 <- indian
 indian.1$x <- c(indian$x[length(indian$x)], rev(atlantic.2$x)[1:5], indian$x)
@@ -56,6 +66,7 @@ pacific.3$y <- c(-90, rev(indian$y)[1:(length(indian$y) - 7)], rev(pacific.2$y),
 points(pacific.3$x, pacific.3$y, type = "l", col = "green")
 
 save(pacific.1, pacific.3, atlantic.1, indian.1, file = "Outputs/150509_OceanPolygons.RData")
+save(pacific.1, pacific.3, atlantic.3, indian.1, file = "Outputs/150603_Gulf_OceanPolygons.RData")
 rm(pacific, atlantic, atlantic.2, indian, pacific.2)
 
 ## 2ii. Add column to ldg.p.margo ------------------------------------------
@@ -65,7 +76,7 @@ ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Lat
 ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, pacific.3$x, pacific.3$y) == 1)] <- "Pacific"
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific", ], points(Longitude, Latitude, col = "yellow"))
 
-ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, atlantic.1$x, atlantic.1$y) == 1)] <- "Atlantic"
+ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, atlantic.3$x, atlantic.3$y) == 1)] <- "Atlantic"
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Atlantic", ], points(Longitude, Latitude, col = "red"))
 
 ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, indian.1$x, indian.1$y) == 1)] <- "Indian"
@@ -84,12 +95,12 @@ points(land$x, land$y, type = "l", col = "green")
 ldg.p.margo$Ocean2[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
 
 ## 2iii. Check and tidy up -------------------------------------------------
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, Ocean2, key = "FALSE"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Atlantic", ], points(Longitude, Latitude, col = "red"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Indian", ], points(Longitude, Latitude, col = "orange"))
 with(ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific", ], points(Longitude, Latitude, col = "yellow"))
 
-rm(tmp, atlantic.1, indian.1, pacific.1, pacific.3)
+rm(tmp, atlantic.3, indian.1, pacific.1, pacific.3)
 
 
 ## 3. SST.4km -------------------------------------------------------------
@@ -386,7 +397,7 @@ rm(sal.mean.depth, sal.sd.depth)
 
 # 9. carb_ion ------------------------------------------------------------
 # carb_ion
-hist(sort(ldg.margo.mod$carb_ion))
+hist(sort(rsr.margo.mod$carb_ion))
 ldg.p.margo$carb_ion <- 100
 # pick this as high values of carbonate ion saturation indicate no dissolution
 
