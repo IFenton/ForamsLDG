@@ -280,7 +280,7 @@ with(eve.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matl
 dev.off()
 
 png("Figures/Ana_0iii_map_lna.png", 700, 500)
-with(eve.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", main = "Average Community Age", col.water = "white", col.land = "black"))
+with(eve.margo.mod, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", main = "Average Community Age", col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_0iii_map_fric.png", 700, 500)
@@ -427,15 +427,15 @@ rm(mod.sar.opW.SACcor)
 
 # check whether different coding methods improve the AIC
 mod.sar.opB <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-AIC(mod.sar.opW$obj) # 4659.405
-AIC(mod.sar.opB$obj) # 4689.377
+AIC(mod.sar.opW$obj) # 4395.44
+AIC(mod.sar.opB$obj) # 4426.503
 
 mod.sar.opS <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-AIC(mod.sar.opW$obj) # 4659.405
-AIC(mod.sar.opS$obj) # 4665.91
+AIC(mod.sar.opW$obj) # 4395.44
+AIC(mod.sar.opS$obj) # 4404.467
 
 mod.sar.opW
-# So "W" is the best coding style and the best neighbourhood distance is 553.5048
+# So "W" is the best coding style and the best neighbourhood distance is 507.1066
 rm(mod.sar.opS, mod.sar.opB)
 
 ## 2iv. Run model simplification -------------------------------------------
@@ -448,281 +448,226 @@ mod.sar.op0 <- errorsarlm(mod.sar.opW$mod, listw = op.w, zero.policy = TRUE, tol
 rm(op.nb)
 
 # start model simplification
-summary(mod.sar.op0, Nagelkerke = TRUE) # 0.88671
+summary(mod.sar.op0, Nagelkerke = TRUE) # 0.89051
 summary(mod.sar.op0)$Coef[order(summary(mod.sar.op0)$Coef[, 4]),]
-mod.sar.op1 <- update(mod.sar.op0, ~. -I(mean.mld.t/10):I(depth10deg/100))
+mod.sar.op1 <- update(mod.sar.op0, ~. -poly(meanSST.1deg, 3):sdSST.1deg + poly(meanSST.1deg, 2):sdSST.1deg)
 anova(mod.sar.op0, mod.sar.op1)
-summary(mod.sar.op1, Nagelkerke = TRUE) # 0.88671
-AIC(mod.sar.op1) # 4657.405
+summary(mod.sar.op1, Nagelkerke = TRUE) # 0.89051
+AIC(mod.sar.op1) # 4393.454
 summary(mod.sar.op1)$Coef[order(summary(mod.sar.op1)$Coef[, 4]),]
 
-mod.sar.op2 <- update(mod.sar.op1, ~. -logProd.mn.ann:prop2.oxy)
+mod.sar.op2 <- update(mod.sar.op1, ~. -I(depth10deg/100):logProd.mn.ann)
 anova(mod.sar.op2, mod.sar.op1)
-summary(mod.sar.op2, Nagelkerke = TRUE) # 0.88671 
-AIC(mod.sar.op2) # 4655.407
+summary(mod.sar.op2, Nagelkerke = TRUE) # 0.8905
+AIC(mod.sar.op2) # 4391.473
 rm(mod.sar.op1)
 summary(mod.sar.op2)$Coef[order(summary(mod.sar.op2)$Coef[, 4]),]
 
-mod.sar.op3 <- update(mod.sar.op2, ~. -I(depth10deg/100):logProd.mn.ann)
+mod.sar.op3 <- update(mod.sar.op2, ~. -I(mean.mld.t/10):prop2.oxy )
 anova(mod.sar.op3, mod.sar.op2)
-summary(mod.sar.op3, Nagelkerke = TRUE) # 0.88671
-AIC(mod.sar.op3) # 4653.409
+summary(mod.sar.op3, Nagelkerke = TRUE) # 0.8905
+AIC(mod.sar.op3) # 4389.541
 rm(mod.sar.op2)
 summary(mod.sar.op3)$Coef[order(summary(mod.sar.op3)$Coef[, 4]),]
 
-mod.sar.op4 <- update(mod.sar.op3, ~. -)
+mod.sar.op4 <- update(mod.sar.op3, ~. -absMnSal.0m:sdSal.0m)
 anova(mod.sar.op4, mod.sar.op3)
-summary(mod.sar.op4, Nagelkerke = TRUE) # 
-AIC(mod.sar.op4) # 
+summary(mod.sar.op4, Nagelkerke = TRUE) # 0.89049
+AIC(mod.sar.op4) # 4387.628
 rm(mod.sar.op3)
 summary(mod.sar.op4)$Coef[order(summary(mod.sar.op4)$Coef[, 4]),]
 
-mod.sar.op5 <- update(mod.sar.op4, ~. -)
+mod.sar.op5 <- update(mod.sar.op4, ~. -sdSal.0m:Ocean2)
 anova(mod.sar.op5, mod.sar.op4)
-summary(mod.sar.op5, Nagelkerke = TRUE) # 
-AIC(mod.sar.op5) # 
+summary(mod.sar.op5, Nagelkerke = TRUE) # 0.89047
+AIC(mod.sar.op5) # 4383.814
 rm(mod.sar.op4)
 summary(mod.sar.op5)$Coef[order(summary(mod.sar.op5)$Coef[, 4]),]
 
-mod.sar.op6 <- update(mod.sar.op5, ~. -)
+mod.sar.op6 <- update(mod.sar.op5, ~. -logProd.mn.ann:prop2.oxy)
 anova(mod.sar.op6, mod.sar.op5)
-summary(mod.sar.op6, Nagelkerke = TRUE) # 
-AIC(mod.sar.op6) # 4658.373
+summary(mod.sar.op6, Nagelkerke = TRUE) # 0.89046
+AIC(mod.sar.op6) # 4381.931
 rm(mod.sar.op5)
 summary(mod.sar.op6)$Coef[order(summary(mod.sar.op6)$Coef[, 4]),]
 
-mod.sar.op7 <- update(mod.sar.op6, ~. -)
+mod.sar.op7 <- update(mod.sar.op6, ~. -sdSST.1deg:poly(meanSST.1deg, 2) + sdSST.1deg:poly(meanSST.1deg, 1))
 anova(mod.sar.op7, mod.sar.op6)
-summary(mod.sar.op7, Nagelkerke = TRUE) # 
-AIC(mod.sar.op7) # 
+summary(mod.sar.op7, Nagelkerke = TRUE) # 0.89044
+AIC(mod.sar.op7) # 4380.114
 rm(mod.sar.op6)
 summary(mod.sar.op7)$Coef[order(summary(mod.sar.op7)$Coef[, 4]),]
 
-mod.sar.op8 <- update(mod.sar.op7, ~. -)
+mod.sar.op8 <- update(mod.sar.op7, ~. -poly(meanSST.1deg, 3):I(depth10deg/100) + poly(meanSST.1deg, 2):I(depth10deg/100))
 anova(mod.sar.op8, mod.sar.op7)
-summary(mod.sar.op8, Nagelkerke = TRUE) # 
-AIC(mod.sar.op8) # 
+summary(mod.sar.op8, Nagelkerke = TRUE) # 0.89041
+AIC(mod.sar.op8) # 4378.372
 rm(mod.sar.op7)
 summary(mod.sar.op8)$Coef[order(summary(mod.sar.op8)$Coef[, 4]),]
 
-mod.sar.op9 <- update(mod.sar.op8, ~. -)
+mod.sar.op9 <- update(mod.sar.op8, ~. -poly(meanSST.1deg, 3):I(mean.mld.t/10) + poly(meanSST.1deg, 2):I(mean.mld.t/10))
 anova(mod.sar.op9, mod.sar.op8)
-summary(mod.sar.op9, Nagelkerke = TRUE) # 
-AIC(mod.sar.op9) # 
+summary(mod.sar.op9, Nagelkerke = TRUE) # 0.8904
+AIC(mod.sar.op9) # 4376.528
 rm(mod.sar.op8)
 summary(mod.sar.op9)$Coef[order(summary(mod.sar.op9)$Coef[, 4]),]
 
-mod.sar.op10 <- update(mod.sar.op9, ~. -)
+mod.sar.op10 <- update(mod.sar.op9, ~. -sdSST.1deg:I(depth10deg/100))
 anova(mod.sar.op10, mod.sar.op9)
-summary(mod.sar.op10, Nagelkerke = TRUE) # 
-AIC(mod.sar.op10) # 
+summary(mod.sar.op10, Nagelkerke = TRUE) # 0.89037
+AIC(mod.sar.op10) # 4374.849
 rm(mod.sar.op9)
 summary(mod.sar.op10)$Coef[order(summary(mod.sar.op10)$Coef[, 4]),]
 
-mod.sar.op11 <- update(mod.sar.op10, ~. -)
+mod.sar.op11 <- update(mod.sar.op10, ~. -sdSST.1deg:absMnSal.0m)
 anova(mod.sar.op11, mod.sar.op10)
-summary(mod.sar.op11, Nagelkerke = TRUE) # 
-AIC(mod.sar.op11) # 
+summary(mod.sar.op11, Nagelkerke = TRUE) # 0.89033
+AIC(mod.sar.op11) # 4373.177
 rm(mod.sar.op10)
 summary(mod.sar.op11)$Coef[order(summary(mod.sar.op11)$Coef[, 4]),]
 
-mod.sar.op12 <- update(mod.sar.op11, ~. -)
+mod.sar.op12 <- update(mod.sar.op11, ~. -I(mean.mld.t/10):poly(meanSST.1deg, 2) + I(mean.mld.t/10):poly(meanSST.1deg, 1))
 anova(mod.sar.op12, mod.sar.op11)
-summary(mod.sar.op12, Nagelkerke = TRUE) # 
-AIC(mod.sar.op12) # 
+summary(mod.sar.op12, Nagelkerke = TRUE) # 0.89025
+AIC(mod.sar.op12) # 4372.032
 rm(mod.sar.op11)
 summary(mod.sar.op12)$Coef[order(summary(mod.sar.op12)$Coef[, 4]),]
 
-mod.sar.op13 <- update(mod.sar.op12, ~. -)
+mod.sar.op13 <- update(mod.sar.op12, ~. -I(mean.mld.t/10):poly(meanSST.1deg, 1))
 anova(mod.sar.op13, mod.sar.op12)
-summary(mod.sar.op13, Nagelkerke = TRUE) # 
-AIC(mod.sar.op13) #  
+summary(mod.sar.op13, Nagelkerke = TRUE) # 0.89017
+AIC(mod.sar.op13) #  4370.807
 rm(mod.sar.op12)
 summary(mod.sar.op13)$Coef[order(summary(mod.sar.op13)$Coef[, 4]),]
 
-mod.sar.op14 <- update(mod.sar.op13, ~. -)
+mod.sar.op14 <- update(mod.sar.op13, ~. -I(mean.mld.t/10):I(depth10deg/100))
 anova(mod.sar.op14, mod.sar.op13)
-summary(mod.sar.op14, Nagelkerke = TRUE) # 
-AIC(mod.sar.op14) # 
+summary(mod.sar.op14, Nagelkerke = TRUE) # 0.89013
+AIC(mod.sar.op14) # 4369.257
 rm(mod.sar.op13)
 summary(mod.sar.op14)$Coef[order(summary(mod.sar.op14)$Coef[, 4]),]
 
-mod.sar.op15 <- update(mod.sar.op14, ~. -)
+mod.sar.op15 <- update(mod.sar.op14, ~. -I(depth10deg/100):poly(meanSST.1deg, 2) + I(depth10deg/100):poly(meanSST.1deg, 1))
 anova(mod.sar.op15, mod.sar.op14)
-summary(mod.sar.op15, Nagelkerke = TRUE) # 
-AIC(mod.sar.op15) # 
+summary(mod.sar.op15, Nagelkerke = TRUE) # 0.89008
+AIC(mod.sar.op15) # 4367.725
 rm(mod.sar.op14)
 summary(mod.sar.op15)$Coef[order(summary(mod.sar.op15)$Coef[, 4]),]
 
-mod.sar.op16 <- update(mod.sar.op15, ~. -)
+mod.sar.op16 <- update(mod.sar.op15, ~. -I(depth10deg/100):poly(meanSST.1deg, 1))
 anova(mod.sar.op16, mod.sar.op15)
-summary(mod.sar.op16, Nagelkerke = TRUE) # 
-AIC(mod.sar.op16) # 
+summary(mod.sar.op16, Nagelkerke = TRUE) # 0.89007
+AIC(mod.sar.op16) # 4365.845
 rm(mod.sar.op15)
 summary(mod.sar.op16)$Coef[order(summary(mod.sar.op16)$Coef[, 4]),]
 
-mod.sar.op17 <- update(mod.sar.op16, ~. -)
+mod.sar.op17 <- update(mod.sar.op16, ~. -sdSST.1deg:logProd.mn.ann)
 anova(mod.sar.op17, mod.sar.op16)
-summary(mod.sar.op17, Nagelkerke = TRUE) # 
-AIC(mod.sar.op17) # 
+summary(mod.sar.op17, Nagelkerke = TRUE) # 0.88995
+AIC(mod.sar.op17) # 4365.003
 rm(mod.sar.op16)
 summary(mod.sar.op17)$Coef[order(summary(mod.sar.op17)$Coef[, 4]),]
 
-mod.sar.op18 <- update(mod.sar.op17, ~. -I(depth10deg/100):Ocean2)
+mod.sar.op18 <- update(mod.sar.op17, ~. -poly(meanSST.1deg, 3):absMnSal.0m  + poly(meanSST.1deg, 2):absMnSal.0m )
 anova(mod.sar.op18, mod.sar.op17)
-summary(mod.sar.op18, Nagelkerke = TRUE) # 0.88743
-AIC(mod.sar.op18) # 4636.028
+summary(mod.sar.op18, Nagelkerke = TRUE) # 0.88982
+AIC(mod.sar.op18) # 4364.26
 rm(mod.sar.op17)
 summary(mod.sar.op18)$Coef[order(summary(mod.sar.op18)$Coef[, 4]),]
 
-mod.sar.op19 <- update(mod.sar.op18, ~. -poly(meanSST.1deg, 3):I(depth10deg/100) + poly(meanSST.1deg, 2):I(depth10deg/100))
+mod.sar.op19 <- update(mod.sar.op18, ~. -sdSST.1deg:prop2.oxy)
 anova(mod.sar.op19, mod.sar.op18)
-summary(mod.sar.op19, Nagelkerke = TRUE) # 0.88737
-AIC(mod.sar.op19) # 4634.599
+summary(mod.sar.op19, Nagelkerke = TRUE) # 0.88965
+AIC(mod.sar.op19) # 4363.938
 rm(mod.sar.op18)
 summary(mod.sar.op19)$Coef[order(summary(mod.sar.op19)$Coef[, 4]),]
 
-mod.sar.op20 <- update(mod.sar.op19, ~. -sdSST.1deg:I(depth10deg/100))
+mod.sar.op20 <- update(mod.sar.op19, ~. -poly(meanSST.1deg, 3):prop2.oxy + poly(meanSST.1deg, 2):prop2.oxy)
 anova(mod.sar.op20, mod.sar.op19)
-summary(mod.sar.op20, Nagelkerke = TRUE) # 0.8873
-AIC(mod.sar.op20) # 4633.318
+summary(mod.sar.op20, Nagelkerke = TRUE) # 0.88951
+AIC(mod.sar.op20) # 4363.36
 rm(mod.sar.op19)
 summary(mod.sar.op20)$Coef[order(summary(mod.sar.op20)$Coef[, 4]),]
 
-mod.sar.op21 <- update(mod.sar.op20, ~. -poly(meanSST.1deg, 3):delta_carb_ion + poly(meanSST.1deg, 2):delta_carb_ion)
+mod.sar.op21 <- update(mod.sar.op20, ~. -sdSST.1deg:Ocean2)
 anova(mod.sar.op21, mod.sar.op20)
-summary(mod.sar.op21, Nagelkerke = TRUE) # 0.88718
-AIC(mod.sar.op21) # 4632.572
+summary(mod.sar.op21, Nagelkerke = TRUE) # 0.88932
+AIC(mod.sar.op21) # 4361.227
 rm(mod.sar.op20)
 summary(mod.sar.op21)$Coef[order(summary(mod.sar.op21)$Coef[, 4]),]
 
-mod.sar.op22 <- update(mod.sar.op21, ~. -poly(meanSST.1deg, 3):logProd.mn.ann + poly(meanSST.1deg, 2):logProd.mn.ann)
+mod.sar.op22 <- update(mod.sar.op21, ~. -I(mean.mld.t/10):sdSal.0m)
 anova(mod.sar.op22, mod.sar.op21)
-summary(mod.sar.op22, Nagelkerke = TRUE) # 0.88706
-AIC(mod.sar.op22) # 4631.811
+summary(mod.sar.op22, Nagelkerke = TRUE) # 0.88915 
+AIC(mod.sar.op22) # 4360.892
 rm(mod.sar.op21)
 summary(mod.sar.op22)$Coef[order(summary(mod.sar.op22)$Coef[, 4]),]
 
-mod.sar.op23 <- update(mod.sar.op22, ~. -I(depth10deg/100):poly(meanSST.1deg, 2) + I(depth10deg/100):poly(meanSST.1deg, 1))
+mod.sar.op23 <- update(mod.sar.op22, ~. -I(depth10deg/100):Ocean2)
 anova(mod.sar.op23, mod.sar.op22)
-summary(mod.sar.op23, Nagelkerke = TRUE) # 0.8869
-AIC(mod.sar.op23) #  4631.421 
+summary(mod.sar.op23, Nagelkerke = TRUE) # 0.88894
+AIC(mod.sar.op23) # 4359.014  
 rm(mod.sar.op22)
 summary(mod.sar.op23)$Coef[order(summary(mod.sar.op23)$Coef[, 4]),]
 
-mod.sar.op24 <- update(mod.sar.op23, ~. -I(depth10deg/100):poly(meanSST.1deg, 1))
+mod.sar.op24 <- update(mod.sar.op23, ~. -I(depth10deg/100):prop2.oxy)
 anova(mod.sar.op24, mod.sar.op23)
-summary(mod.sar.op24, Nagelkerke = TRUE) # 0.88688
-AIC(mod.sar.op24) # 4629.682
+summary(mod.sar.op24, Nagelkerke = TRUE) # 0.88881
+AIC(mod.sar.op24) # 4358.266
 rm(mod.sar.op23)
 summary(mod.sar.op24)$Coef[order(summary(mod.sar.op24)$Coef[, 4]),]
 
-mod.sar.op25 <- update(mod.sar.op24, ~. -I(depth10deg/100):prop2.oxy)
+mod.sar.op25 <- update(mod.sar.op24, ~. -poly(meanSST.1deg, 3):logProd.mn.ann + poly(meanSST.1deg, 2):logProd.mn.ann)
 anova(mod.sar.op25, mod.sar.op24)
-summary(mod.sar.op25, Nagelkerke = TRUE) # 0.88674
-AIC(mod.sar.op25) # 4629.024
+summary(mod.sar.op25, Nagelkerke = TRUE) # 0.88856
+AIC(mod.sar.op25) # 4358.701
 rm(mod.sar.op24)
 summary(mod.sar.op25)$Coef[order(summary(mod.sar.op25)$Coef[, 4]),]
 
 mod.sar.op26 <- update(mod.sar.op25, ~. -logProd.mn.ann:poly(meanSST.1deg, 2) + logProd.mn.ann:poly(meanSST.1deg, 1))
 anova(mod.sar.op26, mod.sar.op25)
-summary(mod.sar.op26, Nagelkerke = TRUE) # 0.88661
-AIC(mod.sar.op26) # 4628.398
+summary(mod.sar.op26, Nagelkerke = TRUE) # 0.88852
+AIC(mod.sar.op26) # 4357.148
 rm(mod.sar.op25)
 summary(mod.sar.op26)$Coef[order(summary(mod.sar.op26)$Coef[, 4]),]
 
-mod.sar.op27 <- update(mod.sar.op26, ~. -logProd.mn.ann:poly(meanSST.1deg, 1))
+# having got to here (which is that all values are <0.05 or can't be removed), then check whether any others should be removed (particularly those with ocean)
+mod.sar.op27 <- update(mod.sar.op26, ~. -logProd.mn.ann:Ocean2)
 anova(mod.sar.op27, mod.sar.op26)
-summary(mod.sar.op27, Nagelkerke = TRUE) #  0.88651
-AIC(mod.sar.op27) # 4627.369
+summary(mod.sar.op27, Nagelkerke = TRUE) # 0.88792
+AIC(mod.sar.op27) # 4358.992
 rm(mod.sar.op26)
 summary(mod.sar.op27)$Coef[order(summary(mod.sar.op27)$Coef[, 4]),]
 
-mod.sar.op28 <- update(mod.sar.op27, ~. -poly(meanSST.1deg, 3):prop2.oxy + poly(meanSST.1deg, 2):prop2.oxy)
+mod.sar.op28 <- update(mod.sar.op27, ~. -logProd.mn.ann:sdSal.0m)
 anova(mod.sar.op28, mod.sar.op27)
-summary(mod.sar.op28, Nagelkerke = TRUE) # 0.88635
-AIC(mod.sar.op28) # 4627.051
+summary(mod.sar.op28, Nagelkerke = TRUE) # 0.88759
+AIC(mod.sar.op28) # 4360.176
 rm(mod.sar.op27)
 summary(mod.sar.op28)$Coef[order(summary(mod.sar.op28)$Coef[, 4]),]
 
-mod.sar.op29 <- update(mod.sar.op28, ~. -sdSST.1deg:prop2.oxy)
+mod.sar.op29 <- update(mod.sar.op28, ~. -sdSal.0m:prop2.oxy)
 anova(mod.sar.op29, mod.sar.op28)
-summary(mod.sar.op29, Nagelkerke = TRUE) # 0.88626
-AIC(mod.sar.op29) # 4625.942
+summary(mod.sar.op29, Nagelkerke = TRUE) # 0.88726
+AIC(mod.sar.op29) # 4361.464
 rm(mod.sar.op28)
 summary(mod.sar.op29)$Coef[order(summary(mod.sar.op29)$Coef[, 4]),]
 
-mod.sar.op30 <- update(mod.sar.op29, ~. -I(depth10deg/100):delta_carb_ion)
+mod.sar.op30 <- update(mod.sar.op29, ~. -prop2.oxy:poly(meanSST.1deg, 2) + prop2.oxy:poly(meanSST.1deg, 1))
 anova(mod.sar.op30, mod.sar.op29)
-summary(mod.sar.op30, Nagelkerke = TRUE) # 0.88603
-AIC(mod.sar.op30) # 4626.349
-rm(mod.sar.op29)
-summary(mod.sar.op30)$Coef[order(summary(mod.sar.op30)$Coef[, 4]),]
+# nothing else can be removed
 
-mod.sar.op31 <- update(mod.sar.op30, ~. -sdSST.1deg:Ocean2)
-anova(mod.sar.op31, mod.sar.op30)
-summary(mod.sar.op31, Nagelkerke = TRUE) # 0.88578
-AIC(mod.sar.op31) # 4624.84
-rm(mod.sar.op30)
-summary(mod.sar.op31)$Coef[order(summary(mod.sar.op31)$Coef[, 4]),]
-
-mod.sar.op32 <- update(mod.sar.op31, ~. -I(mean.mld.t/10):poly(meanSST.1deg, 2) + I(mean.mld.t/10):poly(meanSST.1deg, 1))
-anova(mod.sar.op32, mod.sar.op31)
-summary(mod.sar.op32, Nagelkerke = TRUE) # 0.88552
-AIC(mod.sar.op32) # 4625.514
-rm(mod.sar.op31)
-summary(mod.sar.op32)$Coef[order(summary(mod.sar.op32)$Coef[, 4]),]
-
-mod.sar.op33 <- update(mod.sar.op32, ~. -I(mean.mld.t/10):poly(meanSST.1deg, 1))
-anova(mod.sar.op33, mod.sar.op32)
-summary(mod.sar.op33, Nagelkerke = TRUE) # 0.88542
-AIC(mod.sar.op33) # 4624.455
-rm(mod.sar.op32)
-summary(mod.sar.op33)$Coef[order(summary(mod.sar.op33)$Coef[, 4]),]
-
-mod.sar.op34 <- update(mod.sar.op33, ~. -Ocean2:delta_carb_ion)
-anova(mod.sar.op34, mod.sar.op33) 
-summary(mod.sar.op34, Nagelkerke = TRUE) # 0.88516
-AIC(mod.sar.op34) # 4623.156
-rm(mod.sar.op33)
-summary(mod.sar.op34)$Coef[order(summary(mod.sar.op34)$Coef[, 4]),]
-
-mod.sar.op35 <- update(mod.sar.op34, ~. -delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 1))
-anova(mod.sar.op35, mod.sar.op34)
-summary(mod.sar.op35, Nagelkerke = TRUE) # 0.88487
-AIC(mod.sar.op35) # 4624.044
-rm(mod.sar.op34)
-summary(mod.sar.op35)$Coef[order(summary(mod.sar.op35)$Coef[, 4]),]
-
-mod.sar.op36 <- update(mod.sar.op35, ~. -delta_carb_ion:poly(meanSST.1deg, 1) )
-anova(mod.sar.op36, mod.sar.op35)
-summary(mod.sar.op36, Nagelkerke = TRUE) # 0.88462
-AIC(mod.sar.op36) # 4624.544
-rm(mod.sar.op35)
-summary(mod.sar.op36)$Coef[order(summary(mod.sar.op36)$Coef[, 4]),]
-
-mod.sar.op37 <- update(mod.sar.op36, ~. -I(mean.mld.t/10):delta_carb_ion)
-anova(mod.sar.op37, mod.sar.op36) # 
-summary(mod.sar.op37, Nagelkerke = TRUE) # 0.88456
-AIC(mod.sar.op37) # 4623.137
-rm(mod.sar.op36)
-summary(mod.sar.op37)$Coef[order(summary(mod.sar.op37)$Coef[, 4]),]
-
-# having got to here (which is that all values are <0.05 or can't be removed), then check whether any others should be removed (particularly those with ocean)
-mod.sar.op38 <- update(mod.sar.op37, ~. -sdSal.0m:prop2.oxy)
-anova(mod.sar.op38, mod.sar.op37) # 
-
-mod.sar.opf <- mod.sar.op37
-rm(mod.sar.op37, mod.sar.op38)
+mod.sar.opf <- mod.sar.op29
+rm(mod.sar.op30, mod.sar.op29)
 
 ## 2v. Create a plot of model parameters --------------------------------------
-summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88456
+summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88726
 
 # generate a dataframe of coefficients
 (ms.coef <- data.frame(names = names(mod.sar.opf$coefficients), coef.sar = mod.sar.opf$coefficients, row.names = 1:length(mod.sar.opf$coefficients), stars = NA))
 
 # reorder the rows to something more sensible
-order.coef.ms <- c(1:23, 43:47, 24:42)
+order.coef.ms <- c(1:23, 38:43, 24:37)
 (ms.coef <- ms.coef[order.coef.ms,])
 rm(order.coef.ms)
 
@@ -746,92 +691,92 @@ rm(plt.def, tmp.x, ms.coef)
 
 ## 2vi. Calculate likelihood ratios for the SAR model ----------------------
 # best model is
-summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88456
-AIC(mod.sar.opf) # 4623.137
+summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88726
+AIC(mod.sar.opf) # 4361.464
 
 # removing mean temp^3
 mod.sar.lr.mnt3 <- update(mod.sar.opf, ~. -poly(meanSST.1deg, 3) + poly(meanSST.1deg, 2) - poly(meanSST.1deg, 3):sdSal.0m + poly(meanSST.1deg, 2):sdSal.0m - poly(meanSST.1deg, 3):Ocean2 + poly(meanSST.1deg, 2):Ocean2)
-summary(mod.sar.lr.mnt3, Nagelkerke = T) # r2 = 0.87414
-AIC(mod.sar.lr.mnt3) # 4715.258
+summary(mod.sar.lr.mnt3, Nagelkerke = T) # r2 = 0.87877
+AIC(mod.sar.lr.mnt3) # 4432.861
 lrtest(mod.sar.opf, mod.sar.lr.mnt3) # n.b. this is basically an anova
-# LR = < 2.2e-16 ***
+# LR = < 2.338e-16 ***
 
 # removing mean temp^2
 mod.sar.lr.mnt2 <- update(mod.sar.opf, ~. -poly(meanSST.1deg, 3) + poly(meanSST.1deg, 1) - poly(meanSST.1deg, 3):sdSal.0m + poly(meanSST.1deg, 1):sdSal.0m - Ocean2:poly(meanSST.1deg, 3) + Ocean2:poly(meanSST.1deg, 1) - prop2.oxy:poly(meanSST.1deg, 2) + prop2.oxy:poly(meanSST.1deg, 1) - absMnSal.0m:poly(meanSST.1deg, 2) + absMnSal.0m:poly(meanSST.1deg, 1) )
-summary(mod.sar.lr.mnt2, Nagelkerke = T) # r2 = 0.86469
-AIC(mod.sar.lr.mnt2) # 4787.032
+summary(mod.sar.lr.mnt2, Nagelkerke = T) # r2 = 0.86847
+AIC(mod.sar.lr.mnt2) # 4510.058
 lrtest(mod.sar.opf, mod.sar.lr.mnt2)
 # LR = < 2.2e-16 ***
 
 # removing mean temp
-mod.sar.lr.mnt <- update(mod.sar.opf, ~. -poly(meanSST.1deg, 3) - poly(meanSST.1deg, 3):sdSal.0m - Ocean2:poly(meanSST.1deg, 3) - prop2.oxy:poly(meanSST.1deg, 2) - absMnSal.0m:poly(meanSST.1deg, 2) - sdSST.1deg:poly(meanSST.1deg, 1))
-summary(mod.sar.lr.mnt, Nagelkerke = T) # r2 = 0.82921
-AIC(mod.sar.lr.mnt) # 5042.727
+mod.sar.lr.mnt <- update(mod.sar.opf, ~. -poly(meanSST.1deg, 3) - poly(meanSST.1deg, 3):sdSal.0m - Ocean2:poly(meanSST.1deg, 3) - prop2.oxy:poly(meanSST.1deg, 2) - absMnSal.0m:poly(meanSST.1deg, 2) - sdSST.1deg:poly(meanSST.1deg, 1) - logProd.mn.ann:poly(meanSST.1deg, 1))
+summary(mod.sar.lr.mnt, Nagelkerke = T) # r2 = 0.8313
+AIC(mod.sar.lr.mnt) # 4766.357
 lrtest(mod.sar.opf, mod.sar.lr.mnt)
 # LR = < 2.2e-16 ***
 
 # removing sd temp
 mod.sar.lr.sdt <- update(mod.sar.opf, ~. -sdSST.1deg - sdSST.1deg:I(mean.mld.t/10) - sdSST.1deg:sdSal.0m - sdSST.1deg:poly(meanSST.1deg, 1))
-summary(mod.sar.lr.sdt, Nagelkerke = T) # r2 = 0.88303
-AIC(mod.sar.lr.sdt) # 4630.38
+summary(mod.sar.lr.sdt, Nagelkerke = T) # r2 = 0.88601
+AIC(mod.sar.lr.sdt) # 4365.506
 lrtest(mod.sar.opf, mod.sar.lr.sdt)
-# LR = 0.004224 **
+# LR = 0.01704 *
 
 # removing mld temp
 mod.sar.lr.mld <- update(mod.sar.opf, ~. -I(mean.mld.t/10) - sdSST.1deg:I(mean.mld.t/10) - I(mean.mld.t/10):logProd.mn.ann - I(mean.mld.t/10):absMnSal.0m - I(mean.mld.t/10):Ocean2)
-summary(mod.sar.lr.mld, Nagelkerke = T) # r2 = 0.881
-AIC(mod.sar.lr.mld) # 4646.343
+summary(mod.sar.lr.mld, Nagelkerke = T) # r2 = 0.88346
+AIC(mod.sar.lr.mld) # 4385.69
 lrtest(mod.sar.opf, mod.sar.lr.mld)
-# LR = 3.932e-06 ***
+# LR = 2.492e-06 ***
 
 # removing depth of 10 degree contour
 mod.sar.lr.d10 <- update(mod.sar.opf, ~. -I(depth10deg/100) - I(depth10deg/100):absMnSal.0m - I(depth10deg/100):sdSal.0m)
-summary(mod.sar.lr.d10, Nagelkerke = T) # r2 = 0.88225
-AIC(mod.sar.lr.d10) # 4640.058
+summary(mod.sar.lr.d10, Nagelkerke = T) # r2 = 0.88506 
+AIC(mod.sar.lr.d10) # 4376.608
 lrtest(mod.sar.opf, mod.sar.lr.d10)
-# LR = 4.195e-05 ***
+# LR =  9.831e-05 ***
 
 # removing mean log Prod
-mod.sar.lr.prod <- update(mod.sar.opf, ~. -logProd.mn.ann - I(mean.mld.t/10):logProd.mn.ann - logProd.mn.ann:absMnSal.0m - logProd.mn.ann:sdSal.0m - logProd.mn.ann:Ocean2 - logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.lr.prod, Nagelkerke = T) # r2 = 0.87761
-AIC(mod.sar.lr.prod) # 4676.841
+mod.sar.lr.prod <- update(mod.sar.opf, ~. -logProd.mn.ann - I(mean.mld.t/10):logProd.mn.ann - logProd.mn.ann:absMnSal.0m - logProd.mn.ann:poly(meanSST.1deg, 1))
+summary(mod.sar.lr.prod, Nagelkerke = T) # r2 = 0.88133
+AIC(mod.sar.lr.prod) # 4409.523
 lrtest(mod.sar.opf, mod.sar.lr.prod)
-# LR = < 4.295e-12 ***
+# LR = 1.95e-11 ***
 
 # removing mean salinity
 mod.sar.lr.msal <- update(mod.sar.opf, ~. -absMnSal.0m - I(mean.mld.t/10):absMnSal.0m - I(depth10deg/100):absMnSal.0m - logProd.mn.ann:absMnSal.0m - absMnSal.0m:prop2.oxy - absMnSal.0m:Ocean2 - absMnSal.0m:poly(meanSST.1deg, 2))
-summary(mod.sar.lr.msal, Nagelkerke = T) # r2 = 0.87891
-AIC(mod.sar.lr.msal) # 4660.493
+summary(mod.sar.lr.msal, Nagelkerke = T) # r2 = 0.88124
+AIC(mod.sar.lr.msal) # 4400.288
 lrtest(mod.sar.opf, mod.sar.lr.msal)
-# LR = 1.042e-08 ***
+# LR = 5.461e-09 ***
 
 # removing sd salinity
-mod.sar.lr.sdsal <- update(mod.sar.opf, ~. -sdSal.0m - poly(meanSST.1deg, 3):sdSal.0m - sdSST.1deg:sdSal.0m - I(depth10deg/100):sdSal.0m - logProd.mn.ann:sdSal.0m - sdSal.0m:prop2.oxy)
-summary(mod.sar.lr.sdsal, Nagelkerke = T) # r2 = 0.8812
-AIC(mod.sar.lr.sdsal) # 4640.336
+mod.sar.lr.sdsal <- update(mod.sar.opf, ~. -sdSal.0m - poly(meanSST.1deg, 3):sdSal.0m - sdSST.1deg:sdSal.0m - I(depth10deg/100):sdSal.0m)
+summary(mod.sar.lr.sdsal, Nagelkerke = T) # r2 = 0.88498
+AIC(mod.sar.lr.sdsal) # 4371.346
 lrtest(mod.sar.opf, mod.sar.lr.sdsal)
-# LR = 5.67e-05 ***
+# LR = 0.001272 **
 
 # removing prop2.oxy
-mod.sar.lr.oxy <- update(mod.sar.opf, ~. -prop2.oxy - absMnSal.0m:prop2.oxy - sdSal.0m:prop2.oxy - prop2.oxy:Ocean2 - prop2.oxy:poly(meanSST.1deg, 2))
-summary(mod.sar.lr.oxy, Nagelkerke = T) # r2 = 0.88221
-AIC(mod.sar.lr.oxy) # 4632.521
+mod.sar.lr.oxy <- update(mod.sar.opf, ~. -prop2.oxy - absMnSal.0m:prop2.oxy - prop2.oxy:Ocean2 - prop2.oxy:poly(meanSST.1deg, 2))
+summary(mod.sar.lr.oxy, Nagelkerke = T) # r2 = 0.88556
+AIC(mod.sar.lr.oxy) # 4365.766
 lrtest(mod.sar.opf, mod.sar.lr.oxy)
-# LR = 0.001461 **
+# LR = 0.01222 *
 
 # removing Ocean2
-mod.sar.lr.oce <- update(mod.sar.opf, ~. -Ocean2 - I(mean.mld.t/10):Ocean2 - logProd.mn.ann:Ocean2 - absMnSal.0m:Ocean2 - prop2.oxy:Ocean2 - Ocean2:poly(meanSST.1deg, 3))
-summary(mod.sar.lr.oce, Nagelkerke = T) # r2 = 0.87451
-AIC(mod.sar.lr.oce) # 4687.775
+mod.sar.lr.oce <- update(mod.sar.opf, ~. -Ocean2 - I(mean.mld.t/10):Ocean2 - absMnSal.0m:Ocean2 - prop2.oxy:Ocean2 - Ocean2:poly(meanSST.1deg, 3))
+summary(mod.sar.lr.oce, Nagelkerke = T) # r2 = 0.87711
+AIC(mod.sar.lr.oce) # 4427.744
 lrtest(mod.sar.opf, mod.sar.lr.oce)
-# LR = 1.472e-13 ***
+# LR = 5.862e-14 ***
 
 # removing delta_carb_ion
-mod.sar.lr.dis <- update(mod.sar.opf, ~. -delta_carb_ion - logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.lr.dis, Nagelkerke = T) # r2 = 0.88229
-AIC(mod.sar.lr.dis) # 4641.725
+mod.sar.lr.dis <- update(mod.sar.opf, ~. -delta_carb_ion)
+summary(mod.sar.lr.dis, Nagelkerke = T) # r2 = 0.88638
+AIC(mod.sar.lr.dis) # 4367.931
 lrtest(mod.sar.opf, mod.sar.lr.dis)
-# LR = 1.245e-05 ***
+# LR = 0.003618 **
 
 # create a vector with these likelihood values
 ms.lr <- data.frame(names = c("mnt3", "mnt2", "mnt", "sdt", "mld", "d10", "prod", "msal", "sdsal", "oxy", "oce", "dis"), lr = NA, p = NA, stars = NA)
@@ -858,54 +803,54 @@ rm(tmp.x)
 
 ## 2vii. Calculate likelihood ratios for groups of EVs ---------------------
 # best model is
-summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88456
-AIC(mod.sar.opf) # 4623.137
+summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88726
+AIC(mod.sar.opf) # 4361.464
 
 # removing temp
 mod.sar.lr.temp <- mod.sar.lr.mnt
-summary(mod.sar.lr.temp, Nagelkerke = T) # r2 = 0.82921
-AIC(mod.sar.lr.temp) # 5042.727
+summary(mod.sar.lr.temp, Nagelkerke = T) # r2 = 0.8313
+AIC(mod.sar.lr.temp) # 4766.357
 lrtest(mod.sar.opf, mod.sar.lr.temp)
 # LR = < 2.2e-16 ***
 
 # removing structure
 mod.sar.lr.str <- update(mod.sar.opf, ~. -I(mean.mld.t/10) - I(depth10deg/100) - sdSST.1deg:I(mean.mld.t/10) - I(mean.mld.t/10):logProd.mn.ann - I(mean.mld.t/10):absMnSal.0m - I(mean.mld.t/10):Ocean2 - I(depth10deg/100):absMnSal.0m - I(depth10deg/100):sdSal.0m)
-summary(mod.sar.lr.str, Nagelkerke = T) # r2 = 0.87934
-AIC(mod.sar.lr.str) # 4656.308
+summary(mod.sar.lr.str, Nagelkerke = T) # r2 = 0.88188
+AIC(mod.sar.lr.str) # 4394.435
 lrtest(mod.sar.opf, mod.sar.lr.str)
-# LR = 6.484e-08 ***
+# LR = 7.073e-08 ***
 
 # removing stability
 mod.sar.lr.stable <- update(mod.sar.opf, ~. -sdSST.1deg - sdSal.0m - sdSST.1deg:I(mean.mld.t/10) - sdSST.1deg:sdSal.0m - sdSST.1deg:poly(meanSST.1deg, 1) - poly(meanSST.1deg, 3):sdSal.0m - I(depth10deg/100):sdSal.0m - logProd.mn.ann:sdSal.0m - sdSal.0m:prop2.oxy)
-summary(mod.sar.lr.stable, Nagelkerke = T) # r2 = 0.88041
-AIC(mod.sar.lr.stable) # 4642.038
+summary(mod.sar.lr.stable, Nagelkerke = T) # r2 = 0.88446
+AIC(mod.sar.lr.stable) # 4370.286
 lrtest(mod.sar.opf, mod.sar.lr.stable)
-# LR = 2.506e-05 ***
+# LR = 0.001497 **
 
 # removing productivity
-summary(mod.sar.lr.prod, Nagelkerke = T) # r2 = 0.87761
-AIC(mod.sar.lr.prod) # 4676.841
+summary(mod.sar.lr.prod, Nagelkerke = T) # r2 = 0.88133
+AIC(mod.sar.lr.prod) # 4409.523
 lrtest(mod.sar.opf, mod.sar.lr.prod)
-# LR = 4.295e-12 ***
+# LR = 1.95e-11 ***
 
 # removing stress
-mod.sar.lr.sts <- update(mod.sar.opf, ~. -absMnSal.0m - prop2.oxy - I(mean.mld.t/10):absMnSal.0m - I(depth10deg/100):absMnSal.0m - logProd.mn.ann:absMnSal.0m - absMnSal.0m:prop2.oxy - absMnSal.0m:Ocean2 - sdSal.0m:prop2.oxy - prop2.oxy:Ocean2 - absMnSal.0m:poly(meanSST.1deg, 2) - prop2.oxy:poly(meanSST.1deg, 2))
-summary(mod.sar.lr.sts, Nagelkerke = T) # r2 = 0.87796
-AIC(mod.sar.lr.sts) # 4657.522
+mod.sar.lr.sts <- update(mod.sar.opf, ~. -absMnSal.0m - prop2.oxy - I(mean.mld.t/10):absMnSal.0m - I(depth10deg/100):absMnSal.0m - logProd.mn.ann:absMnSal.0m - absMnSal.0m:prop2.oxy - absMnSal.0m:Ocean2 - prop2.oxy:Ocean2 - absMnSal.0m:poly(meanSST.1deg, 2) - prop2.oxy:poly(meanSST.1deg, 2))
+summary(mod.sar.lr.sts, Nagelkerke = T) # r2 = 0.8806
+AIC(mod.sar.lr.sts) # 4396.195
 lrtest(mod.sar.opf, mod.sar.lr.sts)
-# LR =  4.378e-08 ***
+# LR =  3.874e-08 ***
 
 # removing Ocean2
-summary(mod.sar.lr.oce, Nagelkerke = T) # r2 = 0.87451
-AIC(mod.sar.lr.oce) # 4687.775
+summary(mod.sar.lr.oce, Nagelkerke = T) # r2 = 0.87711
+AIC(mod.sar.lr.oce) # 4427.744
 lrtest(mod.sar.opf, mod.sar.lr.oce)
-# LR = 1.472e-13 ***
+# LR = 5.862e-14 ***
 
 # removing delta_carb_ion
-summary(mod.sar.lr.dis, Nagelkerke = T) # r2 = 0.88229
-AIC(mod.sar.lr.dis) # 4641.725
+summary(mod.sar.lr.dis, Nagelkerke = T) # r2 = 0.88638
+AIC(mod.sar.lr.dis) # 4367.931
 lrtest(mod.sar.opf, mod.sar.lr.dis)
-# LR = 1.245e-05 ***
+# LR = 0.003618 **
 
 # create a vector with these likelihood values
 ms.lr.group <- data.frame(names = c("temp", "str", "stable", "prod", "sts", "oce", "dis"), lr = NA, p = NA, stars = NA)
@@ -944,7 +889,7 @@ par(mfrow = c(1,1))
 
 png("Figures/Ana_2viii_LRatio_opfop0.png", width = 800)
 # get order from running without order first
-lr.plot(lr.sar.op0, lr.sar.opf, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Full", "Simplified"), ylab = "Log Likelihood ratio", star.pos = 20)
+lr.plot(lr.sar.op0, lr.sar.opf, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Full", "Simplified"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 # also for groups of variables
@@ -962,19 +907,19 @@ dev.off()
 
 ## 2ix. Does optimisation differ for simplified? ---------------------------
 mod.fw.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
-mod.fw.rop # 508.5788
+mod.fw.rop # 506.6565
 AIC(mod.fw.rop$obj)
-# 4619.581
+# 4361.423
 
 mod.fb.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-mod.fb.rop # 562.59
+mod.fb.rop # 558.9481
 AIC(mod.fb.rop$obj)
-# 4669.185
+# 4400.223
 
 mod.fs.rop <- with(rsr.margo.mod, sar.optimised(mod.l0.sac$real$x.intercept, mod.sar.opf$call$formula, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-mod.fs.rop # 562.3092
+mod.fs.rop # 558.76
 AIC(mod.fs.rop$obj)
-# 4632.595
+# 4373.124
 
 # therefore justified in using W
 rm(mod.fw.rop, mod.fb.rop, mod.fs.rop, ms.lr, ms.lr.group)
@@ -982,8 +927,8 @@ rm(mod.fw.rop, mod.fb.rop, mod.fs.rop, ms.lr, ms.lr.group)
 
 ## 3. How do the different Oceans compare? ---------------------------------
 # best model is
-summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.86407
-AIC(mod.sar.opf) # 7585.799
+summary(mod.sar.opf, Nagelkerke = T) # r2 = 0.88726
+AIC(mod.sar.opf) # 4361.464
 
 # do I have sufficient points for each ocean?
 table(rsr.margo.mod$Ocean2) # should do
@@ -992,18 +937,18 @@ table(rsr.margo.mod$Ocean2) # should do
 ## 3i. set up model for Atlantic -----------------------------
 # run model based on best model for complete data with only Atlantic
 atl.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Atlantic", ], 0, mod.sar.opW$dist, longlat = TRUE)
-atl.s <- nb2listw(atl.nb, glist = NULL, style = "W", zero.policy = TRUE)
+atl.w <- nb2listw(atl.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(atl.nb)
 
 ## 3ii. set up model for Indian -----------------------------------
 # run model based on best model for complete data with only Indian
 ind.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Indian", ], 0, mod.sar.opW$dist, longlat = TRUE)
-ind.s <- nb2listw(ind.nb, glist = NULL, style = "W", zero.policy = TRUE)
+ind.w <- nb2listw(ind.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(ind.nb)
 
 ## 3iii. set up model for Pacific  ---------------------------
 pac.nb <- dnearneigh(ldg.coords[rsr.margo.mod$Ocean2 == "Pacific", ], 0, mod.sar.opW$dist, longlat = TRUE)
-pac.s <- nb2listw(pac.nb, glist = NULL, style = "W", zero.policy = TRUE)
+pac.w <- nb2listw(pac.nb, glist = NULL, style = "W", zero.policy = TRUE)
 rm(pac.nb)
 
 # n.b. removed the simplification in 3i-3iii as I'm only simplifying from the model with significant interactions (see 3vii). Therefore, also didn't need 3iv - vi
@@ -1012,10 +957,10 @@ rm(pac.nb)
 summary(mod.sar.op0)
 summary(mod.sar.opf)
 # get formula without the Ocean2
-op.formula <- update(mod.sar.opf$call$formula, ~.-Ocean2 - sdSST.1deg:Ocean2 - I(mean.mld.t/10):Ocean2 - logProd.mn.ann:Ocean2 - prop2.oxy:Ocean2 - Ocean2:delta_carb_ion - Ocean2:poly(meanSST.1deg, 2))
+op.formula <- update(mod.sar.opf$call$formula, ~.-Ocean2 - poly(meanSST.1deg, 3):Ocean2 - I(mean.mld.t/10):Ocean2 - absMnSal.0m:Ocean2 - prop2.oxy:Ocean2)
 
 # create a model with only significant values
-mod.sar.atlI <- errorsarlm(op.formula, listw = atl.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ])
+mod.sar.atlI <- errorsarlm(op.formula, listw = atl.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.atlI)
 par(mfrow = c(1, 1))
@@ -1023,394 +968,202 @@ par(mfrow = c(1, 1))
 # try adding in the other interactions
 mod.sar.atlI2 <- update(mod.sar.atlI, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.atlI2)
-anova(mod.sar.atlI, mod.sar.atlI2) # 0.29206
+anova(mod.sar.atlI, mod.sar.atlI2) # 0.14863
 rm(mod.sar.atlI2)
 
+# significant at the 0.05 level
 mod.sar.atlI3 <- update(mod.sar.atlI, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.atlI3)
-anova(mod.sar.atlI, mod.sar.atlI3) # 0.34832
+anova(mod.sar.atlI, mod.sar.atlI3) # 0.033485
 rm(mod.sar.atlI3)
 
 mod.sar.atlI4 <- update(mod.sar.atlI, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.atlI4)
-anova(mod.sar.atlI, mod.sar.atlI4) # 0.38968
+anova(mod.sar.atlI, mod.sar.atlI4) # 0.39041
 rm(mod.sar.atlI4)
 
-mod.sar.atlI5 <- update(mod.sar.atlI, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.atlI5 <- update(mod.sar.atlI, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.atlI5)
-anova(mod.sar.atlI, mod.sar.atlI5) # 0.57059
+anova(mod.sar.atlI, mod.sar.atlI5) # 0.25305
 rm(mod.sar.atlI5)
 
 mod.sar.atlI6 <- update(mod.sar.atlI, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.atlI6)
-anova(mod.sar.atlI, mod.sar.atlI6) # 0.12442
+anova(mod.sar.atlI, mod.sar.atlI6) # 0.13798
 rm(mod.sar.atlI6)
 
 mod.sar.atlI7 <- update(mod.sar.atlI, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.atlI7)
-anova(mod.sar.atlI, mod.sar.atlI7) # 0.66236
+anova(mod.sar.atlI, mod.sar.atlI7) # 0.8793
 rm(mod.sar.atlI7)
-
-mod.sar.atlI9 <- update(mod.sar.atlI, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.atlI9)
-anova(mod.sar.atlI, mod.sar.atlI9) # 0.084804
-rm(mod.sar.atlI9)
 
 mod.sar.atlI10 <- update(mod.sar.atlI, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.atlI10)
-anova(mod.sar.atlI, mod.sar.atlI10) # 0.4846
+anova(mod.sar.atlI, mod.sar.atlI10) # 0.19049
 rm(mod.sar.atlI10)
 
 mod.sar.atlI11 <- update(mod.sar.atlI, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.atlI11)
-anova(mod.sar.atlI, mod.sar.atlI11) # 0.95632
+anova(mod.sar.atlI, mod.sar.atlI11) # 0.98245
 rm(mod.sar.atlI11)
 
 mod.sar.atlI12 <- update(mod.sar.atlI, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.atlI12)
-anova(mod.sar.atlI, mod.sar.atlI12) # 0.060058
+anova(mod.sar.atlI, mod.sar.atlI12) # 0.26328
 rm(mod.sar.atlI12)
 
-mod.sar.atlI13 <- update(mod.sar.atlI, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.atlI13 <- update(mod.sar.atlI, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.atlI13)
-anova(mod.sar.atlI, mod.sar.atlI13) # 0.60343
+anova(mod.sar.atlI, mod.sar.atlI13) # 0.78239
 rm(mod.sar.atlI13)
 
 mod.sar.atlI14 <- update(mod.sar.atlI, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.atlI14)
-anova(mod.sar.atlI, mod.sar.atlI14) # 0.79249
+anova(mod.sar.atlI, mod.sar.atlI14) # 0.18756
 rm(mod.sar.atlI14)
 
-mod.sar.atlI15 <- update(mod.sar.atlI, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.atlI15)
-anova(mod.sar.atlI, mod.sar.atlI15) # 0.91004
-rm(mod.sar.atlI15)
-
+# significant at the 0.05 level
 mod.sar.atlI16 <- update(mod.sar.atlI, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.atlI16)
-anova(mod.sar.atlI, mod.sar.atlI16) # 0.38174
+anova(mod.sar.atlI, mod.sar.atlI16) # 0.033051
 rm(mod.sar.atlI16)
 
 mod.sar.atlI17 <- update(mod.sar.atlI, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.atlI17)
-anova(mod.sar.atlI, mod.sar.atlI17) # 0.54658
+anova(mod.sar.atlI, mod.sar.atlI17) # 0.78268
 rm(mod.sar.atlI17)
 
-mod.sar.atlI18 <- update(mod.sar.atlI, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.atlI18 <- update(mod.sar.atlI, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.atlI18)
-anova(mod.sar.atlI, mod.sar.atlI18) # 0.82099
+anova(mod.sar.atlI, mod.sar.atlI18) # 0.73457
 rm(mod.sar.atlI18)
 
-mod.sar.atlI19 <- update(mod.sar.atlI, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.atlI19 <- update(mod.sar.atlI, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.atlI19)
-anova(mod.sar.atlI, mod.sar.atlI19) # 0.59692
+anova(mod.sar.atlI, mod.sar.atlI19) # 0.38935
 rm(mod.sar.atlI19)
 
-mod.sar.atlI21 <- update(mod.sar.atlI, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.atlI21)
-anova(mod.sar.atlI, mod.sar.atlI21) # 0.39067
-rm(mod.sar.atlI21)
-
 # significant at the 0.05 level
-mod.sar.atlI22 <- update(mod.sar.atlI, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.atlI22 <- update(mod.sar.atlI, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.atlI22)
-anova(mod.sar.atlI, mod.sar.atlI22) # 0.03498
-rm(mod.sar.atlI22)
+anova(mod.sar.atlI, mod.sar.atlI22) # 0.0044561
 
-mod.sar.atlI23 <- update(mod.sar.atlI, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.atlI23 <- update(mod.sar.atlI, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.atlI23)
-anova(mod.sar.atlI, mod.sar.atlI23) # 0.74448
+anova(mod.sar.atlI, mod.sar.atlI23) # 0.28243
 rm(mod.sar.atlI23)
 
 mod.sar.atlI24 <- update(mod.sar.atlI, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.atlI24)
-anova(mod.sar.atlI, mod.sar.atlI24) # 0.77829
+anova(mod.sar.atlI, mod.sar.atlI24) # 0.39044
 rm(mod.sar.atlI24)
-
-mod.sar.atlI25 <- update(mod.sar.atlI, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.atlI25)
-anova(mod.sar.atlI, mod.sar.atlI25) # 0.85475
-rm(mod.sar.atlI25)
-
-mod.sar.atlI27 <- update(mod.sar.atlI, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.atlI27)
-anova(mod.sar.atlI, mod.sar.atlI27) # 0.89812
-rm(mod.sar.atlI27)
 
 mod.sar.atlI28 <- update(mod.sar.atlI, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.atlI28)
-anova(mod.sar.atlI, mod.sar.atlI28) # 0.84054
+anova(mod.sar.atlI, mod.sar.atlI28) # 0.59744 
 rm(mod.sar.atlI28)
 
-# significant at the 0.05 level
-mod.sar.atlI30 <- update(mod.sar.atlI, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.atlI30)
-anova(mod.sar.atlI, mod.sar.atlI30) # 0.019602
 
-mod.sar.atlI31 <- update(mod.sar.atlI, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.atlI31)
-anova(mod.sar.atlI, mod.sar.atlI31) # 0.67247
-rm(mod.sar.atlI31)
-
-## adding back in finds sdSal.0m:delta_carb_ion should be included in the model, also potentially logProd.mn.ann:prop2.oxy
-mod.sar.atl1.I <- mod.sar.atlI30
-rm(mod.sar.atlI30)
+## adding back in finds logProd.mn.ann:sdSal.0m should be included in the model, also potentially I(mean.mld.t/10):sdSal.0m and poly(meanSST.1deg, 3):I(mean.mld.t/10)
+mod.sar.atl1.I <- mod.sar.atlI22
+rm(mod.sar.atlI22)
 
 # check whether any of the interactions are now significant
 mod.sar.atl1.I2 <- update(mod.sar.atl1.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.atl1.I2)
-anova(mod.sar.atl1.I, mod.sar.atl1.I2) # 0.35061
+anova(mod.sar.atl1.I, mod.sar.atl1.I2) # 0.18475 
 rm(mod.sar.atl1.I2)
 
 mod.sar.atl1.I3 <- update(mod.sar.atl1.I, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.atl1.I3)
-anova(mod.sar.atl1.I, mod.sar.atl1.I3) # 0.36778
+anova(mod.sar.atl1.I, mod.sar.atl1.I3) # 0.096995
 rm(mod.sar.atl1.I3)
 
 mod.sar.atl1.I4 <- update(mod.sar.atl1.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.atl1.I4)
-anova(mod.sar.atl1.I, mod.sar.atl1.I4) # 0.4248
+anova(mod.sar.atl1.I, mod.sar.atl1.I4) # 0.5183
 rm(mod.sar.atl1.I4)
 
-mod.sar.atl1.I5 <- update(mod.sar.atl1.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.atl1.I5 <- update(mod.sar.atl1.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.atl1.I5)
-anova(mod.sar.atl1.I, mod.sar.atl1.I5) # 0.53555
+anova(mod.sar.atl1.I, mod.sar.atl1.I5) # 0.94304
 rm(mod.sar.atl1.I5)
 
 mod.sar.atl1.I6 <- update(mod.sar.atl1.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.atl1.I6)
-anova(mod.sar.atl1.I, mod.sar.atl1.I6) # 0.12247
+anova(mod.sar.atl1.I, mod.sar.atl1.I6) # 0.13359
 rm(mod.sar.atl1.I6)
 
 mod.sar.atl1.I7 <- update(mod.sar.atl1.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.atl1.I7)
-anova(mod.sar.atl1.I, mod.sar.atl1.I7) # 0.59396
+anova(mod.sar.atl1.I, mod.sar.atl1.I7) # 0.59964
 rm(mod.sar.atl1.I7)
-
-mod.sar.atl1.I9 <- update(mod.sar.atl1.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.atl1.I9)
-anova(mod.sar.atl1.I, mod.sar.atl1.I9) # 0.23402
-rm(mod.sar.atl1.I9)
 
 mod.sar.atl1.I10 <- update(mod.sar.atl1.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.atl1.I10)
-anova(mod.sar.atl1.I, mod.sar.atl1.I10) # 0.45743
+anova(mod.sar.atl1.I, mod.sar.atl1.I10) # 0.26823
 rm(mod.sar.atl1.I10)
 
 mod.sar.atl1.I11 <- update(mod.sar.atl1.I, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.atl1.I11)
-anova(mod.sar.atl1.I, mod.sar.atl1.I11) # 0.91279
+anova(mod.sar.atl1.I, mod.sar.atl1.I11) # 0.71167
 rm(mod.sar.atl1.I11)
 
 mod.sar.atl1.I12 <- update(mod.sar.atl1.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.atl1.I12)
-anova(mod.sar.atl1.I, mod.sar.atl1.I12) # 0.055326
+anova(mod.sar.atl1.I, mod.sar.atl1.I12) # 0.21665
 rm(mod.sar.atl1.I12)
 
-mod.sar.atl1.I13 <- update(mod.sar.atl1.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.atl1.I13 <- update(mod.sar.atl1.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.atl1.I13)
-anova(mod.sar.atl1.I, mod.sar.atl1.I13) # 0.90115
+anova(mod.sar.atl1.I, mod.sar.atl1.I13) # 0.75653
 rm(mod.sar.atl1.I13)
 
 mod.sar.atl1.I14 <- update(mod.sar.atl1.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.atl1.I14)
-anova(mod.sar.atl1.I, mod.sar.atl1.I14) # 0.78888
+anova(mod.sar.atl1.I, mod.sar.atl1.I14) # 0.2875
 rm(mod.sar.atl1.I14)
-
-mod.sar.atl1.I15 <- update(mod.sar.atl1.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.atl1.I15)
-anova(mod.sar.atl1.I, mod.sar.atl1.I15) # 0.96784
-rm(mod.sar.atl1.I15)
 
 mod.sar.atl1.I16 <- update(mod.sar.atl1.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.atl1.I16)
-anova(mod.sar.atl1.I, mod.sar.atl1.I16) # 0.38872
+anova(mod.sar.atl1.I, mod.sar.atl1.I16) # 0.34874
 rm(mod.sar.atl1.I16)
 
 mod.sar.atl1.I17 <- update(mod.sar.atl1.I, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.atl1.I17)
-anova(mod.sar.atl1.I, mod.sar.atl1.I17) # 0.51591
+anova(mod.sar.atl1.I, mod.sar.atl1.I17) # 0.87476
 rm(mod.sar.atl1.I17)
 
-mod.sar.atl1.I18 <- update(mod.sar.atl1.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.atl1.I18 <- update(mod.sar.atl1.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.atl1.I18)
-anova(mod.sar.atl1.I, mod.sar.atl1.I18) # 0.61322
+anova(mod.sar.atl1.I, mod.sar.atl1.I18) # 0.31169
 rm(mod.sar.atl1.I18)
 
-mod.sar.atl1.I19 <- update(mod.sar.atl1.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.atl1.I19 <- update(mod.sar.atl1.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.atl1.I19)
-anova(mod.sar.atl1.I, mod.sar.atl1.I19) # 0.60771
+anova(mod.sar.atl1.I, mod.sar.atl1.I19) # 0.53712
 rm(mod.sar.atl1.I19)
 
-mod.sar.atl1.I21 <- update(mod.sar.atl1.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.atl1.I21)
-anova(mod.sar.atl1.I, mod.sar.atl1.I21) # 0.43443
-rm(mod.sar.atl1.I21)
-
-# significant at the 0.05 level
-mod.sar.atl1.I22 <- update(mod.sar.atl1.I, ~. + logProd.mn.ann:prop2.oxy)
-summary(mod.sar.atl1.I22)
-anova(mod.sar.atl1.I, mod.sar.atl1.I22) # 0.019167
-
-mod.sar.atl1.I23 <- update(mod.sar.atl1.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.atl1.I23 <- update(mod.sar.atl1.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.atl1.I23)
-anova(mod.sar.atl1.I, mod.sar.atl1.I23) # 0.53117
+anova(mod.sar.atl1.I, mod.sar.atl1.I23) # 0.5081
 rm(mod.sar.atl1.I23)
 
 mod.sar.atl1.I24 <- update(mod.sar.atl1.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.atl1.I24)
-anova(mod.sar.atl1.I, mod.sar.atl1.I24) # 0.66135
+anova(mod.sar.atl1.I, mod.sar.atl1.I24) # 0.74771
 rm(mod.sar.atl1.I24)
-
-mod.sar.atl1.I25 <- update(mod.sar.atl1.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.atl1.I25)
-anova(mod.sar.atl1.I, mod.sar.atl1.I25) # 0.79875
-rm(mod.sar.atl1.I25)
-
-mod.sar.atl1.I27 <- update(mod.sar.atl1.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.atl1.I27)
-anova(mod.sar.atl1.I, mod.sar.atl1.I27) # 0.43224
-rm(mod.sar.atl1.I27)
 
 mod.sar.atl1.I28 <- update(mod.sar.atl1.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.atl1.I28)
-anova(mod.sar.atl1.I, mod.sar.atl1.I28) # 0.85621
+anova(mod.sar.atl1.I, mod.sar.atl1.I28) # 0.95253
 rm(mod.sar.atl1.I28)
 
-mod.sar.atl1.I31 <- update(mod.sar.atl1.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.atl1.I31)
-anova(mod.sar.atl1.I, mod.sar.atl1.I31) # 0.46566
-rm(mod.sar.atl1.I31)
-
-## adding back in finds logProd.mn.ann:prop2.oxy
-mod.sar.atl2.I <- mod.sar.atl1.I22
-rm(mod.sar.atl1.I22)
-
-# check whether any of the interactions are now significant
-mod.sar.atl2.I2 <- update(mod.sar.atl2.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
-summary(mod.sar.atl2.I2)
-anova(mod.sar.atl2.I, mod.sar.atl2.I2) # 0.25463
-rm(mod.sar.atl2.I2)
-
-mod.sar.atl2.I3 <- update(mod.sar.atl2.I, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
-summary(mod.sar.atl2.I3)
-anova(mod.sar.atl2.I, mod.sar.atl2.I3) # 0.40342
-rm(mod.sar.atl2.I3)
-
-mod.sar.atl2.I4 <- update(mod.sar.atl2.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
-summary(mod.sar.atl2.I4)
-anova(mod.sar.atl2.I, mod.sar.atl2.I4) # 0.36932
-rm(mod.sar.atl2.I4)
-
-mod.sar.atl2.I5 <- update(mod.sar.atl2.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
-summary(mod.sar.atl2.I5)
-anova(mod.sar.atl2.I, mod.sar.atl2.I5) # 0.40448
-rm(mod.sar.atl2.I5)
-
-mod.sar.atl2.I6 <- update(mod.sar.atl2.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
-summary(mod.sar.atl2.I6)
-anova(mod.sar.atl2.I, mod.sar.atl2.I6) # 0.12673
-rm(mod.sar.atl2.I6)
-
-mod.sar.atl2.I7 <- update(mod.sar.atl2.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
-summary(mod.sar.atl2.I7)
-anova(mod.sar.atl2.I, mod.sar.atl2.I7) # 0.32729
-rm(mod.sar.atl2.I7)
-
-mod.sar.atl2.I9 <- update(mod.sar.atl2.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.atl2.I9)
-anova(mod.sar.atl2.I, mod.sar.atl2.I9) # 0.32372
-rm(mod.sar.atl2.I9)
-
-mod.sar.atl2.I10 <- update(mod.sar.atl2.I, ~. + sdSST.1deg:I(depth10deg/100))
-summary(mod.sar.atl2.I10)
-anova(mod.sar.atl2.I, mod.sar.atl2.I10) # 0.38486
-rm(mod.sar.atl2.I10)
-
-mod.sar.atl2.I11 <- update(mod.sar.atl2.I, ~. + sdSST.1deg:logProd.mn.ann)
-summary(mod.sar.atl2.I11)
-anova(mod.sar.atl2.I, mod.sar.atl2.I11) # 0.55001
-rm(mod.sar.atl2.I11)
-
-mod.sar.atl2.I12 <- update(mod.sar.atl2.I, ~. + sdSST.1deg:absMnSal.0m)
-summary(mod.sar.atl2.I12)
-anova(mod.sar.atl2.I, mod.sar.atl2.I12) # 0.050214
-rm(mod.sar.atl2.I12)
-
-mod.sar.atl2.I13 <- update(mod.sar.atl2.I, ~. + sdSST.1deg:delta_carb_ion)
-summary(mod.sar.atl2.I13)
-anova(mod.sar.atl2.I, mod.sar.atl2.I13) # 0.78259
-rm(mod.sar.atl2.I13)
-
-mod.sar.atl2.I14 <- update(mod.sar.atl2.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
-summary(mod.sar.atl2.I14)
-anova(mod.sar.atl2.I, mod.sar.atl2.I14) # 0.93954
-rm(mod.sar.atl2.I14)
-
-mod.sar.atl2.I15 <- update(mod.sar.atl2.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.atl2.I15)
-anova(mod.sar.atl2.I, mod.sar.atl2.I15) # 0.96913
-rm(mod.sar.atl2.I15)
-
-mod.sar.atl2.I16 <- update(mod.sar.atl2.I, ~. + I(mean.mld.t/10):sdSal.0m)
-summary(mod.sar.atl2.I16)
-anova(mod.sar.atl2.I, mod.sar.atl2.I16) # 0.31357
-rm(mod.sar.atl2.I16)
-
-mod.sar.atl2.I17 <- update(mod.sar.atl2.I, ~. + I(mean.mld.t/10):prop2.oxy)
-summary(mod.sar.atl2.I17)
-anova(mod.sar.atl2.I, mod.sar.atl2.I17) # 0.38476
-rm(mod.sar.atl2.I17)
-
-mod.sar.atl2.I18 <- update(mod.sar.atl2.I, ~. + I(mean.mld.t/10):delta_carb_ion)
-summary(mod.sar.atl2.I18)
-anova(mod.sar.atl2.I, mod.sar.atl2.I18) # 0.90752
-rm(mod.sar.atl2.I18)
-
-mod.sar.atl2.I19 <- update(mod.sar.atl2.I, ~. + I(depth10deg/100):absMnSal.0m)
-summary(mod.sar.atl2.I19)
-anova(mod.sar.atl2.I, mod.sar.atl2.I19) # 0.60374
-rm(mod.sar.atl2.I19)
-
-mod.sar.atl2.I21 <- update(mod.sar.atl2.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.atl2.I21)
-anova(mod.sar.atl2.I, mod.sar.atl2.I21) # 0.41062
-rm(mod.sar.atl2.I21)
-
-mod.sar.atl2.I23 <- update(mod.sar.atl2.I, ~. + logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.atl2.I23)
-anova(mod.sar.atl2.I, mod.sar.atl2.I23) # 0.93479
-rm(mod.sar.atl2.I23)
-
-mod.sar.atl2.I24 <- update(mod.sar.atl2.I, ~. + absMnSal.0m:sdSal.0m)
-summary(mod.sar.atl2.I24)
-anova(mod.sar.atl2.I, mod.sar.atl2.I24) # 0.45112
-rm(mod.sar.atl2.I24)
-
-mod.sar.atl2.I25 <- update(mod.sar.atl2.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.atl2.I25)
-anova(mod.sar.atl2.I, mod.sar.atl2.I25) # 0.64701
-rm(mod.sar.atl2.I25)
-
-mod.sar.atl2.I27 <- update(mod.sar.atl2.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.atl2.I27)
-anova(mod.sar.atl2.I, mod.sar.atl2.I27) # 0.51563
-rm(mod.sar.atl2.I27)
-
-mod.sar.atl2.I28 <- update(mod.sar.atl2.I, ~. + sdSal.0m:prop2.oxy)
-summary(mod.sar.atl2.I28)
-anova(mod.sar.atl2.I, mod.sar.atl2.I28) # 0.26055
-rm(mod.sar.atl2.I28)
-
-mod.sar.atl2.I31 <- update(mod.sar.atl2.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.atl2.I31)
-anova(mod.sar.atl2.I, mod.sar.atl2.I31) # 0.74811
-rm(mod.sar.atl2.I31)
 
 # nothing is significant, so 
-mod.sar.atlIf <- mod.sar.atl2.I
-summary(mod.sar.atlIf, Nagelkerke = TRUE) # 0.90757 
-AIC(mod.sar.atlIf) # 4413.503
+mod.sar.atlIf <- mod.sar.atl1.I
+summary(mod.sar.atlIf, Nagelkerke = TRUE) # 0.9213 
+AIC(mod.sar.atlIf) # 2530.357
 
 # Check for correlation
 env.var.atl <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "depth10deg", "logProd.mn.ann", "absMnSal.0m", "sdSal.0m", "delta_carb_ion", "prop2.oxy")
@@ -1439,654 +1192,307 @@ png("Figures/Ana_3vii_LRatio_g_atlIf.png", width = 800)
 lr.plot(lr.sar.atlIfg, order = c(5:6, 1:4), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 7)
 dev.off()
 
-save(mod.sar.atlI, mod.sar.atl1.I, mod.sar.atl2.I, file = "Outputs/Atlantic_simplification.RData")
-rm(env.var.atl, mod.sar.atlI, mod.sar.atl1.I, mod.sar.atl2.I)
+save(mod.sar.atlI, mod.sar.atl1.I, file = "Outputs/Atlantic_simplification.RData")
+rm(env.var.atl, mod.sar.atlI, mod.sar.atl1.I)
 
 ## 3viii. Only significant interactions for Indian -------------------------
 summary(mod.sar.op0)
 summary(mod.sar.opf)
 
 # create a model with only significant values
-mod.sar.indI <- errorsarlm(op.formula, listw = ind.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ])
+mod.sar.indI <- errorsarlm(op.formula, listw = ind.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.indI)
 par(mfrow = c(1, 1))
-summary(mod.sar.indI, Nagelkerke = TRUE) # 0.8496 
-AIC(mod.sar.indI) # 1050.043
+summary(mod.sar.indI, Nagelkerke = TRUE) # 0.89932 
+AIC(mod.sar.indI) # 667.4904
 
 # try adding in the other interactions
 mod.sar.indI2 <- update(mod.sar.indI, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.indI2)
-anova(mod.sar.indI, mod.sar.indI2) # 0.23316
+anova(mod.sar.indI, mod.sar.indI2) # 0.23629
 rm(mod.sar.indI2)
 
 mod.sar.indI3 <- update(mod.sar.indI, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.indI3)
-anova(mod.sar.indI, mod.sar.indI3) # 0.16103
+anova(mod.sar.indI, mod.sar.indI3) # 0.12408
 rm(mod.sar.indI3)
 
 mod.sar.indI4 <- update(mod.sar.indI, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.indI4)
-anova(mod.sar.indI, mod.sar.indI4) # 0.71998
+anova(mod.sar.indI, mod.sar.indI4) # 0.24683
 rm(mod.sar.indI4)
 
-mod.sar.indI5 <- update(mod.sar.indI, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.indI5 <- update(mod.sar.indI, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.indI5)
-anova(mod.sar.indI, mod.sar.indI5) # 0.82565
+anova(mod.sar.indI, mod.sar.indI5) # 0.57219
 rm(mod.sar.indI5)
 
 mod.sar.indI6 <- update(mod.sar.indI, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.indI6)
-anova(mod.sar.indI, mod.sar.indI6) # 0.89703
+anova(mod.sar.indI, mod.sar.indI6) # 0.91034
 rm(mod.sar.indI6)
 
 mod.sar.indI7 <- update(mod.sar.indI, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.indI7)
-anova(mod.sar.indI, mod.sar.indI7) # 0.78843
+anova(mod.sar.indI, mod.sar.indI7) # 0.90183
 rm(mod.sar.indI7)
-
-# significant at the 0.05 level
-mod.sar.indI9 <- update(mod.sar.indI, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.indI9)
-anova(mod.sar.indI, mod.sar.indI9) # 0.017565
-rm(mod.sar.indI9)
 
 mod.sar.indI10 <- update(mod.sar.indI, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.indI10)
-anova(mod.sar.indI, mod.sar.indI10) # 0.17926
+anova(mod.sar.indI, mod.sar.indI10) # 0.59245
 rm(mod.sar.indI10)
 
 mod.sar.indI11 <- update(mod.sar.indI, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.indI11)
-anova(mod.sar.indI, mod.sar.indI11) # 0.95716
+anova(mod.sar.indI, mod.sar.indI11) # 0.88074
 rm(mod.sar.indI11)
 
 mod.sar.indI12 <- update(mod.sar.indI, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.indI12)
-anova(mod.sar.indI, mod.sar.indI12) # 0.75331 
+anova(mod.sar.indI, mod.sar.indI12) # 0.39673
 rm(mod.sar.indI12)
 
-mod.sar.indI13 <- update(mod.sar.indI, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.indI13 <- update(mod.sar.indI, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.indI13)
-anova(mod.sar.indI, mod.sar.indI13) # 0.11561
+anova(mod.sar.indI, mod.sar.indI13) # 0.31135
 rm(mod.sar.indI13)
 
 mod.sar.indI14 <- update(mod.sar.indI, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.indI14)
-anova(mod.sar.indI, mod.sar.indI14) # 0.3944
+anova(mod.sar.indI, mod.sar.indI14) # 0.55959
 rm(mod.sar.indI14)
-
-mod.sar.indI15 <- update(mod.sar.indI, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.indI15)
-anova(mod.sar.indI, mod.sar.indI15) # 0.55653
-rm(mod.sar.indI15)
 
 mod.sar.indI16 <- update(mod.sar.indI, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.indI16)
-anova(mod.sar.indI, mod.sar.indI16) # 0.2993
+anova(mod.sar.indI, mod.sar.indI16) # 0.4223
 rm(mod.sar.indI16)
 
 # significant at the 0.05 level
 mod.sar.indI17 <- update(mod.sar.indI, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.indI17)
-anova(mod.sar.indI, mod.sar.indI17) # 0.0052249
+anova(mod.sar.indI, mod.sar.indI17) # 0.0010702
 
-mod.sar.indI18 <- update(mod.sar.indI, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.indI18 <- update(mod.sar.indI, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.indI18)
-anova(mod.sar.indI, mod.sar.indI18) # 0.20616
+anova(mod.sar.indI, mod.sar.indI18) # 0.92627
 rm(mod.sar.indI18)
 
-mod.sar.indI19 <- update(mod.sar.indI, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.indI19 <- update(mod.sar.indI, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.indI19)
-anova(mod.sar.indI, mod.sar.indI19) # 0.17104
+anova(mod.sar.indI, mod.sar.indI19) # 0.72213
 rm(mod.sar.indI19)
 
-mod.sar.indI21 <- update(mod.sar.indI, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.indI21)
-anova(mod.sar.indI, mod.sar.indI21) # 0.51582
-rm(mod.sar.indI21)
-
-mod.sar.indI22 <- update(mod.sar.indI, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.indI22 <- update(mod.sar.indI, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.indI22)
-anova(mod.sar.indI, mod.sar.indI22) # 0.83483
+anova(mod.sar.indI, mod.sar.indI22) # 0.11802
 rm(mod.sar.indI22)
 
-mod.sar.indI23 <- update(mod.sar.indI, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.indI23 <- update(mod.sar.indI, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.indI23)
-anova(mod.sar.indI, mod.sar.indI23) # 0.12629
+anova(mod.sar.indI, mod.sar.indI23) # 0.60157
 rm(mod.sar.indI23)
 
 mod.sar.indI24 <- update(mod.sar.indI, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.indI24)
-anova(mod.sar.indI, mod.sar.indI24) # 0.73389
+anova(mod.sar.indI, mod.sar.indI24) # 0.71851
 rm(mod.sar.indI24)
 
-mod.sar.indI25 <- update(mod.sar.indI, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.indI25)
-anova(mod.sar.indI, mod.sar.indI25) # 0.71142
-rm(mod.sar.indI25)
-
-mod.sar.indI27 <- update(mod.sar.indI, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.indI27)
-anova(mod.sar.indI, mod.sar.indI27) # 0.30243
-rm(mod.sar.indI27)
-
-# significant at the 0.05 level
 mod.sar.indI28 <- update(mod.sar.indI, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.indI28)
-anova(mod.sar.indI, mod.sar.indI28) # 0.048386
+anova(mod.sar.indI, mod.sar.indI28) # 0.20991
 rm(mod.sar.indI28)
 
-mod.sar.indI30 <- update(mod.sar.indI, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.indI30)
-anova(mod.sar.indI, mod.sar.indI30) # 0.32894
-rm(mod.sar.indI30)
 
-mod.sar.indI31 <- update(mod.sar.indI, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.indI31)
-anova(mod.sar.indI, mod.sar.indI31) # 0.053794
-rm(mod.sar.indI31)
-
-
-# I(mean.mld.t/10):prop2.oxy is significant at the 0.05 level (as is sdSal.0m:prop2.oxy and delta_carb_ion:poly(meanSST.1deg, 3) ), so add it in and recheck
+# I(mean.mld.t/10):prop2.oxy is significant at the 0.05 level, so add it in and recheck
 mod.sar.ind1.I <- mod.sar.indI17
 rm(mod.sar.indI17)
 
 mod.sar.ind1.I2 <- update(mod.sar.ind1.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.ind1.I2)
-anova(mod.sar.ind1.I, mod.sar.ind1.I2) # 0.18636
+anova(mod.sar.ind1.I, mod.sar.ind1.I2) # 0.4772
 rm(mod.sar.ind1.I2)
 
 # significant at the 0.05 level
 mod.sar.ind1.I3 <- update(mod.sar.ind1.I, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.ind1.I3)
-anova(mod.sar.ind1.I, mod.sar.ind1.I3) # 0.009128
+anova(mod.sar.ind1.I, mod.sar.ind1.I3) # 0.02403
 
 mod.sar.ind1.I4 <- update(mod.sar.ind1.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.ind1.I4)
-anova(mod.sar.ind1.I, mod.sar.ind1.I4) # 0.69709
+anova(mod.sar.ind1.I, mod.sar.ind1.I4) # 0.45659
 rm(mod.sar.ind1.I4)
 
-mod.sar.ind1.I5 <- update(mod.sar.ind1.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.ind1.I5 <- update(mod.sar.ind1.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.ind1.I5)
-anova(mod.sar.ind1.I, mod.sar.ind1.I5) # 0.67025
+anova(mod.sar.ind1.I, mod.sar.ind1.I5) # 0.26468
 rm(mod.sar.ind1.I5)
 
 mod.sar.ind1.I6 <- update(mod.sar.ind1.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.ind1.I6)
-anova(mod.sar.ind1.I, mod.sar.ind1.I6) # 0.7565
+anova(mod.sar.ind1.I, mod.sar.ind1.I6) # 0.8919
 rm(mod.sar.ind1.I6)
 
 mod.sar.ind1.I7 <- update(mod.sar.ind1.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.ind1.I7)
-anova(mod.sar.ind1.I, mod.sar.ind1.I7) # 0.65098
+anova(mod.sar.ind1.I, mod.sar.ind1.I7) # 0.52472
 rm(mod.sar.ind1.I7)
-
-# significant at the 0.05 level
-mod.sar.ind1.I9 <- update(mod.sar.ind1.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.ind1.I9)
-anova(mod.sar.ind1.I, mod.sar.ind1.I9) # 0.012566
-rm(mod.sar.ind1.I9)
 
 mod.sar.ind1.I10 <- update(mod.sar.ind1.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.ind1.I10)
-anova(mod.sar.ind1.I, mod.sar.ind1.I10) # 0.18451
+anova(mod.sar.ind1.I, mod.sar.ind1.I10) # 0.67547
 rm(mod.sar.ind1.I10)
 
 mod.sar.ind1.I11 <- update(mod.sar.ind1.I, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.ind1.I11)
-anova(mod.sar.ind1.I, mod.sar.ind1.I11) # 0.82692
+anova(mod.sar.ind1.I, mod.sar.ind1.I11) # 0.62609
 rm(mod.sar.ind1.I11)
 
 mod.sar.ind1.I12 <- update(mod.sar.ind1.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.ind1.I12)
-anova(mod.sar.ind1.I, mod.sar.ind1.I12) #  0.63618
+anova(mod.sar.ind1.I, mod.sar.ind1.I12) # 0.53595
 rm(mod.sar.ind1.I12)
 
-mod.sar.ind1.I13 <- update(mod.sar.ind1.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.ind1.I13 <- update(mod.sar.ind1.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.ind1.I13)
-anova(mod.sar.ind1.I, mod.sar.ind1.I13) # 0.062204
+anova(mod.sar.ind1.I, mod.sar.ind1.I13) # 0.81095
 rm(mod.sar.ind1.I13)
 
 mod.sar.ind1.I14 <- update(mod.sar.ind1.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.ind1.I14)
-anova(mod.sar.ind1.I, mod.sar.ind1.I14) # 0.6673
+anova(mod.sar.ind1.I, mod.sar.ind1.I14) # 0.99061 
 rm(mod.sar.ind1.I14)
-
-mod.sar.ind1.I15 <- update(mod.sar.ind1.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.ind1.I15)
-anova(mod.sar.ind1.I, mod.sar.ind1.I15) # 0.059822
-rm(mod.sar.ind1.I15)
 
 mod.sar.ind1.I16 <- update(mod.sar.ind1.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.ind1.I16)
-anova(mod.sar.ind1.I, mod.sar.ind1.I16) # 0.73619
+anova(mod.sar.ind1.I, mod.sar.ind1.I16) # 0.51755
 rm(mod.sar.ind1.I16)
 
-mod.sar.ind1.I18 <- update(mod.sar.ind1.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.ind1.I18 <- update(mod.sar.ind1.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.ind1.I18)
-anova(mod.sar.ind1.I, mod.sar.ind1.I18) # 0.13316
+anova(mod.sar.ind1.I, mod.sar.ind1.I18) # 0.63336
 rm(mod.sar.ind1.I18)
 
-mod.sar.ind1.I19 <- update(mod.sar.ind1.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.ind1.I19 <- update(mod.sar.ind1.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.ind1.I19)
-anova(mod.sar.ind1.I, mod.sar.ind1.I19) # 0.082024
+anova(mod.sar.ind1.I, mod.sar.ind1.I19) # 0.49225
 rm(mod.sar.ind1.I19)
 
-mod.sar.ind1.I21 <- update(mod.sar.ind1.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.ind1.I21)
-anova(mod.sar.ind1.I, mod.sar.ind1.I21) # 0.34191
-rm(mod.sar.ind1.I21)
-
-mod.sar.ind1.I22 <- update(mod.sar.ind1.I, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.ind1.I22 <- update(mod.sar.ind1.I, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.ind1.I22)
-anova(mod.sar.ind1.I, mod.sar.ind1.I22) # 0.91231
+anova(mod.sar.ind1.I, mod.sar.ind1.I22) # 0.050262
 rm(mod.sar.ind1.I22)
 
-mod.sar.ind1.I23 <- update(mod.sar.ind1.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.ind1.I23 <- update(mod.sar.ind1.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.ind1.I23)
-anova(mod.sar.ind1.I, mod.sar.ind1.I23) # 0.15113
+anova(mod.sar.ind1.I, mod.sar.ind1.I23) # 0.90013
 rm(mod.sar.ind1.I23)
 
 mod.sar.ind1.I24 <- update(mod.sar.ind1.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.ind1.I24)
-anova(mod.sar.ind1.I, mod.sar.ind1.I24) # 0.80927
+anova(mod.sar.ind1.I, mod.sar.ind1.I24) # 0.6296
 rm(mod.sar.ind1.I24)
-
-mod.sar.ind1.I25 <- update(mod.sar.ind1.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.ind1.I25)
-anova(mod.sar.ind1.I, mod.sar.ind1.I25) # 0.4924
-rm(mod.sar.ind1.I25)
-
-mod.sar.ind1.I27 <- update(mod.sar.ind1.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.ind1.I27)
-anova(mod.sar.ind1.I, mod.sar.ind1.I27) # 0.67617
-rm(mod.sar.ind1.I27)
 
 mod.sar.ind1.I28 <- update(mod.sar.ind1.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.ind1.I28)
-anova(mod.sar.ind1.I, mod.sar.ind1.I28) # 0.1948
+anova(mod.sar.ind1.I, mod.sar.ind1.I28) # 0.30408 
 rm(mod.sar.ind1.I28)
 
-mod.sar.ind1.I30 <- update(mod.sar.ind1.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.ind1.I30)
-anova(mod.sar.ind1.I, mod.sar.ind1.I30) # 0.22831
-rm(mod.sar.ind1.I30)
 
-mod.sar.ind1.I31 <- update(mod.sar.ind1.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.ind1.I31)
-anova(mod.sar.ind1.I, mod.sar.ind1.I31) # 0.10392
-rm(mod.sar.ind1.I31)
-
-
-# poly(meanSST.1deg, 3):I(mean.mld.t/10) is significant at the 0.05 level (as is delta_carb_ion:poly(meanSST.1deg, 3), so add it in and recheck
-# 
+# poly(meanSST.1deg, 3):I(mean.mld.t/10) is significant at the 0.05 level so add it in and recheck
 mod.sar.ind2.I <- mod.sar.ind1.I3
 rm(mod.sar.ind1.I3)
 
 mod.sar.ind2.I2 <- update(mod.sar.ind2.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.ind2.I2)
-anova(mod.sar.ind2.I, mod.sar.ind2.I2) # 0.39787
+anova(mod.sar.ind2.I, mod.sar.ind2.I2) # 0.50575
 rm(mod.sar.ind2.I2)
 
 mod.sar.ind2.I4 <- update(mod.sar.ind2.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.ind2.I4)
-anova(mod.sar.ind2.I, mod.sar.ind2.I4) # 0.76191
+anova(mod.sar.ind2.I, mod.sar.ind2.I4) # 0.63042
 rm(mod.sar.ind2.I4)
 
-mod.sar.ind2.I5 <- update(mod.sar.ind2.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.ind2.I5 <- update(mod.sar.ind2.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.ind2.I5)
-anova(mod.sar.ind2.I, mod.sar.ind2.I5) # 0.42822
+anova(mod.sar.ind2.I, mod.sar.ind2.I5) # 0.45537
 rm(mod.sar.ind2.I5)
 
 mod.sar.ind2.I6 <- update(mod.sar.ind2.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.ind2.I6)
-anova(mod.sar.ind2.I, mod.sar.ind2.I6) # 0.97361
+anova(mod.sar.ind2.I, mod.sar.ind2.I6) # 0.39703
 rm(mod.sar.ind2.I6)
 
 mod.sar.ind2.I7 <- update(mod.sar.ind2.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.ind2.I7)
-anova(mod.sar.ind2.I, mod.sar.ind2.I7) # 0.54549
+anova(mod.sar.ind2.I, mod.sar.ind2.I7) # 0.23298
 rm(mod.sar.ind2.I7)
-
-# significant at the 0.05 level
-mod.sar.ind2.I9 <- update(mod.sar.ind2.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.ind2.I9)
-anova(mod.sar.ind2.I, mod.sar.ind2.I9) # 0.023986
 
 mod.sar.ind2.I10 <- update(mod.sar.ind2.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.ind2.I10)
-anova(mod.sar.ind2.I, mod.sar.ind2.I10) # 0.14827
+anova(mod.sar.ind2.I, mod.sar.ind2.I10) # 0.35398
 rm(mod.sar.ind2.I10)
 
 mod.sar.ind2.I11 <- update(mod.sar.ind2.I, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.ind2.I11)
-anova(mod.sar.ind2.I, mod.sar.ind2.I11) # 0.99448
+anova(mod.sar.ind2.I, mod.sar.ind2.I11) # 0.68094
 rm(mod.sar.ind2.I11)
 
 mod.sar.ind2.I12 <- update(mod.sar.ind2.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.ind2.I12)
-anova(mod.sar.ind2.I, mod.sar.ind2.I12) # 0.9036 
+anova(mod.sar.ind2.I, mod.sar.ind2.I12) # 0.96196
 rm(mod.sar.ind2.I12)
 
-mod.sar.ind2.I13 <- update(mod.sar.ind2.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.ind2.I13 <- update(mod.sar.ind2.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.ind2.I13)
-anova(mod.sar.ind2.I, mod.sar.ind2.I13) # 0.1692
+anova(mod.sar.ind2.I, mod.sar.ind2.I13) # 0.91638
 rm(mod.sar.ind2.I13)
 
 mod.sar.ind2.I14 <- update(mod.sar.ind2.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.ind2.I14)
-anova(mod.sar.ind2.I, mod.sar.ind2.I14) # 0.76513
+anova(mod.sar.ind2.I, mod.sar.ind2.I14) # 0.12524
 rm(mod.sar.ind2.I14)
-
-mod.sar.ind2.I15 <- update(mod.sar.ind2.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.ind2.I15)
-anova(mod.sar.ind2.I, mod.sar.ind2.I15) # 0.79312
-rm(mod.sar.ind2.I15)
 
 mod.sar.ind2.I16 <- update(mod.sar.ind2.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.ind2.I16)
-anova(mod.sar.ind2.I, mod.sar.ind2.I16) # 0.8453
+anova(mod.sar.ind2.I, mod.sar.ind2.I16) # 0.94599
 rm(mod.sar.ind2.I16)
 
-mod.sar.ind2.I18 <- update(mod.sar.ind2.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.ind2.I18 <- update(mod.sar.ind2.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.ind2.I18)
-anova(mod.sar.ind2.I, mod.sar.ind2.I18) # 0.3734
+anova(mod.sar.ind2.I, mod.sar.ind2.I18) # 0.31594
 rm(mod.sar.ind2.I18)
 
-# significant at the 0.05 level
-mod.sar.ind2.I19 <- update(mod.sar.ind2.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.ind2.I19 <- update(mod.sar.ind2.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.ind2.I19)
-anova(mod.sar.ind2.I, mod.sar.ind2.I19) # 0.042127
+anova(mod.sar.ind2.I, mod.sar.ind2.I19) # 0.19278
 rm(mod.sar.ind2.I19)
 
-mod.sar.ind2.I21 <- update(mod.sar.ind2.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.ind2.I21)
-anova(mod.sar.ind2.I, mod.sar.ind2.I21) # 0.43901
-rm(mod.sar.ind2.I21)
-
-mod.sar.ind2.I22 <- update(mod.sar.ind2.I, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.ind2.I22 <- update(mod.sar.ind2.I, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.ind2.I22)
-anova(mod.sar.ind2.I, mod.sar.ind2.I22) # 0.87582
+anova(mod.sar.ind2.I, mod.sar.ind2.I22) # 0.094605
 rm(mod.sar.ind2.I22)
 
-mod.sar.ind2.I23 <- update(mod.sar.ind2.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.ind2.I23 <- update(mod.sar.ind2.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.ind2.I23)
-anova(mod.sar.ind2.I, mod.sar.ind2.I23) # 0.14845
+anova(mod.sar.ind2.I, mod.sar.ind2.I23) # 0.85739
 rm(mod.sar.ind2.I23)
 
 mod.sar.ind2.I24 <- update(mod.sar.ind2.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.ind2.I24)
-anova(mod.sar.ind2.I, mod.sar.ind2.I24) # 0.40109
+anova(mod.sar.ind2.I, mod.sar.ind2.I24) # 0.37726
 rm(mod.sar.ind2.I24)
-
-mod.sar.ind2.I25 <- update(mod.sar.ind2.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.ind2.I25)
-anova(mod.sar.ind2.I, mod.sar.ind2.I25) # 0.17482
-rm(mod.sar.ind2.I25)
-
-mod.sar.ind2.I27 <- update(mod.sar.ind2.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.ind2.I27)
-anova(mod.sar.ind2.I, mod.sar.ind2.I27) # 0.7013
-rm(mod.sar.ind2.I27)
 
 mod.sar.ind2.I28 <- update(mod.sar.ind2.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.ind2.I28)
-anova(mod.sar.ind2.I, mod.sar.ind2.I28) # 0.96966
+anova(mod.sar.ind2.I, mod.sar.ind2.I28) # 0.98439
 rm(mod.sar.ind2.I28)
 
-mod.sar.ind2.I30 <- update(mod.sar.ind2.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.ind2.I30)
-anova(mod.sar.ind2.I, mod.sar.ind2.I30) # 0.52635
-rm(mod.sar.ind2.I30)
-
-mod.sar.ind2.I31 <- update(mod.sar.ind2.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.ind2.I31)
-anova(mod.sar.ind2.I, mod.sar.ind2.I31) # 0.28305
-rm(mod.sar.ind2.I31)
-
-
-# delta_carb_ion:poly(meanSST.1deg, 3) is significant at the 0.05 level (as is I(depth10deg/100):absMnSal.0m, so add it in and recheck
-# 
-mod.sar.ind3.I <- mod.sar.ind2.I9
-rm(mod.sar.ind2.I9)
-
-mod.sar.ind3.I2 <- update(mod.sar.ind3.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
-summary(mod.sar.ind3.I2)
-anova(mod.sar.ind3.I, mod.sar.ind3.I2) # 0.31159
-rm(mod.sar.ind3.I2)
-
-mod.sar.ind3.I4 <- update(mod.sar.ind3.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
-summary(mod.sar.ind3.I4)
-anova(mod.sar.ind3.I, mod.sar.ind3.I4) # 0.55417
-rm(mod.sar.ind3.I4)
-
-mod.sar.ind3.I5 <- update(mod.sar.ind3.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
-summary(mod.sar.ind3.I5)
-anova(mod.sar.ind3.I, mod.sar.ind3.I5) # 0.22841
-rm(mod.sar.ind3.I5)
-
-mod.sar.ind3.I6 <- update(mod.sar.ind3.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
-summary(mod.sar.ind3.I6)
-anova(mod.sar.ind3.I, mod.sar.ind3.I6) # 0.75827
-rm(mod.sar.ind3.I6)
-
-mod.sar.ind3.I7 <- update(mod.sar.ind3.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
-summary(mod.sar.ind3.I7)
-anova(mod.sar.ind3.I, mod.sar.ind3.I7) # 0.46962
-rm(mod.sar.ind3.I7)
-
-mod.sar.ind3.I10 <- update(mod.sar.ind3.I, ~. + sdSST.1deg:I(depth10deg/100))
-summary(mod.sar.ind3.I10)
-anova(mod.sar.ind3.I, mod.sar.ind3.I10) # 0.078003
-rm(mod.sar.ind3.I10)
-
-mod.sar.ind3.I11 <- update(mod.sar.ind3.I, ~. + sdSST.1deg:logProd.mn.ann)
-summary(mod.sar.ind3.I11)
-anova(mod.sar.ind3.I, mod.sar.ind3.I11) # 0.78386
-rm(mod.sar.ind3.I11)
-
-mod.sar.ind3.I12 <- update(mod.sar.ind3.I, ~. + sdSST.1deg:absMnSal.0m)
-summary(mod.sar.ind3.I12)
-anova(mod.sar.ind3.I, mod.sar.ind3.I12) #  0.96801
-rm(mod.sar.ind3.I12)
-
-mod.sar.ind3.I13 <- update(mod.sar.ind3.I, ~. + sdSST.1deg:delta_carb_ion)
-summary(mod.sar.ind3.I13)
-anova(mod.sar.ind3.I, mod.sar.ind3.I13) # 0.9163
-rm(mod.sar.ind3.I13)
-
-mod.sar.ind3.I14 <- update(mod.sar.ind3.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
-summary(mod.sar.ind3.I14)
-anova(mod.sar.ind3.I, mod.sar.ind3.I14) # 0.63716
-rm(mod.sar.ind3.I14)
-
-mod.sar.ind3.I15 <- update(mod.sar.ind3.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.ind3.I15)
-anova(mod.sar.ind3.I, mod.sar.ind3.I15) # 0.8968
-rm(mod.sar.ind3.I15)
-
-mod.sar.ind3.I16 <- update(mod.sar.ind3.I, ~. + I(mean.mld.t/10):sdSal.0m)
-summary(mod.sar.ind3.I16)
-anova(mod.sar.ind3.I, mod.sar.ind3.I16) # 0.99215
-rm(mod.sar.ind3.I16)
-
-mod.sar.ind3.I18 <- update(mod.sar.ind3.I, ~. + I(mean.mld.t/10):delta_carb_ion)
-summary(mod.sar.ind3.I18)
-anova(mod.sar.ind3.I, mod.sar.ind3.I18) # 0.53561
-rm(mod.sar.ind3.I18)
-
-# significant at the 0.05 level
-mod.sar.ind3.I19 <- update(mod.sar.ind3.I, ~. + I(depth10deg/100):absMnSal.0m)
-summary(mod.sar.ind3.I19)
-anova(mod.sar.ind3.I, mod.sar.ind3.I19) # 0.048813
-
-mod.sar.ind3.I21 <- update(mod.sar.ind3.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.ind3.I21)
-anova(mod.sar.ind3.I, mod.sar.ind3.I21) # 0.8154
-rm(mod.sar.ind3.I21)
-
-mod.sar.ind3.I22 <- update(mod.sar.ind3.I, ~. + logProd.mn.ann:prop2.oxy)
-summary(mod.sar.ind3.I22)
-anova(mod.sar.ind3.I, mod.sar.ind3.I22) # 0.75453
-rm(mod.sar.ind3.I22)
-
-mod.sar.ind3.I23 <- update(mod.sar.ind3.I, ~. + logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.ind3.I23)
-anova(mod.sar.ind3.I, mod.sar.ind3.I23) # 0.26439
-rm(mod.sar.ind3.I23)
-
-mod.sar.ind3.I24 <- update(mod.sar.ind3.I, ~. + absMnSal.0m:sdSal.0m)
-summary(mod.sar.ind3.I24)
-anova(mod.sar.ind3.I, mod.sar.ind3.I24) # 0.40043
-rm(mod.sar.ind3.I24)
-
-mod.sar.ind3.I25 <- update(mod.sar.ind3.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.ind3.I25)
-anova(mod.sar.ind3.I, mod.sar.ind3.I25) # 0.27059
-rm(mod.sar.ind3.I25)
-
-mod.sar.ind3.I27 <- update(mod.sar.ind3.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.ind3.I27)
-anova(mod.sar.ind3.I, mod.sar.ind3.I27) # 0.8925
-rm(mod.sar.ind3.I27)
-
-mod.sar.ind3.I28 <- update(mod.sar.ind3.I, ~. + sdSal.0m:prop2.oxy)
-summary(mod.sar.ind3.I28)
-anova(mod.sar.ind3.I, mod.sar.ind3.I28) # 0.883
-rm(mod.sar.ind3.I28)
-
-mod.sar.ind3.I30 <- update(mod.sar.ind3.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.ind3.I30)
-anova(mod.sar.ind3.I, mod.sar.ind3.I30) # 0.93081
-rm(mod.sar.ind3.I30)
-
-mod.sar.ind3.I31 <- update(mod.sar.ind3.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.ind3.I31)
-anova(mod.sar.ind3.I, mod.sar.ind3.I31) # 0.58186
-rm(mod.sar.ind3.I31)
-
-
-# I(depth10deg/100):absMnSal.0m is significant at the 0.05 level so add it in and recheck
-# 
-mod.sar.ind4.I <- mod.sar.ind3.I19
-rm(mod.sar.ind3.I19)
-
-mod.sar.ind4.I2 <- update(mod.sar.ind4.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
-summary(mod.sar.ind4.I2)
-anova(mod.sar.ind4.I, mod.sar.ind4.I2) # 0.46367
-rm(mod.sar.ind4.I2)
-
-mod.sar.ind4.I4 <- update(mod.sar.ind4.I, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
-summary(mod.sar.ind4.I4)
-anova(mod.sar.ind4.I, mod.sar.ind4.I4) # 0.31166
-rm(mod.sar.ind4.I4)
-
-mod.sar.ind4.I5 <- update(mod.sar.ind4.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
-summary(mod.sar.ind4.I5)
-anova(mod.sar.ind4.I, mod.sar.ind4.I5) # 0.18473
-rm(mod.sar.ind4.I5)
-
-mod.sar.ind4.I6 <- update(mod.sar.ind4.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
-summary(mod.sar.ind4.I6)
-anova(mod.sar.ind4.I, mod.sar.ind4.I6) # 0.8312
-rm(mod.sar.ind4.I6)
-
-mod.sar.ind4.I7 <- update(mod.sar.ind4.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
-summary(mod.sar.ind4.I7)
-anova(mod.sar.ind4.I, mod.sar.ind4.I7) # 0.3646
-rm(mod.sar.ind4.I7)
-
-mod.sar.ind4.I10 <- update(mod.sar.ind4.I, ~. + sdSST.1deg:I(depth10deg/100))
-summary(mod.sar.ind4.I10)
-anova(mod.sar.ind4.I, mod.sar.ind4.I10) # 0.17899
-rm(mod.sar.ind4.I10)
-
-mod.sar.ind4.I11 <- update(mod.sar.ind4.I, ~. + sdSST.1deg:logProd.mn.ann)
-summary(mod.sar.ind4.I11)
-anova(mod.sar.ind4.I, mod.sar.ind4.I11) # 0.92685
-rm(mod.sar.ind4.I11)
-
-mod.sar.ind4.I12 <- update(mod.sar.ind4.I, ~. + sdSST.1deg:absMnSal.0m)
-summary(mod.sar.ind4.I12)
-anova(mod.sar.ind4.I, mod.sar.ind4.I12) #  0.97611
-rm(mod.sar.ind4.I12)
-
-mod.sar.ind4.I13 <- update(mod.sar.ind4.I, ~. + sdSST.1deg:delta_carb_ion)
-summary(mod.sar.ind4.I13)
-anova(mod.sar.ind4.I, mod.sar.ind4.I13) # 0.91465
-rm(mod.sar.ind4.I13)
-
-mod.sar.ind4.I14 <- update(mod.sar.ind4.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
-summary(mod.sar.ind4.I14)
-anova(mod.sar.ind4.I, mod.sar.ind4.I14) # 0.38342
-rm(mod.sar.ind4.I14)
-
-mod.sar.ind4.I15 <- update(mod.sar.ind4.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.ind4.I15)
-anova(mod.sar.ind4.I, mod.sar.ind4.I15) # 0.77137
-rm(mod.sar.ind4.I15)
-
-mod.sar.ind4.I16 <- update(mod.sar.ind4.I, ~. + I(mean.mld.t/10):sdSal.0m)
-summary(mod.sar.ind4.I16)
-anova(mod.sar.ind4.I, mod.sar.ind4.I16) # 0.98177
-rm(mod.sar.ind4.I16)
-
-mod.sar.ind4.I18 <- update(mod.sar.ind4.I, ~. + I(mean.mld.t/10):delta_carb_ion)
-summary(mod.sar.ind4.I18)
-anova(mod.sar.ind4.I, mod.sar.ind4.I18) # 0.53644
-rm(mod.sar.ind4.I18)
-
-mod.sar.ind4.I21 <- update(mod.sar.ind4.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.ind4.I21)
-anova(mod.sar.ind4.I, mod.sar.ind4.I21) # 0.8847
-rm(mod.sar.ind4.I21)
-
-mod.sar.ind4.I22 <- update(mod.sar.ind4.I, ~. + logProd.mn.ann:prop2.oxy)
-summary(mod.sar.ind4.I22)
-anova(mod.sar.ind4.I, mod.sar.ind4.I22) # 0.84796
-rm(mod.sar.ind4.I22)
-
-mod.sar.ind4.I23 <- update(mod.sar.ind4.I, ~. + logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.ind4.I23)
-anova(mod.sar.ind4.I, mod.sar.ind4.I23) # 0.45701
-rm(mod.sar.ind4.I23)
-
-mod.sar.ind4.I24 <- update(mod.sar.ind4.I, ~. + absMnSal.0m:sdSal.0m)
-summary(mod.sar.ind4.I24)
-anova(mod.sar.ind4.I, mod.sar.ind4.I24) # 0.47642
-rm(mod.sar.ind4.I24)
-
-mod.sar.ind4.I25 <- update(mod.sar.ind4.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.ind4.I25)
-anova(mod.sar.ind4.I, mod.sar.ind4.I25) # 0.62473
-rm(mod.sar.ind4.I25)
-
-mod.sar.ind4.I27 <- update(mod.sar.ind4.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.ind4.I27)
-anova(mod.sar.ind4.I, mod.sar.ind4.I27) # 0.93019
-rm(mod.sar.ind4.I27)
-
-mod.sar.ind4.I28 <- update(mod.sar.ind4.I, ~. + sdSal.0m:prop2.oxy)
-summary(mod.sar.ind4.I28)
-anova(mod.sar.ind4.I, mod.sar.ind4.I28) # 0.94016
-rm(mod.sar.ind4.I28)
-
-mod.sar.ind4.I30 <- update(mod.sar.ind4.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.ind4.I30)
-anova(mod.sar.ind4.I, mod.sar.ind4.I30) # 0.96117
-rm(mod.sar.ind4.I30)
-
-mod.sar.ind4.I31 <- update(mod.sar.ind4.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.ind4.I31)
-anova(mod.sar.ind4.I, mod.sar.ind4.I31) # 0.85767
-rm(mod.sar.ind4.I31)
 
 # Nothing more is significant
-
-mod.sar.indIf <- mod.sar.ind4.I
-summary(mod.sar.indIf, Nagelkerke = TRUE) # 0.86535
-AIC(mod.sar.indIf) # 1033.724
+mod.sar.indIf <- mod.sar.ind2.I
+summary(mod.sar.indIf, Nagelkerke = TRUE) # 0.9107
+AIC(mod.sar.indIf) # 655.3532
 
 # Check for correlation
 env.var.ind <- c("meanSST.1deg", "sdSST.1deg", "mean.mld.t", "depth10deg", "logProd.mn.ann", "absMnSal.0m", "sdSal.0m", "delta_carb_ion")
@@ -2116,15 +1522,15 @@ png("Figures/Ana_3viii_LRatio_g_indIf.png", width = 800)
 lr.plot(lr.sar.indIfg, order = c(5:6, 1:4), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 3)
 dev.off()
 
-save(mod.sar.indI, mod.sar.ind1.I, mod.sar.ind2.I, mod.sar.ind3.I, mod.sar.ind4.I, file = "Outputs/Indian_simplification.RData")
-rm(ind.s, env.var.ind, mod.sar.indI, mod.sar.ind1.I, mod.sar.ind2.I, mod.sar.ind3.I, mod.sar.ind4.I)
+save(mod.sar.indI, mod.sar.ind1.I, mod.sar.ind2.I, file = "Outputs/Indian_simplification.RData")
+rm(env.var.ind, mod.sar.indI, mod.sar.ind1.I, mod.sar.ind2.I)
 
 ## 3ix. Only significant interactions for Pacific --------------------------
 summary(mod.sar.op0)
 summary(mod.sar.opf)
 
 # create a model with only significant values
-mod.sar.pacI <- errorsarlm(op.formula, listw = pac.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ])
+mod.sar.pacI <- errorsarlm(op.formula, listw = pac.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ])
 par(mfrow = c(1, 2))
 sar.plot(mod.sar.pacI)
 par(mfrow = c(1, 1))
@@ -2132,638 +1538,381 @@ par(mfrow = c(1, 1))
 # try adding in the other interactions
 mod.sar.pacI2 <- update(mod.sar.pacI, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.pacI2)
-anova(mod.sar.pacI, mod.sar.pacI2) # 0.49757
+anova(mod.sar.pacI, mod.sar.pacI2) # 0.24919
 rm(mod.sar.pacI2)
 
-# significant at the 0.05 level
 mod.sar.pacI3 <- update(mod.sar.pacI, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.pacI3)
-anova(mod.sar.pacI, mod.sar.pacI3) # 0.0054992
+anova(mod.sar.pacI, mod.sar.pacI3) # 0.082686
 rm(mod.sar.pacI3)
 
-# significant at the 0.05 level
+# signficant at the 0.05 level
 mod.sar.pacI4 <- update(mod.sar.pacI, ~. + poly(meanSST.1deg, 3):I(depth10deg/100))
 summary(mod.sar.pacI4)
-anova(mod.sar.pacI, mod.sar.pacI4) # 0.0048417
+anova(mod.sar.pacI, mod.sar.pacI4) # 0.0062355
 
-mod.sar.pacI5 <- update(mod.sar.pacI, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+# signficant at the 0.05 level
+mod.sar.pacI5 <- update(mod.sar.pacI, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.pacI5)
-anova(mod.sar.pacI, mod.sar.pacI5) # 0.20129
+anova(mod.sar.pacI, mod.sar.pacI5) # 0.013977
 rm(mod.sar.pacI5)
 
 mod.sar.pacI6 <- update(mod.sar.pacI, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.pacI6)
-anova(mod.sar.pacI, mod.sar.pacI6) # 0.4505
+anova(mod.sar.pacI, mod.sar.pacI6) # 0.34215
 rm(mod.sar.pacI6)
 
 mod.sar.pacI7 <- update(mod.sar.pacI, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.pacI7)
-anova(mod.sar.pacI, mod.sar.pacI7) # 0.97162
+anova(mod.sar.pacI, mod.sar.pacI7) # 0.86885
 rm(mod.sar.pacI7)
-
-mod.sar.pacI9 <- update(mod.sar.pacI, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.pacI9)
-anova(mod.sar.pacI, mod.sar.pacI9) # 0.72598
-rm(mod.sar.pacI9)
 
 mod.sar.pacI10 <- update(mod.sar.pacI, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.pacI10)
-anova(mod.sar.pacI, mod.sar.pacI10) # 0.19835
+anova(mod.sar.pacI, mod.sar.pacI10) # 0.69857
 rm(mod.sar.pacI10)
 
 mod.sar.pacI11 <- update(mod.sar.pacI, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.pacI11)
-anova(mod.sar.pacI, mod.sar.pacI11) # 0.12939
+anova(mod.sar.pacI, mod.sar.pacI11) # 0.58248
 rm(mod.sar.pacI11)
 
-# significant at the 0.05 level
 mod.sar.pacI12 <- update(mod.sar.pacI, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.pacI12)
-anova(mod.sar.pacI, mod.sar.pacI12) # 0.031738
+anova(mod.sar.pacI, mod.sar.pacI12) # 0.14436
 rm(mod.sar.pacI12)
 
-mod.sar.pacI13 <- update(mod.sar.pacI, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.pacI13 <- update(mod.sar.pacI, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.pacI13)
-anova(mod.sar.pacI, mod.sar.pacI13) # 0.064652
+anova(mod.sar.pacI, mod.sar.pacI13) # 0.50185
 rm(mod.sar.pacI13)
 
+# significant at the 0.05 level
 mod.sar.pacI14 <- update(mod.sar.pacI, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.pacI14)
-anova(mod.sar.pacI, mod.sar.pacI14) # 0.74371
+anova(mod.sar.pacI, mod.sar.pacI14) # 0.011825
 rm(mod.sar.pacI14)
-
-mod.sar.pacI15 <- update(mod.sar.pacI, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.pacI15)
-anova(mod.sar.pacI, mod.sar.pacI15) # 0.21602
-rm(mod.sar.pacI15)
 
 mod.sar.pacI16 <- update(mod.sar.pacI, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.pacI16)
-anova(mod.sar.pacI, mod.sar.pacI16) # 0.36686
+anova(mod.sar.pacI, mod.sar.pacI16) # 0.7474
 rm(mod.sar.pacI16)
 
 mod.sar.pacI17 <- update(mod.sar.pacI, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.pacI17)
-anova(mod.sar.pacI, mod.sar.pacI17) # 0.34832
+anova(mod.sar.pacI, mod.sar.pacI17) # 0.84673
 rm(mod.sar.pacI17)
 
-# significant at the 0.05 level
-mod.sar.pacI18 <- update(mod.sar.pacI, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.pacI18 <- update(mod.sar.pacI, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.pacI18)
-anova(mod.sar.pacI, mod.sar.pacI18) # 0.015415
+anova(mod.sar.pacI, mod.sar.pacI18) # 0.53775
 rm(mod.sar.pacI18)
 
-mod.sar.pacI19 <- update(mod.sar.pacI, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.pacI19 <- update(mod.sar.pacI, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.pacI19)
-anova(mod.sar.pacI, mod.sar.pacI19) # 0.092581
+anova(mod.sar.pacI, mod.sar.pacI19) # 0.59324
 rm(mod.sar.pacI19)
 
-mod.sar.pacI21 <- update(mod.sar.pacI, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.pacI21)
-anova(mod.sar.pacI, mod.sar.pacI21) # 0.13341
-rm(mod.sar.pacI21)
-
-mod.sar.pacI22 <- update(mod.sar.pacI, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.pacI22 <- update(mod.sar.pacI, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.pacI22)
-anova(mod.sar.pacI, mod.sar.pacI22) # 0.28196
+anova(mod.sar.pacI, mod.sar.pacI22) # 0.3503
 rm(mod.sar.pacI22)
 
-mod.sar.pacI23 <- update(mod.sar.pacI, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.pacI23 <- update(mod.sar.pacI, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.pacI23)
-anova(mod.sar.pacI, mod.sar.pacI23) # 0.37956
+anova(mod.sar.pacI, mod.sar.pacI23) # 0.56317
 rm(mod.sar.pacI23)
 
 mod.sar.pacI24 <- update(mod.sar.pacI, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.pacI24)
-anova(mod.sar.pacI, mod.sar.pacI24) # 0.9209
+anova(mod.sar.pacI, mod.sar.pacI24) # 0.56717
 rm(mod.sar.pacI24)
-
-mod.sar.pacI25 <- update(mod.sar.pacI, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.pacI25)
-anova(mod.sar.pacI, mod.sar.pacI25) # 0.40176
-rm(mod.sar.pacI25)
-
-mod.sar.pacI27 <- update(mod.sar.pacI, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.pacI27)
-anova(mod.sar.pacI, mod.sar.pacI27) # 0.81533
-rm(mod.sar.pacI27)
 
 mod.sar.pacI28 <- update(mod.sar.pacI, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.pacI28)
-anova(mod.sar.pacI, mod.sar.pacI28) # 0.69828
+anova(mod.sar.pacI, mod.sar.pacI28) # 0.34801 
 rm(mod.sar.pacI28)
 
-mod.sar.pacI30 <- update(mod.sar.pacI, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.pacI30)
-anova(mod.sar.pacI, mod.sar.pacI30) # 0.63095
-rm(mod.sar.pacI30)
 
-mod.sar.pacI31 <- update(mod.sar.pacI, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.pacI31)
-anova(mod.sar.pacI, mod.sar.pacI31) # 0.46578
-rm(mod.sar.pacI31)
-
-
-# multiple interactions were significant. Add in the most significant and then recalculate
+# multiple interactions were significant. Add in the most significant (poly(meanSST.1deg, 3):I(depth10deg/100)) and then recalculate
 mod.sar.pac1.I <- mod.sar.pacI4
 rm(mod.sar.pacI4)
 
 # try adding in the other interactions
 mod.sar.pac1.I2 <- update(mod.sar.pac1.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.pac1.I2)
-anova(mod.sar.pac1.I, mod.sar.pac1.I2) # 0.92108
+anova(mod.sar.pac1.I, mod.sar.pac1.I2) # 0.78798
 rm(mod.sar.pac1.I2)
 
 # significant at the 0.05 level
 mod.sar.pac1.I3 <- update(mod.sar.pac1.I, ~. + poly(meanSST.1deg, 3):I(mean.mld.t/10))
 summary(mod.sar.pac1.I3)
-anova(mod.sar.pac1.I, mod.sar.pac1.I3) # 0.0078896
+anova(mod.sar.pac1.I, mod.sar.pac1.I3) # 0.014697
+rm(mod.sar.pac1.I3)
 
-mod.sar.pac1.I5 <- update(mod.sar.pac1.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.pac1.I5 <- update(mod.sar.pac1.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.pac1.I5)
-anova(mod.sar.pac1.I, mod.sar.pac1.I5) # 0.62158
+anova(mod.sar.pac1.I, mod.sar.pac1.I5) # 0.2007
 rm(mod.sar.pac1.I5)
 
 mod.sar.pac1.I6 <- update(mod.sar.pac1.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.pac1.I6)
-anova(mod.sar.pac1.I, mod.sar.pac1.I6) # 0.93069
+anova(mod.sar.pac1.I, mod.sar.pac1.I6) # 0.93508
 rm(mod.sar.pac1.I6)
 
 mod.sar.pac1.I7 <- update(mod.sar.pac1.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.pac1.I7)
-anova(mod.sar.pac1.I, mod.sar.pac1.I7) # 0.87748
+anova(mod.sar.pac1.I, mod.sar.pac1.I7) # 0.74712
 rm(mod.sar.pac1.I7)
-
-mod.sar.pac1.I9 <- update(mod.sar.pac1.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.pac1.I9)
-anova(mod.sar.pac1.I, mod.sar.pac1.I9) # 0.51157 
-rm(mod.sar.pac1.I9)
 
 mod.sar.pac1.I10 <- update(mod.sar.pac1.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.pac1.I10)
-anova(mod.sar.pac1.I, mod.sar.pac1.I10) # 0.52793
+anova(mod.sar.pac1.I, mod.sar.pac1.I10) # 0.18859
 rm(mod.sar.pac1.I10)
 
 mod.sar.pac1.I11 <- update(mod.sar.pac1.I, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.pac1.I11)
-anova(mod.sar.pac1.I, mod.sar.pac1.I11) # 0.11369
+anova(mod.sar.pac1.I, mod.sar.pac1.I11) # 0.23866
 rm(mod.sar.pac1.I11)
 
-# significant at the 0.05 level
 mod.sar.pac1.I12 <- update(mod.sar.pac1.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.pac1.I12)
-anova(mod.sar.pac1.I, mod.sar.pac1.I12) # 0.18555
+anova(mod.sar.pac1.I, mod.sar.pac1.I12) # 0.43051
 rm(mod.sar.pac1.I12)
 
-# significant at the 0.05 level
-mod.sar.pac1.I13 <- update(mod.sar.pac1.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.pac1.I13 <- update(mod.sar.pac1.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.pac1.I13)
-anova(mod.sar.pac1.I, mod.sar.pac1.I13) # 0.040274
+anova(mod.sar.pac1.I, mod.sar.pac1.I13) # 0.36385
 rm(mod.sar.pac1.I13)
 
+# significant at the 0.05 level
 mod.sar.pac1.I14 <- update(mod.sar.pac1.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.pac1.I14)
-anova(mod.sar.pac1.I, mod.sar.pac1.I14) # 0.52655
+anova(mod.sar.pac1.I, mod.sar.pac1.I14) # 0.038133
 rm(mod.sar.pac1.I14)
-
-mod.sar.pac1.I15 <- update(mod.sar.pac1.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.pac1.I15)
-anova(mod.sar.pac1.I, mod.sar.pac1.I15) # 0.87029
-rm(mod.sar.pac1.I15)
 
 mod.sar.pac1.I16 <- update(mod.sar.pac1.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.pac1.I16)
-anova(mod.sar.pac1.I, mod.sar.pac1.I16) # 0.33075
+anova(mod.sar.pac1.I, mod.sar.pac1.I16) # 0.83727
 rm(mod.sar.pac1.I16)
 
 mod.sar.pac1.I17 <- update(mod.sar.pac1.I, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.pac1.I17)
-anova(mod.sar.pac1.I, mod.sar.pac1.I17) # 0.43237
+anova(mod.sar.pac1.I, mod.sar.pac1.I17) # 0.75554
 rm(mod.sar.pac1.I17)
 
-# significant at the 0.05 level
-mod.sar.pac1.I18 <- update(mod.sar.pac1.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.pac1.I18 <- update(mod.sar.pac1.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.pac1.I18)
-anova(mod.sar.pac1.I, mod.sar.pac1.I18) # 0.01561
+anova(mod.sar.pac1.I, mod.sar.pac1.I18) # 0.40662
 rm(mod.sar.pac1.I18)
 
-mod.sar.pac1.I19 <- update(mod.sar.pac1.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.pac1.I19 <- update(mod.sar.pac1.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.pac1.I19)
-anova(mod.sar.pac1.I, mod.sar.pac1.I19) # 0.067521
+anova(mod.sar.pac1.I, mod.sar.pac1.I19) # 0.35844
 rm(mod.sar.pac1.I19)
 
-mod.sar.pac1.I21 <- update(mod.sar.pac1.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.pac1.I21)
-anova(mod.sar.pac1.I, mod.sar.pac1.I21) # 0.2749
-rm(mod.sar.pac1.I21)
-
-mod.sar.pac1.I22 <- update(mod.sar.pac1.I, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.pac1.I22 <- update(mod.sar.pac1.I, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.pac1.I22)
-anova(mod.sar.pac1.I, mod.sar.pac1.I22) # 0.20087
+anova(mod.sar.pac1.I, mod.sar.pac1.I22) # 0.49025
 rm(mod.sar.pac1.I22)
 
-mod.sar.pac1.I23 <- update(mod.sar.pac1.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.pac1.I23 <- update(mod.sar.pac1.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.pac1.I23)
-anova(mod.sar.pac1.I, mod.sar.pac1.I23) # 0.20485
+anova(mod.sar.pac1.I, mod.sar.pac1.I23) # 0.67571
 rm(mod.sar.pac1.I23)
 
 mod.sar.pac1.I24 <- update(mod.sar.pac1.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.pac1.I24)
-anova(mod.sar.pac1.I, mod.sar.pac1.I24) # 0.74585
+anova(mod.sar.pac1.I, mod.sar.pac1.I24) # 0.65253
 rm(mod.sar.pac1.I24)
-
-mod.sar.pac1.I25 <- update(mod.sar.pac1.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.pac1.I25)
-anova(mod.sar.pac1.I, mod.sar.pac1.I25) # 0.57501
-rm(mod.sar.pac1.I25)
-
-mod.sar.pac1.I27 <- update(mod.sar.pac1.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.pac1.I27)
-anova(mod.sar.pac1.I, mod.sar.pac1.I27) # 0.98376
-rm(mod.sar.pac1.I27)
 
 mod.sar.pac1.I28 <- update(mod.sar.pac1.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.pac1.I28)
-anova(mod.sar.pac1.I, mod.sar.pac1.I28) # 0.55538
+anova(mod.sar.pac1.I, mod.sar.pac1.I28) # 0.34293
 rm(mod.sar.pac1.I28)
 
-mod.sar.pac1.I30 <- update(mod.sar.pac1.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.pac1.I30)
-anova(mod.sar.pac1.I, mod.sar.pac1.I30) # 0.86085
-rm(mod.sar.pac1.I30)
 
-mod.sar.pac1.I31 <- update(mod.sar.pac1.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.pac1.I31)
-anova(mod.sar.pac1.I, mod.sar.pac1.I31) # 0.45622
-rm(mod.sar.pac1.I31)
-
-
-# add in poly(meanSST.1deg, 3):mean.mld.t and recalculate
+# add in poly(meanSST.1deg, 3):I(mean.mld.t/10) and recalculate
 mod.sar.pac2.I <- mod.sar.pac1.I3
 rm(mod.sar.pac1.I3)
 
 # try adding in the other interactions
 mod.sar.pac2.I2 <- update(mod.sar.pac2.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.pac2.I2)
-anova(mod.sar.pac2.I, mod.sar.pac2.I2) # 0.47797
+anova(mod.sar.pac2.I, mod.sar.pac2.I2) # 0.97982
 rm(mod.sar.pac2.I2)
 
-mod.sar.pac2.I5 <- update(mod.sar.pac2.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.pac2.I5 <- update(mod.sar.pac2.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.pac2.I5)
-anova(mod.sar.pac2.I, mod.sar.pac2.I5) # 0.91649
+anova(mod.sar.pac2.I, mod.sar.pac2.I5) # 0.34652
 rm(mod.sar.pac2.I5)
 
 mod.sar.pac2.I6 <- update(mod.sar.pac2.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.pac2.I6)
-anova(mod.sar.pac2.I, mod.sar.pac2.I6) # 0.47812
+anova(mod.sar.pac2.I, mod.sar.pac2.I6) # 0.30557
 rm(mod.sar.pac2.I6)
 
 mod.sar.pac2.I7 <- update(mod.sar.pac2.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.pac2.I7)
-anova(mod.sar.pac2.I, mod.sar.pac2.I7) # 0.57602
+anova(mod.sar.pac2.I, mod.sar.pac2.I7) # 0.68922
 rm(mod.sar.pac2.I7)
-
-mod.sar.pac2.I9 <- update(mod.sar.pac2.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.pac2.I9)
-anova(mod.sar.pac2.I, mod.sar.pac2.I9) #  0.88527
-rm(mod.sar.pac2.I9)
 
 mod.sar.pac2.I10 <- update(mod.sar.pac2.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.pac2.I10)
-anova(mod.sar.pac2.I, mod.sar.pac2.I10) # 0.55538
+anova(mod.sar.pac2.I, mod.sar.pac2.I10) # 0.14676
 rm(mod.sar.pac2.I10)
 
-# significant at the 0.05 level
 mod.sar.pac2.I11 <- update(mod.sar.pac2.I, ~. + sdSST.1deg:logProd.mn.ann)
 summary(mod.sar.pac2.I11)
-anova(mod.sar.pac2.I, mod.sar.pac2.I11) # 0.01735
+anova(mod.sar.pac2.I, mod.sar.pac2.I11) # 0.17757
+rm(mod.sar.pac2.I11)
 
 mod.sar.pac2.I12 <- update(mod.sar.pac2.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.pac2.I12)
-anova(mod.sar.pac2.I, mod.sar.pac2.I12) # 0.31569
+anova(mod.sar.pac2.I, mod.sar.pac2.I12) # 0.48992
 rm(mod.sar.pac2.I12)
 
-mod.sar.pac2.I13 <- update(mod.sar.pac2.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.pac2.I13 <- update(mod.sar.pac2.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.pac2.I13)
-anova(mod.sar.pac2.I, mod.sar.pac2.I13) # 0.054336
+anova(mod.sar.pac2.I, mod.sar.pac2.I13) # 0.19567
 rm(mod.sar.pac2.I13)
 
+# significant at the 0.05 level
 mod.sar.pac2.I14 <- update(mod.sar.pac2.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
 summary(mod.sar.pac2.I14)
-anova(mod.sar.pac2.I, mod.sar.pac2.I14) # 0.69515
-rm(mod.sar.pac2.I14)
-
-mod.sar.pac2.I15 <- update(mod.sar.pac2.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.pac2.I15)
-anova(mod.sar.pac2.I, mod.sar.pac2.I15) # 0.60551
-rm(mod.sar.pac2.I15)
+anova(mod.sar.pac2.I, mod.sar.pac2.I14) # 0.020589
 
 mod.sar.pac2.I16 <- update(mod.sar.pac2.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.pac2.I16)
-anova(mod.sar.pac2.I, mod.sar.pac2.I16) # 0.63653
+anova(mod.sar.pac2.I, mod.sar.pac2.I16) # 0.65852
 rm(mod.sar.pac2.I16)
 
 mod.sar.pac2.I17 <- update(mod.sar.pac2.I, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.pac2.I17)
-anova(mod.sar.pac2.I, mod.sar.pac2.I17) # 0.35766
+anova(mod.sar.pac2.I, mod.sar.pac2.I17) # 0.80192
 rm(mod.sar.pac2.I17)
 
-mod.sar.pac2.I18 <- update(mod.sar.pac2.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.pac2.I18 <- update(mod.sar.pac2.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.pac2.I18)
-anova(mod.sar.pac2.I, mod.sar.pac2.I18) # 0.1286
+anova(mod.sar.pac2.I, mod.sar.pac2.I18) # 0.31289
 rm(mod.sar.pac2.I18)
 
-mod.sar.pac2.I19 <- update(mod.sar.pac2.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.pac2.I19 <- update(mod.sar.pac2.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.pac2.I19)
-anova(mod.sar.pac2.I, mod.sar.pac2.I19) # 0.13658
+anova(mod.sar.pac2.I, mod.sar.pac2.I19) # 0.086355
 rm(mod.sar.pac2.I19)
 
-mod.sar.pac2.I21 <- update(mod.sar.pac2.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.pac2.I21)
-anova(mod.sar.pac2.I, mod.sar.pac2.I21) # 0.40787
-rm(mod.sar.pac2.I21)
-
-mod.sar.pac2.I22 <- update(mod.sar.pac2.I, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.pac2.I22 <- update(mod.sar.pac2.I, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.pac2.I22)
-anova(mod.sar.pac2.I, mod.sar.pac2.I22) # 0.086263
+anova(mod.sar.pac2.I, mod.sar.pac2.I22) # 0.76406
 rm(mod.sar.pac2.I22)
 
-mod.sar.pac2.I23 <- update(mod.sar.pac2.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.pac2.I23 <- update(mod.sar.pac2.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.pac2.I23)
-anova(mod.sar.pac2.I, mod.sar.pac2.I23) # 0.15135
+anova(mod.sar.pac2.I, mod.sar.pac2.I23) # 0.67704
 rm(mod.sar.pac2.I23)
 
 mod.sar.pac2.I24 <- update(mod.sar.pac2.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.pac2.I24)
-anova(mod.sar.pac2.I, mod.sar.pac2.I24) # 0.34378
+anova(mod.sar.pac2.I, mod.sar.pac2.I24) # 0.5821
 rm(mod.sar.pac2.I24)
-
-mod.sar.pac2.I25 <- update(mod.sar.pac2.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.pac2.I25)
-anova(mod.sar.pac2.I, mod.sar.pac2.I25) # 0.91648
-rm(mod.sar.pac2.I25)
-
-mod.sar.pac2.I27 <- update(mod.sar.pac2.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.pac2.I27)
-anova(mod.sar.pac2.I, mod.sar.pac2.I27) # 0.98268
-rm(mod.sar.pac2.I27)
 
 mod.sar.pac2.I28 <- update(mod.sar.pac2.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.pac2.I28)
-anova(mod.sar.pac2.I, mod.sar.pac2.I28) # 0.27949
+anova(mod.sar.pac2.I, mod.sar.pac2.I28) #  0.48527
 rm(mod.sar.pac2.I28)
 
-mod.sar.pac2.I30 <- update(mod.sar.pac2.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.pac2.I30)
-anova(mod.sar.pac2.I, mod.sar.pac2.I30) # 0.76627
-rm(mod.sar.pac2.I30)
-
-mod.sar.pac2.I31 <- update(mod.sar.pac2.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.pac2.I31)
-anova(mod.sar.pac2.I, mod.sar.pac2.I31) # 0.32665
-rm(mod.sar.pac2.I31)
 
 # add in sdSST.1deg:logProd.mn.ann and recalculate
-mod.sar.pac3.I <- mod.sar.pac2.I11
-rm(mod.sar.pac2.I11)
+mod.sar.pac3.I <- mod.sar.pac2.I14
+rm(mod.sar.pac2.I14)
 
 # try adding in the other interactions
 mod.sar.pac3.I2 <- update(mod.sar.pac3.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
 summary(mod.sar.pac3.I2)
-anova(mod.sar.pac3.I, mod.sar.pac3.I2) # 0.91224
+anova(mod.sar.pac3.I, mod.sar.pac3.I2) # 0.9098
 rm(mod.sar.pac3.I2)
 
-mod.sar.pac3.I5 <- update(mod.sar.pac3.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
+mod.sar.pac3.I5 <- update(mod.sar.pac3.I, ~. -logProd.mn.ann:poly(meanSST.1deg, 1) + poly(meanSST.1deg, 3):logProd.mn.ann)
 summary(mod.sar.pac3.I5)
-anova(mod.sar.pac3.I, mod.sar.pac3.I5) # 0.25957
+anova(mod.sar.pac3.I, mod.sar.pac3.I5) # 0.24538
 rm(mod.sar.pac3.I5)
 
 mod.sar.pac3.I6 <- update(mod.sar.pac3.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
 summary(mod.sar.pac3.I6)
-anova(mod.sar.pac3.I, mod.sar.pac3.I6) # 0.5501
+anova(mod.sar.pac3.I, mod.sar.pac3.I6) # 0.18695
 rm(mod.sar.pac3.I6)
 
 mod.sar.pac3.I7 <- update(mod.sar.pac3.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
 summary(mod.sar.pac3.I7)
-anova(mod.sar.pac3.I, mod.sar.pac3.I7) # 0.75835
+anova(mod.sar.pac3.I, mod.sar.pac3.I7) # 0.74174
 rm(mod.sar.pac3.I7)
-
-mod.sar.pac3.I9 <- update(mod.sar.pac3.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.pac3.I9)
-anova(mod.sar.pac3.I, mod.sar.pac3.I9) # 0.8027 
-rm(mod.sar.pac3.I9)
 
 mod.sar.pac3.I10 <- update(mod.sar.pac3.I, ~. + sdSST.1deg:I(depth10deg/100))
 summary(mod.sar.pac3.I10)
-anova(mod.sar.pac3.I, mod.sar.pac3.I10) # 0.89013
+anova(mod.sar.pac3.I, mod.sar.pac3.I10) # 0.16782
 rm(mod.sar.pac3.I10)
+
+mod.sar.pac3.I11 <- update(mod.sar.pac3.I, ~. + sdSST.1deg:logProd.mn.ann)
+summary(mod.sar.pac3.I11)
+anova(mod.sar.pac3.I, mod.sar.pac3.I11) # 0.25921
+rm(mod.sar.pac3.I11)
 
 mod.sar.pac3.I12 <- update(mod.sar.pac3.I, ~. + sdSST.1deg:absMnSal.0m)
 summary(mod.sar.pac3.I12)
-anova(mod.sar.pac3.I, mod.sar.pac3.I12) # 0.19926
+anova(mod.sar.pac3.I, mod.sar.pac3.I12) # 0.20125
 rm(mod.sar.pac3.I12)
 
-# significant at the 0.05 level
-mod.sar.pac3.I13 <- update(mod.sar.pac3.I, ~. + sdSST.1deg:delta_carb_ion)
+mod.sar.pac3.I13 <- update(mod.sar.pac3.I, ~. + sdSST.1deg:prop2.oxy )
 summary(mod.sar.pac3.I13)
-anova(mod.sar.pac3.I, mod.sar.pac3.I13) # 0.037206
-
-mod.sar.pac3.I14 <- update(mod.sar.pac3.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
-summary(mod.sar.pac3.I14)
-anova(mod.sar.pac3.I, mod.sar.pac3.I14) # 0.81682
-rm(mod.sar.pac3.I14)
-
-mod.sar.pac3.I15 <- update(mod.sar.pac3.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.pac3.I15)
-anova(mod.sar.pac3.I, mod.sar.pac3.I15) # 0.65358
-rm(mod.sar.pac3.I15)
+anova(mod.sar.pac3.I, mod.sar.pac3.I13) # 0.24953
+rm(mod.sar.pac3.I13)
 
 mod.sar.pac3.I16 <- update(mod.sar.pac3.I, ~. + I(mean.mld.t/10):sdSal.0m)
 summary(mod.sar.pac3.I16)
-anova(mod.sar.pac3.I, mod.sar.pac3.I16) # 0.91734
+anova(mod.sar.pac3.I, mod.sar.pac3.I16) # 0.89359
 rm(mod.sar.pac3.I16)
 
 mod.sar.pac3.I17 <- update(mod.sar.pac3.I, ~. + I(mean.mld.t/10):prop2.oxy)
 summary(mod.sar.pac3.I17)
-anova(mod.sar.pac3.I, mod.sar.pac3.I17) # 0.46314
+anova(mod.sar.pac3.I, mod.sar.pac3.I17) # 0.97584
 rm(mod.sar.pac3.I17)
 
-mod.sar.pac3.I18 <- update(mod.sar.pac3.I, ~. + I(mean.mld.t/10):delta_carb_ion)
+mod.sar.pac3.I18 <- update(mod.sar.pac3.I, ~. + I(depth10deg/100):logProd.mn.ann)
 summary(mod.sar.pac3.I18)
-anova(mod.sar.pac3.I, mod.sar.pac3.I18) # 0.15594
+anova(mod.sar.pac3.I, mod.sar.pac3.I18) # 0.70008
 rm(mod.sar.pac3.I18)
 
-mod.sar.pac3.I19 <- update(mod.sar.pac3.I, ~. + I(depth10deg/100):absMnSal.0m)
+mod.sar.pac3.I19 <- update(mod.sar.pac3.I, ~. + I(depth10deg/100):prop2.oxy)
 summary(mod.sar.pac3.I19)
-anova(mod.sar.pac3.I, mod.sar.pac3.I19) # 0.20299
+anova(mod.sar.pac3.I, mod.sar.pac3.I19) # 0.29674
 rm(mod.sar.pac3.I19)
 
-mod.sar.pac3.I21 <- update(mod.sar.pac3.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.pac3.I21)
-anova(mod.sar.pac3.I, mod.sar.pac3.I21) # 0.34057
-rm(mod.sar.pac3.I21)
-
-mod.sar.pac3.I22 <- update(mod.sar.pac3.I, ~. + logProd.mn.ann:prop2.oxy)
+mod.sar.pac3.I22 <- update(mod.sar.pac3.I, ~. + logProd.mn.ann:sdSal.0m)
 summary(mod.sar.pac3.I22)
-anova(mod.sar.pac3.I, mod.sar.pac3.I22) # 0.20734
+anova(mod.sar.pac3.I, mod.sar.pac3.I22) # 0.93002
 rm(mod.sar.pac3.I22)
 
-mod.sar.pac3.I23 <- update(mod.sar.pac3.I, ~. + logProd.mn.ann:delta_carb_ion)
+mod.sar.pac3.I23 <- update(mod.sar.pac3.I, ~. + logProd.mn.ann:prop2.oxy)
 summary(mod.sar.pac3.I23)
-anova(mod.sar.pac3.I, mod.sar.pac3.I23) # 0.28197
+anova(mod.sar.pac3.I, mod.sar.pac3.I23) # 0.87246
 rm(mod.sar.pac3.I23)
 
 mod.sar.pac3.I24 <- update(mod.sar.pac3.I, ~. + absMnSal.0m:sdSal.0m)
 summary(mod.sar.pac3.I24)
-anova(mod.sar.pac3.I, mod.sar.pac3.I24) # 0.46697
+anova(mod.sar.pac3.I, mod.sar.pac3.I24) # 0.89672
 rm(mod.sar.pac3.I24)
-
-mod.sar.pac3.I25 <- update(mod.sar.pac3.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.pac3.I25)
-anova(mod.sar.pac3.I, mod.sar.pac3.I25) # 0.688
-rm(mod.sar.pac3.I25)
-
-mod.sar.pac3.I27 <- update(mod.sar.pac3.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.pac3.I27)
-anova(mod.sar.pac3.I, mod.sar.pac3.I27) # 0.99263
-rm(mod.sar.pac3.I27)
 
 mod.sar.pac3.I28 <- update(mod.sar.pac3.I, ~. + sdSal.0m:prop2.oxy)
 summary(mod.sar.pac3.I28)
-anova(mod.sar.pac3.I, mod.sar.pac3.I28) # 0.42745
+anova(mod.sar.pac3.I, mod.sar.pac3.I28) # 0.51714
 rm(mod.sar.pac3.I28)
 
-mod.sar.pac3.I30 <- update(mod.sar.pac3.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.pac3.I30)
-anova(mod.sar.pac3.I, mod.sar.pac3.I30) # 0.95914
-rm(mod.sar.pac3.I30)
-
-mod.sar.pac3.I31 <- update(mod.sar.pac3.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.pac3.I31)
-anova(mod.sar.pac3.I, mod.sar.pac3.I31) # 0.44131
-rm(mod.sar.pac3.I31)
-
-
-# add in sdSST.1deg:delta_carb_ion and recalculate
-mod.sar.pac4.I <- mod.sar.pac3.I13
-rm(mod.sar.pac3.I13)
-
-# try adding in the other interactions
-mod.sar.pac4.I2 <- update(mod.sar.pac4.I, ~. - poly(meanSST.1deg, 1):sdSST.1deg + poly(meanSST.1deg, 3):sdSST.1deg)
-summary(mod.sar.pac4.I2)
-anova(mod.sar.pac4.I, mod.sar.pac4.I2) # 0.73057
-rm(mod.sar.pac4.I2)
-
-mod.sar.pac4.I5 <- update(mod.sar.pac4.I, ~. + poly(meanSST.1deg, 3):logProd.mn.ann)
-summary(mod.sar.pac4.I5)
-anova(mod.sar.pac4.I, mod.sar.pac4.I5) # 0.19794
-rm(mod.sar.pac4.I5)
-
-mod.sar.pac4.I6 <- update(mod.sar.pac4.I, ~. - absMnSal.0m:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):absMnSal.0m)
-summary(mod.sar.pac4.I6)
-anova(mod.sar.pac4.I, mod.sar.pac4.I6) # 0.60861
-rm(mod.sar.pac4.I6)
-
-mod.sar.pac4.I7 <- update(mod.sar.pac4.I, ~. - prop2.oxy:poly(meanSST.1deg, 2) + poly(meanSST.1deg, 3):prop2.oxy)
-summary(mod.sar.pac4.I7)
-anova(mod.sar.pac4.I, mod.sar.pac4.I7) # 0.76467
-rm(mod.sar.pac4.I7)
-
-mod.sar.pac4.I9 <- update(mod.sar.pac4.I, ~. - delta_carb_ion:poly(meanSST.1deg, 2) + delta_carb_ion:poly(meanSST.1deg, 3) )
-summary(mod.sar.pac4.I9)
-anova(mod.sar.pac4.I, mod.sar.pac4.I9) # 0.45163 
-rm(mod.sar.pac4.I9)
-
-mod.sar.pac4.I10 <- update(mod.sar.pac4.I, ~. + sdSST.1deg:I(depth10deg/100))
-summary(mod.sar.pac4.I10)
-anova(mod.sar.pac4.I, mod.sar.pac4.I10) # 0.85379
-rm(mod.sar.pac4.I10)
-
-mod.sar.pac4.I12 <- update(mod.sar.pac4.I, ~. + sdSST.1deg:absMnSal.0m)
-summary(mod.sar.pac4.I12)
-anova(mod.sar.pac4.I, mod.sar.pac4.I12) # 0.18787
-rm(mod.sar.pac4.I12)
-
-mod.sar.pac4.I14 <- update(mod.sar.pac4.I, ~. + I(mean.mld.t/10):I(depth10deg/100))
-summary(mod.sar.pac4.I14)
-anova(mod.sar.pac4.I, mod.sar.pac4.I14) # 0.71541
-rm(mod.sar.pac4.I14)
-
-mod.sar.pac4.I15 <- update(mod.sar.pac4.I, ~. + I(mean.mld.t/10):absMnSal.0m)
-summary(mod.sar.pac4.I15)
-anova(mod.sar.pac4.I, mod.sar.pac4.I15) # 0.44578
-rm(mod.sar.pac4.I15)
-
-mod.sar.pac4.I16 <- update(mod.sar.pac4.I, ~. + I(mean.mld.t/10):sdSal.0m)
-summary(mod.sar.pac4.I16)
-anova(mod.sar.pac4.I, mod.sar.pac4.I16) # 0.94996
-rm(mod.sar.pac4.I16)
-
-mod.sar.pac4.I17 <- update(mod.sar.pac4.I, ~. + I(mean.mld.t/10):prop2.oxy)
-summary(mod.sar.pac4.I17)
-anova(mod.sar.pac4.I, mod.sar.pac4.I17) # 0.37635
-rm(mod.sar.pac4.I17)
-
-mod.sar.pac4.I18 <- update(mod.sar.pac4.I, ~. + I(mean.mld.t/10):delta_carb_ion)
-summary(mod.sar.pac4.I18)
-anova(mod.sar.pac4.I, mod.sar.pac4.I18) # 0.33318
-rm(mod.sar.pac4.I18)
-
-mod.sar.pac4.I19 <- update(mod.sar.pac4.I, ~. + I(depth10deg/100):absMnSal.0m)
-summary(mod.sar.pac4.I19)
-anova(mod.sar.pac4.I, mod.sar.pac4.I19) # 0.14677
-rm(mod.sar.pac4.I19)
-
-mod.sar.pac4.I21 <- update(mod.sar.pac4.I, ~. + I(depth10deg/100):delta_carb_ion)
-summary(mod.sar.pac4.I21)
-anova(mod.sar.pac4.I, mod.sar.pac4.I21) # 0.71721
-rm(mod.sar.pac4.I21)
-
-mod.sar.pac4.I22 <- update(mod.sar.pac4.I, ~. + logProd.mn.ann:prop2.oxy)
-summary(mod.sar.pac4.I22)
-anova(mod.sar.pac4.I, mod.sar.pac4.I22) # 0.21723
-rm(mod.sar.pac4.I22)
-
-mod.sar.pac4.I23 <- update(mod.sar.pac4.I, ~. + logProd.mn.ann:delta_carb_ion)
-summary(mod.sar.pac4.I23)
-anova(mod.sar.pac4.I, mod.sar.pac4.I23) # 0.27182
-rm(mod.sar.pac4.I23)
-
-mod.sar.pac4.I24 <- update(mod.sar.pac4.I, ~. + absMnSal.0m:sdSal.0m)
-summary(mod.sar.pac4.I24)
-anova(mod.sar.pac4.I, mod.sar.pac4.I24) # 0.45903
-rm(mod.sar.pac4.I24)
-
-mod.sar.pac4.I25 <- update(mod.sar.pac4.I, ~. + absMnSal.0m:prop2.oxy )
-summary(mod.sar.pac4.I25)
-anova(mod.sar.pac4.I, mod.sar.pac4.I25) # 0.5496
-rm(mod.sar.pac4.I25)
-
-mod.sar.pac4.I27 <- update(mod.sar.pac4.I, ~. + absMnSal.0m:delta_carb_ion)
-summary(mod.sar.pac4.I27)
-anova(mod.sar.pac4.I, mod.sar.pac4.I27) # 0.95035
-rm(mod.sar.pac4.I27)
-
-mod.sar.pac4.I28 <- update(mod.sar.pac4.I, ~. + sdSal.0m:prop2.oxy)
-summary(mod.sar.pac4.I28)
-anova(mod.sar.pac4.I, mod.sar.pac4.I28) # 0.45047
-rm(mod.sar.pac4.I28)
-
-mod.sar.pac4.I30 <- update(mod.sar.pac4.I, ~. + sdSal.0m:delta_carb_ion)
-summary(mod.sar.pac4.I30)
-anova(mod.sar.pac4.I, mod.sar.pac4.I30) # 0.9957
-rm(mod.sar.pac4.I30)
-
-mod.sar.pac4.I31 <- update(mod.sar.pac4.I, ~. + prop2.oxy:delta_carb_ion)
-summary(mod.sar.pac4.I31)
-anova(mod.sar.pac4.I, mod.sar.pac4.I31) # 0.2942
-rm(mod.sar.pac4.I31)
-
 # don't need to add anything else
-mod.sar.pacIf <- mod.sar.pac4.I
+mod.sar.pacIf <- mod.sar.pac3.I
 
-summary(mod.sar.pacIf, Nagelkerke = TRUE) # 0.71599 
-AIC(mod.sar.pacIf) # 2012.546
+summary(mod.sar.pacIf, Nagelkerke = TRUE) # 0.75498 
+AIC(mod.sar.pacIf) # 1099.509
 
 # Check for correlation
 env.var.pac <- c("meanSST.1deg", "sdSST.1deg", "depth10deg", "mean.mld.t", "logProd.mn.ann", "absMnSal.0m", "sdSal.0m", "delta_carb_ion")
@@ -2792,12 +1941,12 @@ png("Figures/Ana_3ix_LRatio_g_pacIf.png", width = 800)
 lr.plot(lr.sar.pacIfg, order = c(5:6, 1:4), legend = FALSE, ylab = "Log Likelihood ratio", star.pos = 7)
 dev.off()
 
-save(mod.sar.pacI, mod.sar.pac1.I, mod.sar.pac2.I, mod.sar.pac3.I, mod.sar.pac4.I, file = "Outputs/Pacific_simplification.RData")
-rm(env.var.pac, mod.sar.pacI, mod.sar.pac1.I, mod.sar.pac2.I, mod.sar.pac3.I, mod.sar.pac4.I)
+save(mod.sar.pacI, mod.sar.pac1.I, mod.sar.pac2.I, mod.sar.pac3.I, file = "Outputs/Pacific_simplification.RData")
+rm(env.var.pac, mod.sar.pacI, mod.sar.pac1.I, mod.sar.pac2.I, mod.sar.pac3.I)
 
 ## 3x. Comparison of the oceans --------------------------------------------
 png("Figures/Ana_3x_LRatio_oceIf.png", width = 1200)
-lr.plot(lr.sar.op0, lr.sar.atlIf, lr.sar.indIf, lr.sar.pacIf, order = c(7:9, 3:4, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Full", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 20)
+lr.plot(lr.sar.op0, lr.sar.atlIf, lr.sar.indIf, lr.sar.pacIf, order = c(9:7, 3:4, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Full", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 # also for groups of variables
@@ -2809,158 +1958,157 @@ save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, file = "Outputs/Atlantic_simpli
 save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, file = "Outputs/Indian_simplified.RData")
 save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, file = "Outputs/Pacific_simplified.RData")
 
-rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula, ind.s, atl.s, pac.s)
+rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula, ind.w, atl.w, pac.w)
 
 
 ## 4. Does resolution of variables matter? ---------------------------------
-
-## 4i. Run full model for higher resolution ----------------------
-mod.hres.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.4km, 3) + sdSST.4km + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod)
-
-## 4iii. Compare LRs -------------------------------------------------------
-lr.hres.op0 <- lr.calc(mod.hres.op0)
-
-png("Figures/Ana_4iii_LRatio_ophresop0.png", width = 800)
-# get order from running without order first
-lr.plot(lr.sar.op0, lr.hres.op0, order = c(7, 13, 8, 14, 9, 15, 4:3, 12, 16, 11, 5, 1, 10, 6, 2), leg.txt = c("Coarser resolution", "Finer resolution"), ylab = "Log Likelihood ratio")
-dev.off()
-
-# also for groups of variables
-(tmp <- data.frame(names = model.evs(mod.hres.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
-lr.hres.op0g <- lr.calc(mod.hres.op0, tmp)
-rm(tmp)
-
-png("Figures/Ana_4iii_LRatio_g_ophresop0.png", width = 800)
-lr.plot(lr.sar.op0g, lr.hres.op0g, order = c(6:7, 4, 3, 5, 2:1), leg.txt = c("Coarser resolution", "Finer resolution"), ylab = "Log Likelihood ratio")
-dev.off()
-
-save(mod.hres.op0, lr.hres.op0, lr.hres.op0g, file = "Outputs/mod_hres.RData")
-rm(mod.hres.op0, lr.hres.op0, lr.hres.op0g)
+# Don't do this
 
 
-## 5. Does delta_carb_ion cut-off matter? -------------------------------------
+## 5. Does delta_carb_ion cut-off matter for rarefied richness? ------------------------------
 
 ## 5i. Create a dataset for modelling with higher or lower cut-offs --------
 load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
 rm(db.traits, margo.traits)
 
 # create a dataset for modelling with 
-ldg.margo.tmp <- merge(ldg.margo.env, ldg.margo.data[, c(1, 3:5, 48, 54:58, 60, 65:82)], by.x = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"), by.y = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"))
-rm(ldg.margo.data, ldg.margo.env)
+tmp <- c("Core", "Latitude", "Longitude", "Water.Depth", "Total_Planktics", "Ocean2", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+ldg.margo.mod <- merge(ldg.margo.env, ldg.margo.data[, tmp], by.x = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"), by.y = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"))
+rm(ldg.margo.data, ldg.margo.env, tmp)
 
 # set NAs in 10 deg depth to 0, so it can be modelled
-ldg.margo.tmp$depth10deg[is.na(ldg.margo.tmp$depth10deg)] <- 0
+ldg.margo.mod$depth10deg[is.na(ldg.margo.mod$depth10deg)] <- 0
 # remove Water.Depth again (as it has NAs)
-ldg.margo.tmp <- ldg.margo.tmp[, -which(names(ldg.margo.tmp) == "Water.Depth")]
-# set the FRic NAs to an arbitrary amount, as don't want to remove those rows
-ldg.margo.tmp$FRic[is.na(ldg.margo.tmp$FRic)] <- 999
-# remove other NAs
-ldg.margo.tmp <- na.omit(ldg.margo.tmp)
-# reset these back to NA
-ldg.margo.tmp$FRic[ldg.margo.tmp$FRic == 999] <- NA
-
+ldg.margo.mod <- ldg.margo.mod[, -which(names(ldg.margo.mod) == "Water.Depth")]
 # remove the extra factor level of the mediterranean
-ldg.margo.tmp <- ldg.margo.tmp[ldg.margo.tmp$Ocean2 != "Mediterranean", ]
-ldg.margo.tmp$Ocean2 <- droplevels(ldg.margo.tmp$Ocean2)
+ldg.margo.mod <- ldg.margo.mod[ldg.margo.mod$Ocean2 != "Mediterranean", ]
+ldg.margo.mod$Ocean2 <- droplevels(ldg.margo.mod$Ocean2)
+## which points are to be excluded because of delta_carb_ion?
+ldg.margo.mod <- ldg.margo.mod[which(ldg.margo.mod$delta_carb_ion >= -15), ]
+ldg.margo.mod$delta_carb_ion[ldg.margo.mod$delta_carb_ion > 0] <- 0
+# salinity
+ldg.margo.mod$absMnSal.0m <- abs(ldg.margo.mod$meanSal.0m - 35.1)
 
-## Set up two different cutoffs, so cutoff of -20
-rsr.margo.mod20 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -20), ]
-rsr.margo.mod20$delta_carb_ion[rsr.margo.mod20$delta_carb_ion > 0] <- 0
-# expect salinity to impact both at the top and the bottom of the range. 
-rsr.margo.mod20$absMnSal.0m <- abs(rsr.margo.mod20$meanSal.0m - 35.1)
+## for richness
+cols <- c("simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+rsr.margo.mod15 <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+rsr.margo.mod15 <- na.omit(rsr.margo.mod15)
 
-# cutoff of -10
-rsr.margo.mod10 <- ldg.margo.tmp[which(ldg.margo.tmp$delta_carb_ion >= -10), ]
-rsr.margo.mod10$delta_carb_ion[rsr.margo.mod10$delta_carb_ion > 0] <- 0
-# expect salinity to impact both at the top and the bottom of the range. 
-rsr.margo.mod10$absMnSal.0m <- abs(rsr.margo.mod10$meanSal.0m - 35.1)
+rm(ldg.margo.mod)
+
+# remove unique data
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(rsr.margo.mod15[, cols]))
+tmp.1 <- which(duplicated(rsr.margo.mod15[, cols]))
+rsr.margo.mod15$uni <- NA
+rsr.margo.mod15$uni[!duplicated(rsr.margo.mod15[, cols])] <- 1:length(rsr.margo.mod15$uni[!duplicated(rsr.margo.mod15[, cols])])
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(rsr.margo.mod15[i, ], rsr.margo.mod15, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  rsr.margo.mod15$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows, cols, tmp.1)
+rsr.margo.mod15$uni <- factor(rsr.margo.mod15$uni)
+rsr.margo.dup15 <- rsr.margo.mod15
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+rsr.margo.mod15 <- rsr.margo.dup15[!duplicated(rsr.margo.dup15$uni), ]
+for (i in 1:ncol(rsr.margo.mod15)) {
+  if (!is.factor(rsr.margo.mod15[,i]) & !is.character(rsr.margo.mod15[, i])) {
+    rsr.margo.mod15[, i] <- as.numeric(tapply(rsr.margo.dup15[, i], rsr.margo.dup15$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+
+## Also a cut-off of -5
+rsr.margo.mod5 <- rsr.margo.mod[which(rsr.margo.mod$delta_carb_ion >= -5), ]
 
 ## compare these different cutoffs
-# -10
-with(rsr.margo.mod10, distrib.map(Longitude, Latitude, Ocean2))
-table(rsr.margo.mod10$Ocean2)
+# -5
+with(rsr.margo.mod5, distrib.map(Longitude, Latitude, Ocean2))
+table(rsr.margo.mod5$Ocean2)
 
 # -10.908
 with(rsr.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
 table(rsr.margo.mod$Ocean2)
 
-# -20
-with(rsr.margo.mod20, distrib.map(Longitude, Latitude, Ocean2))
-table(rsr.margo.mod20$Ocean2)
+# -15
+with(rsr.margo.mod15, distrib.map(Longitude, Latitude, Ocean2))
+table(rsr.margo.mod15$Ocean2)
 
-rm(ldg.margo.tmp)
+rm(rsr.margo.dup15)
 
 ## 5ii. Run the model with these different cutoffs -------------------------
-# -10
-ldg.coords.10 <- cbind(rsr.margo.mod10$Long,rsr.margo.mod10$Lat)
-ldg.coords.10 <- as.matrix(ldg.coords.10)
-op10.nb <- dnearneigh(ldg.coords.10, 0, mod.sar.opW$dist, longlat = TRUE)
-op10.w <- nb2listw(op10.nb, glist = NULL, style = "W", zero.policy = TRUE)
+# -5
+ldg.coords.5 <- cbind(rsr.margo.mod5$Long,rsr.margo.mod5$Lat)
+ldg.coords.5 <- as.matrix(ldg.coords.5)
+op5.nb <- dnearneigh(ldg.coords.5, 0, mod.sar.opW$dist, longlat = TRUE)
+op5.w <- nb2listw(op5.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis10.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op10.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod10)
+mod.dis5.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op5.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod5)
 
-# -20
-ldg.coords.20 <- cbind(rsr.margo.mod20$Long,rsr.margo.mod20$Lat)
-ldg.coords.20 <- as.matrix(ldg.coords.20)
-op20.nb <- dnearneigh(ldg.coords.20, 0, mod.sar.opW$dist, longlat = TRUE)
-op20.s <- nb2listw(op20.nb, glist = NULL, style = "W", zero.policy = TRUE)
+# -15
+ldg.coords.15 <- cbind(rsr.margo.mod15$Long,rsr.margo.mod15$Lat)
+ldg.coords.15 <- as.matrix(ldg.coords.15)
+op15.nb <- dnearneigh(ldg.coords.15, 0, mod.sar.opW$dist, longlat = TRUE)
+op15.w <- nb2listw(op15.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.dis20.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op20.s, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod20)
+mod.dis15.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op15.w, zero.policy = TRUE, tol.solve = 1e-18, data = rsr.margo.mod15)
 
 ## 5iii. Compare LRs -------------------------------------------------------
-lr.dis10.op0 <- lr.calc(mod.dis10.op0)
-lr.dis20.op0 <- lr.calc(mod.dis20.op0)
+lr.dis5.op0 <- lr.calc(mod.dis5.op0)
+lr.dis15.op0 <- lr.calc(mod.dis15.op0)
 
-png("Figures/Ana_4iii_LRatio_opdis10op0.png", width = 1000)
+png("Figures/Ana_5iii_LRatio_opdis5op0.png", width = 1000)
 # get order from running without order first
-lr.plot(lr.dis10.op0, lr.sar.op0, lr.dis20.op0, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -10", "Cutoff: -10.908", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
+lr.plot(lr.dis5.op0, lr.sar.op0, lr.dis15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 # also for groups of variables
-(tmp <- data.frame(names = model.evs(mod.dis10.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
-lr.dis10.op0g <- lr.calc(mod.dis10.op0, tmp)
-lr.dis20.op0g <- lr.calc(mod.dis20.op0, tmp)
+(tmp <- data.frame(names = model.evs(mod.dis5.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+lr.dis5.op0g <- lr.calc(mod.dis5.op0, tmp)
+lr.dis15.op0g <- lr.calc(mod.dis15.op0, tmp)
 rm(tmp)
 
-png("Figures/Ana_4iii_LRatio_g_opdis10op0.png", width = 800)
-lr.plot(lr.dis10.op0g, lr.sar.op0g, lr.dis20.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -10", "Cutoff: -10.908", "Cutoff: -20"), ylab = "Log Likelihood ratio", star.pos = 20)
+png("Figures/Ana_5iii_LRatio_g_opdis5op0.png", width = 800)
+lr.plot(lr.dis5.op0g, lr.sar.op0g, lr.dis15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(rsr.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, file = "Outputs/mod_dis10.RData")
-save(rsr.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, file = "Outputs/mod_dis20.RData")
-rm(rsr.margo.mod10, mod.dis10.op0, lr.dis10.op0, lr.dis10.op0g, rsr.margo.mod20, mod.dis20.op0, lr.dis20.op0, lr.dis20.op0g, ldg.coords.10, ldg.coords.20, op10.nb, op20.nb, op10.s, op20.s)
+save(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, file = "Outputs/mod_dis5.RData")
+save(rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, file = "Outputs/mod_dis15.RData")
+rm(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, ldg.coords.5, ldg.coords.15, op5.nb, op15.nb, op5.w, op15.w)
 
 
 ## 6. Does averaging explanatory variables matter? -------------------------
-
- 
-ldg.coords.ran <- cbind(tmp7$Longitude, tmp7$Latitude)
-ldg.coords.ran <- as.matrix(ldg.coords.ran)
-opran.nb <- dnearneigh(ldg.coords.ran, 0, mod.sar.opW$dist, longlat = TRUE)
-opran.s <- nb2listw(opran.nb, glist = NULL, style = "W", zero.policy = TRUE)
-
-mod.disran.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = opran.s, zero.policy = TRUE, tol.solve = 1e-18, data = tmp7)
+# 
+#  
+# ldg.coords.ran <- cbind(tmp7$Longitude, tmp7$Latitude)
+# ldg.coords.ran <- as.matrix(ldg.coords.ran)
+# opran.nb <- dnearneigh(ldg.coords.ran, 0, mod.sar.opW$dist, longlat = TRUE)
+# opran.s <- nb2listw(opran.nb, glist = NULL, style = "W", zero.policy = TRUE)
+# 
+# mod.disran.op0 <- errorsarlm(rarefy.sr ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = opran.s, zero.policy = TRUE, tol.solve = 1e-18, data = tmp7)
 
 ## 6iii. Compare LRs -------------------------------------------------------
-lr.dis.ran.op0 <- lr.calc(mod.disran.op0)
-
-png("Figures/Ana_4iii_LRatio_opranop0ii.png", width = 1000)
-# get order from running without order first
-lr.plot(lr.dis.ran.op0, lr.sar.op0, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Random", "Full"), ylab = "Log Likelihood ratio", star.pos = 20)
-dev.off()
-
-# also for groups of variables
-(tmp <- data.frame(names = model.evs(mod.disran.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
-lr.dis.ran.op0g <- lr.calc(mod.disran.op0, tmp)
-rm(tmp)
-
-png("Figures/Ana_4iii_LRatio_g_opranop0ii.png", width = 800)
-lr.plot(lr.dis.ran.op0g, lr.sar.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Random", "Full"), ylab = "Log Likelihood ratio", star.pos = 20)
-dev.off()
-
-save(tmp7, mod.ran.op0, lr.ran.op0, lr.ran.op0g, file = "Outputs/mod_ran.RData")
-rm(rsr.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran.nb, opran.s)
-
+# lr.dis.ran.op0 <- lr.calc(mod.disran.op0)
+# 
+# png("Figures/Ana_6iii_LRatio_opranop0ii.png", width = 1000)
+# # get order from running without order first
+# lr.plot(lr.dis.ran.op0, lr.sar.op0, order = c(7:9, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Random", "Full"), ylab = "Log Likelihood ratio", star.pos = 20)
+# dev.off()
+# 
+# # also for groups of variables
+# (tmp <- data.frame(names = model.evs(mod.disran.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+# lr.dis.ran.op0g <- lr.calc(mod.disran.op0, tmp)
+# rm(tmp)
+# 
+# png("Figures/Ana_6iii_LRatio_g_opranop0ii.png", width = 800)
+# lr.plot(lr.dis.ran.op0g, lr.sar.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Random", "Full"), ylab = "Log Likelihood ratio", star.pos = 20)
+# dev.off()
+# 
+# save(tmp7, mod.ran.op0, lr.ran.op0, lr.ran.op0g, file = "Outputs/mod_ran.RData")
+# rm(rsr.margo.modran, mod.ran.op0, lr.ran.op0, lr.ran.op0g, ldg.coords.ran, opran.nb, opran.s)
 
 
 ## 7. Does the number of points in the dataset make a difference? ----------------------
@@ -2989,22 +2137,26 @@ plot.spline.correlog.n(mod.eve.l0.sac, xlab = "Distance / km")
 dev.off()
 
 ## 8ii. Run model optimisation ----------------------------------------------
-mod.sar.eveW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.eveW$obj, Nagelkerke = TRUE) # 0.47911
-AIC(mod.sar.eveW$obj) # -3860.016
+ldg.coords.eve <- cbind(eve.margo.mod$Longitude, eve.margo.mod$Latitude)
+ldg.coords.eve <- as.matrix(ldg.coords.eve)
+
+mod.sar.eveW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.eveW$obj, Nagelkerke = TRUE) # 0.45197
+AIC(mod.sar.eveW$obj) # -2713.229
 
 # check other coding styles
-mod.sar.eveB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.eveB$obj, Nagelkerke = TRUE) # 0.4892
-AIC(mod.sar.eveB$obj) # -3896.698
+mod.sar.eveB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.eveB$obj, Nagelkerke = TRUE) # 0.45191
+AIC(mod.sar.eveB$obj) # 2713.078
 
-mod.sar.eveS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.eveS$obj, Nagelkerke = TRUE) # 0.50095
-AIC(mod.sar.eveS$obj) # -3940.305
+mod.sar.eveS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.eveS$obj, Nagelkerke = TRUE) # 0.46706
+AIC(mod.sar.eveS$obj) # -2752.083
 
-# So "S" is the best coding style and the best neighbourhood distance is 544.0801
+mod.sar.eveS
+# So "S" is the best coding style and the best neighbourhood distance is 538.3185
 
-eve.nb <- dnearneigh(ldg.coords, 0, mod.sar.eveS$dist, longlat = TRUE)
+eve.nb <- dnearneigh(ldg.coords.eve, 0, mod.sar.eveS$dist, longlat = TRUE)
 eve.s <- nb2listw(eve.nb, glist = NULL, style = "S", zero.policy = TRUE)
 mod.sar.eve0 <- errorsarlm(mod.sar.eveS$mod, listw = eve.s, zero.policy = TRUE, tol.solve = 1e-18)
 rm(eve.nb)
@@ -3012,10 +2164,8 @@ rm(eve.nb)
 save(mod.sar.eveB, mod.sar.eveS, mod.sar.eveW, file = "Outputs/Evenness_coding.RData")
 rm(mod.sar.eveB, mod.sar.eveW)
 
-## 8ii. Run model simplification -------------------------------------------
-
 ## 8iii. Create a plot of model parameters --------------------------------------
-summary(mod.sar.eve0, Nagelkerke = T) # r2 = 0.45442
+summary(mod.sar.eve0, Nagelkerke = T) # r2 = 0.46706
 
 # generate a dataframe of coefficients
 m.eve.coef <- data.frame(names = names(mod.sar.eve0$coefficients), coef.sar = mod.sar.eve0$coefficients, row.names = 1:length(mod.sar.eve0$coefficients), stars = NA)
@@ -3037,13 +2187,13 @@ rm(plt.def, tmp.x, m.eve.coef)
 
 ## 8iv. Calculate likelihood ratios for the SAR model ----------------------
 # full model is
-summary(mod.sar.eve0, Nagelkerke = T) # r2 = 0.50095 
-AIC(mod.sar.eve0) # -3940.305
+summary(mod.sar.eve0, Nagelkerke = T) # r2 = 0.46706 
+AIC(mod.sar.eve0) # -2752.083
 
 lr.sar.eve0 <- lr.calc(mod.sar.eve0)
 
 png("Figures/Ana_8iv_LRatio_eve0.png", width = 800)
-lr.plot(lr.sar.eve0, order = c(7:9, 3:2, 12:11, 4:5, 10, 6, 1), ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
+lr.plot(lr.sar.eve0, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
 dev.off()
 
 ## 8v. Calculate likelihood ratios for groups of EVs ---------------------
@@ -3054,39 +2204,144 @@ lr.sar.eve0g <- lr.calc(mod.sar.eve0, tmp)
 rm(tmp)
 
 png("Figures/Ana_8v_LRatio_g_eve0.png", width = 800)
-lr.plot(lr.sar.eve0g, order = c(6:7, 5, 3, 4, 1:2), ylab = "Log Likelihood ratio", star.pos = 7, legend = FALSE)
+lr.plot(lr.sar.eve0g, order = c(6:7, 1:5), ylab = "Log Likelihood ratio", star.pos = 7, legend = FALSE)
 dev.off()
 
-# mnt, d10, prod (can't tell if seasonality or productivity), seasonality (sdt, sdsal), salinity, delta_carb_ion, ocean
-
-# full model lr plots for each ocean? map differences of RV between simplified model with and without ocean (by points not by layer) - Supplementary info
-
 ## 8vi. Effect of delta_carb_ion ----------------------------------------------
+load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
+rm(db.traits, margo.traits)
+
+# create a dataset for modelling with 
+tmp <- c("Core", "Latitude", "Longitude", "Water.Depth", "Total_Planktics", "Ocean2", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+ldg.margo.mod <- merge(ldg.margo.env, ldg.margo.data[, tmp], by.x = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"), by.y = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"))
+rm(ldg.margo.data, ldg.margo.env, tmp)
+
+# set NAs in 10 deg depth to 0, so it can be modelled
+ldg.margo.mod$depth10deg[is.na(ldg.margo.mod$depth10deg)] <- 0
+# remove Water.Depth again (as it has NAs)
+ldg.margo.mod <- ldg.margo.mod[, -which(names(ldg.margo.mod) == "Water.Depth")]
+# remove the extra factor level of the mediterranean
+ldg.margo.mod <- ldg.margo.mod[ldg.margo.mod$Ocean2 != "Mediterranean", ]
+ldg.margo.mod$Ocean2 <- droplevels(ldg.margo.mod$Ocean2)
+## which points are to be excluded because of delta_carb_ion?
+ldg.margo.mod <- ldg.margo.mod[which(ldg.margo.mod$delta_carb_ion >= -15), ]
+ldg.margo.mod$delta_carb_ion[ldg.margo.mod$delta_carb_ion > 0] <- 0
+# salinity
+ldg.margo.mod$absMnSal.0m <- abs(ldg.margo.mod$meanSal.0m - 35.1)
+
+## for eveness
+cols <- c("sp.rich", "rarefy.sr", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun")
+eve.margo.mod15 <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+eve.margo.mod15 <- na.omit(eve.margo.mod15)
+
+rm(ldg.margo.mod)
+
+# remove unique data
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(eve.margo.mod15[, cols]))
+tmp.1 <- which(duplicated(eve.margo.mod15[, cols]))
+eve.margo.mod15$uni <- NA
+eve.margo.mod15$uni[!duplicated(eve.margo.mod15[, cols])] <- 1:length(eve.margo.mod15$uni[!duplicated(eve.margo.mod15[, cols])])
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(eve.margo.mod15[i, ], eve.margo.mod15, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  eve.margo.mod15$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows, cols, tmp.1)
+eve.margo.mod15$uni <- factor(eve.margo.mod15$uni)
+eve.margo.dup15 <- eve.margo.mod15
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+eve.margo.mod15 <- eve.margo.dup15[!duplicated(eve.margo.dup15$uni), ]
+for (i in 1:ncol(eve.margo.mod15)) {
+  if (!is.factor(eve.margo.mod15[,i]) & !is.character(eve.margo.mod15[, i])) {
+    eve.margo.mod15[, i] <- as.numeric(tapply(eve.margo.dup15[, i], eve.margo.dup15$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+
+## Also a cut-off of -5
+eve.margo.mod5 <- eve.margo.mod[which(eve.margo.mod$delta_carb_ion >= -5), ]
+
+## compare these different cutoffs
+# -5
+with(eve.margo.mod5, distrib.map(Longitude, Latitude, Ocean2))
+table(eve.margo.mod5$Ocean2)
+
+# -10.908
+with(eve.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
+table(eve.margo.mod$Ocean2)
+
+# -15
+with(eve.margo.mod15, distrib.map(Longitude, Latitude, Ocean2))
+table(eve.margo.mod15$Ocean2)
+
+rm(eve.margo.dup15)
+
+## Run the model with these different cutoffs
+# -5
+ldg.coords.eve.5 <- cbind(eve.margo.mod5$Long, eve.margo.mod5$Lat)
+ldg.coords.eve.5 <- as.matrix(ldg.coords.eve.5)
+op.eve5.nb <- dnearneigh(ldg.coords.eve.5, 0, mod.sar.eveS$dist, longlat = TRUE)
+op.eve5.S <- nb2listw(op.eve5.nb, glist = NULL, style = "S", zero.policy = TRUE)
+
+mod.eve5.op0 <- errorsarlm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.eve5.S, zero.policy = TRUE, tol.solve = 1e-18, data = eve.margo.mod5)
+
+# -15
+ldg.coords.eve.15 <- cbind(eve.margo.mod15$Long,eve.margo.mod15$Lat)
+ldg.coords.eve.15 <- as.matrix(ldg.coords.eve.15)
+op.eve15.nb <- dnearneigh(ldg.coords.eve.15, 0, mod.sar.eveS$dist, longlat = TRUE)
+op.eve15.S <- nb2listw(op.eve15.nb, glist = NULL, style = "S", zero.policy = TRUE)
+
+mod.eve15.op0 <- errorsarlm(simpsonEve ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.eve15.S, zero.policy = TRUE, tol.solve = 1e-18, data = eve.margo.mod15)
+
+lr.eve5.op0 <- lr.calc(mod.eve5.op0)
+lr.eve15.op0 <- lr.calc(mod.eve15.op0)
+
+png("Figures/Ana_8vi_LRatio_op_eve5op0.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.eve5.op0, lr.sar.eve0, lr.eve15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
+dev.off()
+
+# also for groups of variables
+(tmp <- data.frame(names = model.evs(mod.eve5.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+lr.eve5.op0g <- lr.calc(mod.eve5.op0, tmp)
+lr.eve15.op0g <- lr.calc(mod.eve15.op0, tmp)
+rm(tmp)
+
+png("Figures/Ana_8vi_LRatio_g_op_eve5op0.png", width = 800)
+lr.plot(lr.eve5.op0g, lr.sar.eve0g, lr.eve15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
+dev.off()
+
+save(eve.margo.mod5, mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, file = "Outputs/mod_eve5.RData")
+save(eve.margo.mod15, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, file = "Outputs/mod_eve15.RData")
+rm(mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, ldg.coords.eve.5, ldg.coords.eve.15, op.eve5.nb, op.eve15.nb, op.eve5.S, op.eve15.S)
 
 
-## 9. Lineage age / FRic -------------------------------------------------------------
+## 9. Lineage age -------------------------------------------------------------
 
 ## 9i. Lineage age models -------------------------------------------------
-mod.sar.lnaW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.lnaW$obj, Nagelkerke = TRUE) # 0.63489
-AIC(mod.sar.lnaW$obj) # 5565.102
+mod.sar.lnaW <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, LinAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.lnaW$obj, Nagelkerke = TRUE) # 0.53555
+AIC(mod.sar.lnaW$obj) # 6187.966
 
 # check other coding styles
-mod.sar.lnaB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.lnaB$obj, Nagelkerke = TRUE) # 0.61397 
-AIC(mod.sar.lnaB$obj) #  5669.584
+mod.sar.lnaB <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, LinAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.lnaB$obj, Nagelkerke = TRUE) # 0.50394 
+AIC(mod.sar.lnaB$obj) #  6279.58
 
-mod.sar.lnaS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, MorphoAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.lnaS$obj, Nagelkerke = TRUE) # 0.63364 
-AIC(mod.sar.lnaS$obj) # 5571.538
+mod.sar.lnaS <- with(eve.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, LinAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.eve, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.lnaS$obj, Nagelkerke = TRUE) # 0.53103 
+AIC(mod.sar.lnaS$obj) # 6201.437
 
 mod.sar.lnaW
-# So "W" is the best coding style and the best neighbourhood distance is 537.6619
+# So "W" is the best coding style and the best neighbourhood distance is 513.9892
 
-lna.nb <- dnearneigh(ldg.coords, 0, mod.sar.lnaW$dist, longlat = TRUE)
+lna.nb <- dnearneigh(ldg.coords.eve, 0, mod.sar.lnaW$dist, longlat = TRUE)
 lna.w <- nb2listw(lna.nb, glist = NULL, style = "W", zero.policy = TRUE)
 mod.sar.lna0 <- errorsarlm(mod.sar.lnaW$mod, listw = lna.w, zero.policy = TRUE, tol.solve = 1e-18)
-summary(mod.sar.lna0, Nagelkerke = TRUE) # 0.63489
+summary(mod.sar.lna0, Nagelkerke = TRUE) # 0.53555
 
 save(mod.sar.lnaB, mod.sar.lnaS, mod.sar.lnaW, file = "Outputs/Lineage_coding.RData")
 rm(lna.nb, mod.sar.lnaB, mod.sar.lnaS)
@@ -3094,7 +2349,7 @@ rm(lna.nb, mod.sar.lnaB, mod.sar.lnaS)
 lr.sar.lna0 <- lr.calc(mod.sar.lna0)
 
 png("Figures/Ana_9i_LRatio_lna0.png", width = 800)
-lr.plot(lr.sar.lna0, ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
+lr.plot(lr.sar.lna0, ylab = "Log Likelihood ratio", order = c(8:12, 1, 4, 2:3, 5:7), star.pos = 10, legend = FALSE)
 dev.off()
 
 # also for groups of variables
@@ -3103,57 +2358,233 @@ lr.sar.lna0g <- lr.calc(mod.sar.lna0, tmp)
 rm(tmp)
 
 png("Figures/Ana_9i_LRatio_g_lna0.png", width = 800)
-lr.plot(lr.sar.lna0g, order = c(6:7, 5, 3, 4, 1:2), ylab = "Log Likelihood ratio", star.pos = 7, legend = FALSE)
+lr.plot(lr.sar.lna0g, order = c(6:7, 1:5), ylab = "Log Likelihood ratio", star.pos = 7, legend = FALSE)
 dev.off()
 
 ## 9ii. Dissolution cutoffs ------------------------------------------------
+# datasets are the same as for evenness
 
-## 9iii. Functional richness -----------------------------------------------
-mod.sar.fricW <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.fricW$obj, Nagelkerke = TRUE) # 0.87776
-AIC(mod.sar.fricW$obj) # -2791.866
+## Run the model with these different cutoffs
+# -5
+ldg.coords.lna.5 <- cbind(eve.margo.mod5$Long, eve.margo.mod5$Lat)
+ldg.coords.lna.5 <- as.matrix(ldg.coords.lna.5)
+op.lna5.nb <- dnearneigh(ldg.coords.lna.5, 0, mod.sar.lnaW$dist, longlat = TRUE)
+op.lna5.W <- nb2listw(op.lna5.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-# check other coding styles
-mod.sar.fricB <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.fricB$obj, Nagelkerke = TRUE) # 0.87663 
-AIC(mod.sar.fricB$obj) #  -2774.851
+mod.lna5.op0 <- errorsarlm(LinAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.lna5.W, zero.policy = TRUE, tol.solve = 1e-18, data = eve.margo.mod5)
 
-mod.sar.fricS <- with(fric.margo.mod, sar.optimised(mod.eve.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
-summary(mod.sar.fricS$obj, Nagelkerke = TRUE) # 0.88194 
-AIC(mod.sar.fricS$obj) # -2856.622
+# -15
+ldg.coords.lna.15 <- cbind(eve.margo.mod15$Long,eve.margo.mod15$Lat)
+ldg.coords.lna.15 <- as.matrix(ldg.coords.lna.15)
+op.lna15.nb <- dnearneigh(ldg.coords.lna.15, 0, mod.sar.lnaW$dist, longlat = TRUE)
+op.lna15.W <- nb2listw(op.lna15.nb, glist = NULL, style = "W", zero.policy = TRUE)
 
-mod.sar.fricS
-# So "S" is the best coding style and the best neighbourhood distance is 537.6619
+mod.lna15.op0 <- errorsarlm(LinAgeAbun ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.lna15.W, zero.policy = TRUE, tol.solve = 1e-18, data = eve.margo.mod15)
 
-fric.nb <- dnearneigh(ldg.coords, 0, mod.sar.fricS$dist, longlat = TRUE)
-fric.s <- nb2listw(fric.nb, glist = NULL, style = "S", zero.policy = TRUE)
-mod.sar.fric0 <- errorsarlm(mod.sar.fricS$mod, listw = fric.s, zero.policy = TRUE, tol.solve = 1e-18)
-summary(mod.sar.fric0, Nagelkerke = TRUE) # 0.58086
-rm(fric.nb, fric.s)
+lr.lna5.op0 <- lr.calc(mod.lna5.op0)
+lr.lna15.op0 <- lr.calc(mod.lna15.op0)
 
-save(mod.sar.fricB, mod.sar.fricS, mod.sar.fricW, file = "Outputs/Lineage_coding.RData")
-rm(fric.nb, mod.sar.fricB, mod.sar.fricS)
-
-lr.sar.fric0 <- lr.calc(mod.sar.fric0)
-
-png("Figures/Ana_9iii_LRatio_fric0.png", width = 800)
-lr.plot(lr.sar.fric0, order = c(7:9, 3:2, 12:11, 4:5, 10, 6, 1), ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
+png("Figures/Ana_9ii_LRatio_op_lna5op0.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.lna5.op0, lr.sar.lna0, lr.lna15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
 # also for groups of variables
-(tmp <- data.frame(names = model.evs(mod.sar.fric0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
+(tmp <- data.frame(names = model.evs(mod.lna5.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+lr.lna5.op0g <- lr.calc(mod.lna5.op0, tmp)
+lr.lna15.op0g <- lr.calc(mod.lna15.op0, tmp)
+rm(tmp)
+
+png("Figures/Ana_9ii_LRatio_g_op_lna5op0.png", width = 800)
+lr.plot(lr.lna5.op0g, lr.sar.lna0g, lr.lna15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
+dev.off()
+
+save(eve.margo.mod5, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, file = "Outputs/mod_lna5.RData")
+save(eve.margo.mod15, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, file = "Outputs/mod_lna15.RData")
+rm(eve.margo.mod5, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, eve.margo.mod15, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, ldg.coords.lna.5, ldg.coords.lna.15, op.lna5.nb, op.lna15.nb, op.lna5.W, op.lna15.W)
+
+
+## 10. Functional richness -----------------------------------------------
+
+## 10i. Create an OLS model ------------------------------------------------
+mod.fric.l0 <- lm(FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, data = fric.margo.mod)
+
+# check model plots
+png("Figures/Ana_10i_modfricl0.png", 600, 600)
+par(mfrow = c(2, 2))
+plot(mod.fric.l0)
+par(mfrow = c(1, 1))
+dev.off()
+
+summary(mod.fric.l0)
+
+# look for spatial autocorrelation in the residuals
+# using spline.correlog
+mod.fric.l0.sac <- with(fric.margo.mod, spline.correlog(Longitude, Latitude, mod.fric.l0$residuals, latlon = TRUE, resamp = 1))
+summary(mod.fric.l0.sac)
+png("Figures/Ana_10i_modfricl0SAC.png")
+plot.spline.correlog.n(mod.fric.l0.sac, xlab = "Distance / km")
+dev.off()
+
+## 10ii. Run model optimisation --------------------------------------------
+ldg.coords.fric <- cbind(fric.margo.mod$Long, fric.margo.mod$Lat)
+ldg.coords.fric <- as.matrix(ldg.coords.fric)
+
+mod.sar.fricW <- with(fric.margo.mod, sar.optimised(mod.fric.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.fric, style = "W", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.fricW$obj, Nagelkerke = TRUE) # 0.84987
+AIC(mod.sar.fricW$obj) # -1677.571
+
+# check other coding styles
+mod.sar.fricB <- with(fric.margo.mod, sar.optimised(mod.fric.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.fric, style = "B", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.fricB$obj, Nagelkerke = TRUE) #  0.8492 
+AIC(mod.sar.fricB$obj) # -1671.373
+
+mod.sar.fricS <- with(fric.margo.mod, sar.optimised(mod.fric.l0.sac$real$x.intercept, FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy + Ocean2)^2 + delta_carb_ion, ldg.coords.fric, style = "S", tol = 4, longlat = TRUE, zero.policy = TRUE))
+summary(mod.sar.fricS$obj, Nagelkerke = TRUE) #  0.85403
+AIC(mod.sar.fricS$obj) # -1716.254
+
+mod.sar.fricS
+# So "S" is the best coding style and the best neighbourhood distance is 681.9063
+
+fric.nb <- dnearneigh(ldg.coords.fric, 0, mod.sar.fricS$dist, longlat = TRUE)
+fric.s <- nb2listw(fric.nb, glist = NULL, style = "S", zero.policy = TRUE)
+mod.sar.fric0 <- errorsarlm(mod.sar.fricS$mod, listw = fric.s, zero.policy = TRUE, tol.solve = 1e-18)
+summary(mod.sar.fric0, Nagelkerke = TRUE) # 0.85403
+
+save(mod.sar.fricB, mod.sar.fricS, mod.sar.fricW, file = "Outputs/Lineage_coding.RData")
+rm(mod.sar.fricB, mod.sar.fricW)
+
+## 10iii. Create model plots -----------------------------------------------
+lr.sar.fric0 <- lr.calc(mod.sar.fric0)
+
+png("Figures/Ana_10iii_LRatio_fric0.png", width = 800)
+lr.plot(lr.sar.fric0, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
+dev.off()
+
+# also for groups of variables
+(tmp <- data.frame(names = model.evs(mod.sar.fric0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
 lr.sar.fric0g <- lr.calc(mod.sar.fric0, tmp)
 rm(tmp)
 
-png("Figures/Ana_9iii_LRatio_g_fric0.png", width = 800)
-lr.plot(lr.sar.fric0g, order = c(6:7, 5, 3, 4, 1:2), ylab = "Log Likelihood ratio", star.pos = 7, legend = FALSE)
+png("Figures/Ana_10iii_LRatio_g_fric0.png", width = 800)
+lr.plot(lr.sar.fric0g, order = c(6:7, 1:5), ylab = "Log Likelihood ratio", star.pos = 10, legend = FALSE)
 dev.off()
 
+## 10iv. Test for affect of dissolution ------------------------------------
+load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
+rm(db.traits, margo.traits)
+
+# create a dataset for modelling with 
+tmp <- c("Core", "Latitude", "Longitude", "Water.Depth", "Total_Planktics", "Ocean2", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+ldg.margo.mod <- merge(ldg.margo.env, ldg.margo.data[, tmp], by.x = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"), by.y = c("Core", "Latitude", "Longitude", "Water.Depth", "Ocean2"))
+rm(ldg.margo.data, ldg.margo.env, tmp)
+
+# set NAs in 10 deg depth to 0, so it can be modelled
+ldg.margo.mod$depth10deg[is.na(ldg.margo.mod$depth10deg)] <- 0
+# remove Water.Depth again (as it has NAs)
+ldg.margo.mod <- ldg.margo.mod[, -which(names(ldg.margo.mod) == "Water.Depth")]
+# remove the extra factor level of the mediterranean
+ldg.margo.mod <- ldg.margo.mod[ldg.margo.mod$Ocean2 != "Mediterranean", ]
+ldg.margo.mod$Ocean2 <- droplevels(ldg.margo.mod$Ocean2)
+## which points are to be excluded because of delta_carb_ion?
+ldg.margo.mod <- ldg.margo.mod[which(ldg.margo.mod$delta_carb_ion >= -15), ]
+ldg.margo.mod$delta_carb_ion[ldg.margo.mod$delta_carb_ion > 0] <- 0
+# salinity
+ldg.margo.mod$absMnSal.0m <- abs(ldg.margo.mod$meanSal.0m - 35.1)
+
+## for FRic
+cols <- c("sp.rich", "rarefy.sr", "simpson", "simpsonEve", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
+fric.margo.mod15 <- ldg.margo.mod[, !(names(ldg.margo.mod) %in% cols)]
+rm(cols)
+fric.margo.mod15 <- na.omit(fric.margo.mod15)
+
+rm(ldg.margo.mod)
+
+# remove unique data
+cols <- c("meanSST.1deg", "sdSST.1deg", "SST.1deg.exact", "mean.mld.t", "sd.mld.t", "mean.mld.d", "sd.mld.d", "mean.mld.v", "sd.mld.v", "mld.exact", "depth10deg", "meanSal.0m", "sdSal.0m", "sal.exact", "meanOxy", "sdOxy", "prop2.oxy", "oxy.exact", "delta_carb_ion", "delta_carb_ion.OK")
+dim(unique(fric.margo.mod15[, cols]))
+tmp.1 <- which(duplicated(fric.margo.mod15[, cols]))
+fric.margo.mod15$uni <- NA
+fric.margo.mod15$uni[!duplicated(fric.margo.mod15[, cols])] <- 1:length(fric.margo.mod15$uni[!duplicated(fric.margo.mod15[, cols])])
+for (i in tmp.1) {
+  # identify the matching rows (based on the relevant columns)
+  match.rows <- merge(fric.margo.mod15[i, ], fric.margo.mod15, by.x = cols, by.y = cols)
+  # extract the value for uni for these rows add that value to the duplicated row
+  fric.margo.mod15$uni[i] <- unique(match.rows$uni.y)[!is.na(unique(match.rows$uni.y))]
+}
+rm(i, match.rows, cols, tmp.1)
+fric.margo.mod15$uni <- factor(fric.margo.mod15$uni)
+fric.margo.dup15 <- fric.margo.mod15
+# having got a column that identifies each unique grid cell, now need to create a dataframe that contains the mean value for each of these
+fric.margo.mod15 <- fric.margo.dup15[!duplicated(fric.margo.dup15$uni), ]
+for (i in 1:ncol(fric.margo.mod15)) {
+  if (!is.factor(fric.margo.mod15[,i]) & !is.character(fric.margo.mod15[, i])) {
+    fric.margo.mod15[, i] <- as.numeric(tapply(fric.margo.dup15[, i], fric.margo.dup15$uni, mean, na.rm = TRUE))
+  }
+}
+rm(i)
+
+## Also a cut-off of -5
+fric.margo.mod5 <- fric.margo.mod[which(fric.margo.mod$delta_carb_ion >= -5), ]
+
+## compare these different cutoffs
+# -5
+with(fric.margo.mod5, distrib.map(Longitude, Latitude, Ocean2))
+table(fric.margo.mod5$Ocean2)
+
+# -10.908
+with(fric.margo.mod, distrib.map(Longitude, Latitude, Ocean2))
+table(fric.margo.mod$Ocean2)
+
+# -15
+with(fric.margo.mod15, distrib.map(Longitude, Latitude, Ocean2))
+table(fric.margo.mod15$Ocean2)
+
+rm(fric.margo.dup15)
+
+## Run the model with these different cutoffs
+# -5
+ldg.coords.fric.5 <- cbind(fric.margo.mod5$Long, fric.margo.mod5$Lat)
+ldg.coords.fric.5 <- as.matrix(ldg.coords.fric.5)
+op.fric5.nb <- dnearneigh(ldg.coords.fric.5, 0, mod.sar.fricS$dist, longlat = TRUE)
+op.fric5.S <- nb2listw(op.fric5.nb, glist = NULL, style = "S", zero.policy = TRUE)
+
+mod.fric5.op0 <- errorsarlm(FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.fric5.S, zero.policy = TRUE, tol.solve = 1e-18, data = fric.margo.mod5)
+
+# -15
+ldg.coords.fric.15 <- cbind(fric.margo.mod15$Long,fric.margo.mod15$Lat)
+ldg.coords.fric.15 <- as.matrix(ldg.coords.fric.15)
+op.fric15.nb <- dnearneigh(ldg.coords.fric.15, 0, mod.sar.fricS$dist, longlat = TRUE)
+op.fric15.S <- nb2listw(op.fric15.nb, glist = NULL, style = "S", zero.policy = TRUE)
+
+mod.fric15.op0 <- errorsarlm(FRic ~ (poly(meanSST.1deg, 3) + sdSST.1deg + I(mean.mld.t/10) + I(depth10deg/100) + logProd.mn.ann + absMnSal.0m + sdSal.0m + prop2.oxy  + Ocean2)^2 + delta_carb_ion, listw = op.fric15.S, zero.policy = TRUE, tol.solve = 1e-18, data = fric.margo.mod15)
+
+lr.fric5.op0 <- lr.calc(mod.fric5.op0)
+lr.fric15.op0 <- lr.calc(mod.fric15.op0)
+
+png("Figures/Ana_10iv_LRatio_op_fric5op0.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.fric5.op0, lr.sar.fric0, lr.fric15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
+dev.off()
+
+# also for groups of variables
+(tmp <- data.frame(names = model.evs(mod.fric5.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+lr.fric5.op0g <- lr.calc(mod.fric5.op0, tmp)
+lr.fric15.op0g <- lr.calc(mod.fric15.op0, tmp)
+rm(tmp)
+
+png("Figures/Ana_10iv_LRatio_g_op_fric5op0.png", width = 800)
+lr.plot(lr.fric5.op0g, lr.sar.fric0g, lr.fric15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
+dev.off()
+
+save(fric.margo.mod5, mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, file = "Outputs/mod_fric5.RData")
+save(fric.margo.mod15, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, file = "Outputs/mod_fric15.RData")
+rm(mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, ldg.coords.fric.5, ldg.coords.fric.15, op.fric5.nb, op.fric15.nb, op.fric5.S, op.fric15.S)
 
 
-## 10. Paper outputs -------------------------------------------------------
+## 11. Paper outputs -------------------------------------------------------
 
-## 10i. Table of full model cofficients for the models -----------
+## 11i. Table of full model cofficients for the models -----------
 # for rarefied species richness
 # create table
 op0.summary <- as.data.frame(summary(mod.sar.op0, Nagelkerke = T)$Coef)
@@ -3226,8 +2657,30 @@ rm(i)
 write.csv(lna0.summary, "Outputs/lna0_summary.csv")
 rm(lna0.summary)
 
-## 10ii. likelihood ratios for the models ----------------------------------------
-(lr.out <- cbind(lr.sar.op0, lr.sar.eve0[2:4], lr.sar.lna0[2:4]))
+# for FRic
+fric0.summary <- as.data.frame(summary(mod.sar.fric0, Nagelkerke = T)$Coef)
+
+# apply it to all the columns
+for (i in 1:ncol(fric0.summary)) {
+  fric0.summary[, i] <- paper.round(fric0.summary[, i])
+}
+rm(i)
+
+# add significance stars
+stars <- c(0.001, 0.01, 0.05, 0.1)
+names(stars) <- c("***", "**", "*", ".")
+fric0.summary$Significance <- NA
+for (i in 1:length(stars)) {
+  fric0.summary$Significance[which(fric0.summary[,"Pr(>|z|)"] <= stars[i] & is.na(fric0.summary$Significance))] <- names(stars)[i]
+}
+rm(i)
+
+# write to csv
+write.csv(fric0.summary, "Outputs/fric0_summary.csv")
+rm(fric0.summary)
+
+## 11ii. likelihood ratios for the models ----------------------------------------
+(lr.out <- cbind(lr.sar.op0, lr.sar.eve0[2:4], lr.sar.lna0[2:4], lr.sar.fric0[2:4]))
 names(lr.out)[2:4] <- paste("sr", names(lr.out)[2:4], sep = "_")
 names(lr.out)[5:7] <- paste("eve", names(lr.out)[5:7], sep = "_")
 names(lr.out)[8:10] <- paste("lna", names(lr.out)[8:10], sep = "_")
@@ -3235,79 +2688,94 @@ names(lr.out)[8:10] <- paste("lna", names(lr.out)[8:10], sep = "_")
 write.csv(lr.out, "Outputs/lr_out.csv")
 rm(lr.out)
 
-# (lr.oce.out <- merge(lr.sar.op0, lr.sar.atlf, by = "names", all = T))
-# (lr.oce.out <- merge(lr.oce.out, lr.sar.indf, by = "names", all = T))
-# (lr.oce.out <- merge(lr.oce.out, lr.sar.pacf, by = "names", all = T))
-# names(lr.oce.out)[2:4] <- paste("All", names(lr.sar.op0)[2:4], sep = "_")
-# names(lr.oce.out)[5:7] <- paste("atl", names(lr.sar.op0)[2:4], sep = "_")
-# names(lr.oce.out)[8:10] <- paste("ind", names(lr.sar.op0)[2:4], sep = "_")
-# names(lr.oce.out)[11:13] <- paste("pac", names(lr.sar.op0)[2:4], sep = "_")
-
-# write.csv(lr.oce.out, "Outputs/lr_oce_out.csv")
-
-## 10iii. log likelihood ratio plot for full vs simplified model rarified SR --------
-
-png("Figures/Ana_10iii_LRatio_op0f.png", width = 10, height = 6, units = 'in', res = 300)
-lr.plot(lr.sar.op0g, lr.sar.opfg, order = c(5, 7, 6, 3:4, 2:1), ylab = "Log Likelihood ratio", leg.txt = c("Full", "Simplified"), cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+## 11iii. log likelihood ratio plot for full vs simplified model rarified SR --------
+png("Figures/Ana_11iii_LRatio_op0f.png", width = 10, height = 6, units = 'in', res = 300)
+lr.plot(lr.sar.op0g, lr.sar.opfg, order = c(6:7, 4:3, 5, 2:1), ylab = "Log Likelihood ratio", leg.txt = c("Full", "Simplified"), cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-## 10iv. log likelihood ratio plot comparing different delta_carb_ion cut-of --------
-# (tmp <- data.frame(names = model.evs(mod.sar.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-# lr.sar.op0g <- lr.calc(mod.sar.op0, tmp)
-# rm(tmp)
-# 
-# (tmp <- data.frame(names = model.evs(mod.sar8.op0),group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-# lr.sar8.op0g <- lr.calc(mod.sar8.op0, tmp)
-# rm(tmp)
-# 
-# (tmp <- data.frame(names = model.evs(mod.sar4.op0),group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-# lr.sar4.op0g <- lr.calc(mod.sar4.op0, tmp)
-# rm(tmp)
-# 
-# png("Figures/Ana_10iv_LRatio_g_op468.png", width = 800)
-# lr.plot(lr.sar8.op0g, lr.sar.op0g, lr.sar4.op0g, order = c(6, 7, 5, 3, 4, 2, 1), leg.txt = c("8%", "6%", "4%"), ylab = "Log Likelihood ratio", star.pos = 7, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2)
-# dev.off()
-# 
-# png("Figures/Ana_10iv_LRatio_g_op46.png", width = 10, height = 6, units = 'in', res = 300)
-# lr.plot(lr.sar.op0g, lr.sar4.op0g, order = c(5, 7, 6, 3:4, 2:1), leg.txt = c("6%", "4%"), ylab = "Log Likelihood ratio", star.pos = 7, srt = 45, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2)
-# dev.off()
-# 
-# 
-# png("Figures/Ana_10iv_LRatio_g_eve46.png", width = 10, height = 6, units = 'in', res = 300)
-# lr.plot(lr.sar.eve0g, lr.sar4.eve0g, order = c(5, 7, 6, 3:4, 2:1), leg.txt = c("6%", "4%"), ylab = "Log Likelihood ratio", star.pos = 10, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
-# dev.off()
-# 
-# png("Figures/Ana_10iv_LRatio_g_lna46.png", width = 10, height = 6, units = 'in', res = 300)
-# lr.plot(lr.sar.lna0g, lr.sar4.lna0g, order = c(5, 7, 6, 3:4, 2:1), leg.txt = c("6%", "4%"), ylab = "Log Likelihood ratio", star.pos = 7, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
-# dev.off()
+## 11iv. log likelihood ratio plot comparing different delta_carb_ion cut-off --------
+load("Outputs/mod_dis5.RData")
+load("Outputs/mod_dis15.RData")
+load("Outputs/mod_eve5.RData")
+load("Outputs/mod_eve15.RData")
+load("Outputs/mod_lna5.RData")
+load("Outputs/mod_lna15.RData")
+load("Outputs/mod_fric5.RData")
+load("Outputs/mod_fric15.RData")
 
-## 10v. residuals map for full model --------------------------------------------
-png("Figures/Ana_10v_rsp_res.png", 700, 500)
-with(rsr.margo.mod, distrib.map(Longitude, Latitude, mod.sar.op0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -8, max.col = 8, maintitle = "Residuals for rarefied richness"))
+# for rsr
+png("Figures/Ana_11iv_LRatio_rsr_5op15.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.dis5.op0, lr.sar.op0, lr.dis15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-png("Figures/Ana_10v_eve_res.png", 700, 500)
-with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.eve0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -0.5, max.col = 0.5, maintitle = "Residuals for evenness"))
+png("Figures/Ana_11iv_LRatio_g_rsr_5op15.png", width = 800)
+lr.plot(lr.dis5.op0g, lr.sar.op0g, lr.dis15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-png("Figures/Ana_10v_lna_res.png", 700, 500)
-with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.lna0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -6, max.col = 6, maintitle = "Residuals for average community age"))
+# for evenness
+png("Figures/Ana_11iv_LRatio_eve_5op15.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.eve5.op0, lr.sar.eve0, lr.eve15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-## 10vi. coplot ------------------------------------------------------------------
+png("Figures/Ana_11iv_LRatio_g_eve_5op15.png", width = 800)
+lr.plot(lr.eve5.op0g, lr.sar.eve0g, lr.eve15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+dev.off()
+
+# for lineage age
+png("Figures/Ana_11iv_LRatio_lna_5op15.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.lna5.op0, lr.sar.lna0, lr.lna15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+dev.off()
+
+png("Figures/Ana_11iv_LRatio_g_lna_5op15.png", width = 800)
+lr.plot(lr.lna5.op0g, lr.sar.lna0g, lr.lna15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+dev.off()
+
+# for FRic
+png("Figures/Ana_11iv_LRatio_fric_5op15.png", width = 1000)
+# get order from running without order first
+lr.plot(lr.fric5.op0, lr.sar.fric0, lr.fric15.op0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+dev.off()
+
+png("Figures/Ana_11iv_LRatio_g_fric_5op15.png", width = 800)
+lr.plot(lr.fric5.op0g, lr.sar.fric0g, lr.fric15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5.0", "Cutoff: -10.9", "Cutoff: -15.0"), ylab = "Log Likelihood ratio", star.pos = 20, cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
+dev.off()
+
+rm(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, eve.margo.mod5, mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, eve.margo.mod15, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, fric.margo.mod5, mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, fric.margo.mod15, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g)
+
+## 11v. residuals map for full model --------------------------------------------
+png("Figures/Ana_11v_rsp_res.png", 700, 500)
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, mod.sar.op0$residuals, palette = "rwbt", col.water = "white", col.land = "black", maintitle = "Residuals for rarefied richness", min.col = -8, max.col = 8))
+dev.off()
+
+png("Figures/Ana_11v_eve_res.png", 700, 500)
+with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.eve0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -0.7, max.col = 0.7, maintitle = "Residuals for evenness"))
+dev.off()
+
+png("Figures/Ana_11v_lna_res.png", 700, 500)
+with(eve.margo.mod, distrib.map(Longitude, Latitude, mod.sar.lna0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -11, max.col = 11, maintitle = "Residuals for average community age"))
+dev.off()
+
+png("Figures/Ana_11v_fric_res.png", 700, 500)
+with(fric.margo.mod, distrib.map(Longitude, Latitude, mod.sar.fric0$residuals, palette = "rwbt", col.water = "white", col.land = "black", min.col = -0.8, max.col = 0.8, maintitle = "Residuals for functional richness"))
+dev.off()
+
+## 11vi. coplot ------------------------------------------------------------------
 
 # plot marginal effects (hold all else constant) of coefficients of T polynomial in oceans. Plot across temperature range observed in the oceans (3 colours / plotting symbols)
 
-## 10vii. comparing all the models ------------------------------------------------
-png("Figures/Ana_10vii_LRatio_REM.png", width = 800)
-lr.plot(lr.sar.op0, lr.sar.eve0, lr.sar.lna0, order = c(7:9, 4, 1, 11:10, 3, 5, 2, 6), ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age"))
+## 11vii. comparing all the models ------------------------------------------------
+png("Figures/Ana_11vii_LRatio_RELF.png", width = 800)
+lr.plot(lr.sar.op0, lr.sar.eve0, lr.sar.lna0, lr.sar.fric0, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age", "Functional richness"), cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-png("Figures/Ana_10vii_LRatio_g_REM.png", width = 10, height = 6, units = 'in', res = 300)
-lr.plot(lr.sar.op0g, lr.sar.eve0g, lr.sar.lna0g, order = c(6:7, 5, 3:4, 2:1),  ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age"), srt = 45)
+png("Figures/Ana_11vii_LRatio_g_RELF.png", width = 10, height = 6, units = 'in', res = 300)
+lr.plot(lr.sar.op0g, lr.sar.eve0g, lr.sar.lna0g, lr.sar.fric0g, order = c(6:7, 4:3, 5, 2:1), ylab = "Log Likelihood ratio", star.pos = 10, leg.txt = c("Rarefied species richness", "Evenness", "Average community age", "Functional richness"), cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, leg.cex = 1.2, srt = 45)
 dev.off()
 
-## 10viii. compare this to a random model ----------------------------------------
+## 11viii. compare this to a random model ----------------------------------------
 # rdm.vals <- data.frame(model = rep(NA, 1000 * 7), names = NA, lr = NA, p = NA, stars = NA)
 # tmp <- data.frame(names = model.evs(mod.rdm), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature"))
 # 
@@ -3326,9 +2794,9 @@ dev.off()
 # tmp.x <- barplot(rdm.mn)
 
 
-## 11. Predicting models ---------------------------------------------------
+## 12. Predicting models ---------------------------------------------------
 
-## 11i. Set up the dataset for prediction ----------------------------------
+## 12i. Set up the dataset for prediction ----------------------------------
 with(rsr.margo.mod, distrib.map(Longitude, Latitude, predict(mod.sar.op0)))
 
 # check NAs and remove them
@@ -3358,13 +2826,13 @@ ldg.p.margo <- na.omit(ldg.p.margo)
 
 # plot these up
 for (i in env.var) {
-  png(paste("Figures/Ana_11i_map_", i, ".png", sep = ""), width = 800, height = 450)
+  png(paste("Figures/Ana_12i_map_", i, ".png", sep = ""), width = 800, height = 450)
   with(ldg.p.margo, distrib.map(Longitude, Latitude, ldg.p.margo[, i], palette = "matlab.like", pch = 15, cex = 0.5, main = i, col.land = "black", col.water = "white"))
   dev.off()
 }
 rm(i)
 
-## 11ii. predict species richness for this dataset -------------------------------
+## 12ii. predict species richness for this dataset -------------------------------
 # necessary to use sar.predict not predict as the ordinary predict.sarlm function cannot cope with poly variables
 ldg.p.margo$rarefy.sr <- sar.predict(mod.sar.op0, newdata = ldg.p.margo, olddata = rsr.margo.mod)
 summary(ldg.p.margo$rarefy.sr)
@@ -3373,15 +2841,15 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.
 with(ldg.p.margo[ldg.p.margo$rarefy.sr <= 0, ], distrib.map(Longitude, Latitude, rarefy.sr, pch = 15, cex = 0.4)) # around coastlines
 
 # compare with observed
-png("Figures/Ana_11ii_rsr_pred.png", 700, 500)
+png("Figures/Ana_12ii_rsr_pred.png", 700, 500)
 with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", min.col = 0, max.col = 27))
 dev.off()
 
-png("Figures/Ana_11ii_rsr_obs.png", 700, 500)
+png("Figures/Ana_12ii_rsr_obs.png", 700, 500)
 with(rsr.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", min.col = 0, max.col = 27, col.water = "white", col.land = "black"))
 dev.off()
 
-## 11iii. predict evenness for this dataset ---------------------------------------
+## 12iii. predict evenness for this dataset ---------------------------------------
 ldg.p.margo$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.margo, olddata = eve.margo.mod)
 summary(ldg.p.margo$simpsonEve)
 
@@ -3389,87 +2857,87 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab
 with(ldg.p.margo[ldg.p.margo$simpsonEve > 1, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around arctic / antarctica coastlines - not a problem
 
 # compare with observed
-png("Figures/Ana_11iii_eve_pred.png", 700, 500)
+png("Figures/Ana_12iii_eve_pred.png", 700, 500)
 with(ldg.p.margo[ldg.p.margo$simpsonEve <= 1, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Ana_11iii_eve_obs.png", 700, 500)
+png("Figures/Ana_12iii_eve_obs.png", 700, 500)
 with(eve.margo.mod, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-## 11iv. predict average community age for this dataset --------------------
-ldg.p.margo$MorphoAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = eve.margo.mod)
-summary(ldg.p.margo$MorphoAgeAbun)
+## 12iv. predict average community age for this dataset --------------------
+ldg.p.margo$LinAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = eve.margo.mod)
+summary(ldg.p.margo$LinAgeAbun)
 
-with(ldg.p.margo, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
-plot(sort(ldg.p.margo$MorphoAgeAbun))
-summary(eve.margo.mod$MorphoAgeAbun)
-with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun < 5, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
+with(ldg.p.margo, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
+plot(sort(ldg.p.margo$LinAgeAbun))
+summary(eve.margo.mod$LinAgeAbun)
+with(ldg.p.margo[ldg.p.margo$LinAgeAbun < 5, ], distrib.map(Longitude, Latitude, LinAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
 
 # compare with observed
-png("Figures/Ana_11iv_lna_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$MorphoAgeAbun >= 5 & ldg.p.margo$MorphoAgeAbun <= 17, ], distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+png("Figures/Ana_12iv_lna_pred.png", 700, 500)
+with(ldg.p.margo[ldg.p.margo$LinAgeAbun >= 5 & ldg.p.margo$LinAgeAbun <= 17, ], distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
-png("Figures/Ana_11iv_lna_obs.png", 700, 500)
-with(eve.margo.mod, distrib.map(Longitude, Latitude, MorphoAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
+png("Figures/Ana_12iv_lna_obs.png", 700, 500)
+with(eve.margo.mod, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-## 11v. Difference maps ----------------------------------------------------
+## 12v. Difference maps ----------------------------------------------------
 # set up centred and scaled
 rsr.margo.mod$rarefy.sr.cs <- (rsr.margo.mod$rarefy.sr - mean(rsr.margo.mod$rarefy.sr)) / sd(rsr.margo.mod$rarefy.sr)
 eve.margo.mod$simpsonEve.cs <- (eve.margo.mod$simpsonEve - mean(eve.margo.mod$simpsonEve)) / sd(eve.margo.mod$simpsonEve)
-eve.margo.mod$MorphoAgeAbun.cs <- (eve.margo.mod$MorphoAgeAbun - mean(eve.margo.mod$MorphoAgeAbun)) / sd(eve.margo.mod$MorphoAgeAbun)
+eve.margo.mod$LinAgeAbun.cs <- (eve.margo.mod$LinAgeAbun - mean(eve.margo.mod$LinAgeAbun)) / sd(eve.margo.mod$LinAgeAbun)
 
 ldg.p.margo$rarefy.sr.cs <- (ldg.p.margo$rarefy.sr - mean(ldg.p.margo$rarefy.sr)) / sd(ldg.p.margo$rarefy.sr)
 ldg.p.margo$simpsonEve.cs <- (ldg.p.margo$simpsonEve - mean(ldg.p.margo$simpsonEve)) / sd(ldg.p.margo$simpsonEve)
-ldg.p.margo$MorphoAgeAbun.cs <- (ldg.p.margo$MorphoAgeAbun - mean(ldg.p.margo$MorphoAgeAbun)) / sd(ldg.p.margo$MorphoAgeAbun)
+ldg.p.margo$LinAgeAbun.cs <- (ldg.p.margo$LinAgeAbun - mean(ldg.p.margo$LinAgeAbun)) / sd(ldg.p.margo$LinAgeAbun)
 
 ## differences
 # b/w sr and eve
 # red - high sr & low eve
 # blue - low sr & high eve
-png("Figures/Ana_11v_sr_eve.png", 700, 500)
+png("Figures/Ana_12v_sr_eve.png", 700, 500)
 with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -10, max.col = 10))
 dev.off()
 
 # b/w sr and lna
 # red - high sr & low lna
 # blue - low sr & high lna
-png("Figures/Ana_11v_sr_lna.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black"))
+png("Figures/Ana_12v_sr_lna.png", 700, 500)
+with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black"))
 dev.off()
 
 # b/w eve and lna
 # red - high eve & low lna
 # blue - low eve & high lna
-png("Figures/Ana_11v_eve_lna.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -8, max.col = 8))
+png("Figures/Ana_12v_eve_lna.png", 700, 500)
+with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -8, max.col = 8))
 dev.off()
 
 # predicted
 # b/w sr and eve
 # red - high sr & low eve
 # blue - low sr & high eve
-png("Figures/Ana_11v_sr_eve_pred.png", 700, 500)
+png("Figures/Ana_12v_sr_eve_pred.png", 700, 500)
 with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -15, max.col = 15, pch = 15, cex = 0.4))
 dev.off()
 
 # b/w sr and lna
 # red - high sr & low lna
 # blue - low sr & high lna
-png("Figures/Ana_11v_sr_lna_pred.png", 700, 500)
-with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -15, max.col = 15))
+png("Figures/Ana_12v_sr_lna_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -15, max.col = 15))
 dev.off()
 
 # b/w eve and lna
 # red - high eve & low lna
 # blue - low eve & high lna
-png("Figures/Ana_11v_eve_lna_pred.png", 700, 500)
-with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$MorphoAgeAbun.cs) <= 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - MorphoAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4))
+png("Figures/Ana_12v_eve_lna_pred.png", 700, 500)
+with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$LinAgeAbun.cs) <= 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4))
 dev.off()
 
-## 11vi. Comparison plots --------------------------------------------------
+## 12vi. Comparison plots --------------------------------------------------
 load("Outputs/Atlantic_simplified.RData")
 load("Outputs/Indian_simplified.RData")
 load("Outputs/Pacific_simplified.RData")
@@ -3526,7 +2994,7 @@ lr.hres.op0g <- lr.calc(mod.hres.op0, tmp, plots = TRUE, pred.data = ldg.p.margo
 rm(tmp)
 
 
-# 12. Adding error bars ---------------------------------------------------
+## 13. Adding error bars ---------------------------------------------------
 
 
 duplicated.random = function(x, incomparables = FALSE, ...) 
@@ -3558,7 +3026,7 @@ tmp7 <- ldg.tmp[!duplicated.random(ldg.tmp$shift), ]
 tmp7[1:10, 50:57]
 
 
-# 13. Metabolic theory of ecology -----------------------------------------
+## 14. Metabolic theory of ecology -----------------------------------------
 # log transformed SR
 Ln_SR <- log(rsr.margo.mod$rarefy.sr)
 
@@ -3588,7 +3056,7 @@ p.ocean <- data.frame(MTE_SST = rep(p.MTE_SST, 3), MTE_oce = rep(levels(MTE_oce)
 p.ocean$p.Ln_SR <- predict(mte.oce.mod, p.ocean)[, 1]
 
 # plot them
-png("Figures/Ana_12_mte_plot.png")
+png("Figures/Ana_14_mte_plot.png")
 plot(Ln_SR ~ MTE_SST, pch = 16, col = rsr.margo.mod$Ocean2, xlab = "Temperature (1 / kT)", ylab = "ln (rarefied species richness)", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2)
 points(p.MTE_SST, p.Ln_SR, type = "l", lwd = 3) # observed
 with(p.ocean[p.ocean$MTE_oce == "Atlantic",], points(MTE_SST, p.Ln_SR, type = "l", col = 1)) # Atlantic
@@ -3599,7 +3067,7 @@ legend("topright", levels(rsr.margo.mod$Ocean2), pch = 16, col = 1:3)
 dev.off()
 
 # plot this relationship on the SST ~ SR relationship
-png("Figures/Ana_12_sst_mte_plot.png")
+png("Figures/Ana_14_sst_mte_plot.png")
 with(rsr.margo.mod, plot(rarefy.sr ~ meanSST.1deg, pch = 16, col = rsr.margo.mod$Ocean2, xlab = expression(paste("SST / ", degree, "C")), ylab = "Rarefied species richness", bty = "l", las = 1, cex.lab = 1.2, cex.axis = 1.2))
 points((1 / (8.6173324E−5 * p.MTE_SST) - 273.15), exp(mte.Ln_SR), type = "l", lwd = 2)
 legend(0, 24, levels(rsr.margo.mod$Ocean2)[1:3], pch = 16, col = 1:3)
@@ -3609,7 +3077,7 @@ save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/M
 rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, p.ocean)
 
 
-# 14. Tidy up -------------------------------------------------------------
+## 15. Tidy up -------------------------------------------------------------
 save(rsr.margo.mod, eve.margo.mod, lna.margo.mod,file = "Outputs/margo_mod.RData")
 save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, file = "Outputs/Richness_model.RData")
 save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/Richness_model_simplified.RData")
