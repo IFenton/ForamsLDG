@@ -1,6 +1,6 @@
 ## Creating a dataset for prediction with values every degree
 ## Created: 16 / 4 / 15
-## Last edited: 27 / 4 / 15
+## Last edited: 3 / 6 / 15
 ## Isabel Fenton
 ##
 ## Based on the code from Analysis_MARGO.R
@@ -67,7 +67,7 @@ points(pacific.3$x, pacific.3$y, type = "l", col = "green")
 
 save(pacific.1, pacific.3, atlantic.1, indian.1, file = "Outputs/150509_OceanPolygons.RData")
 save(pacific.1, pacific.3, atlantic.3, indian.1, file = "Outputs/150603_Gulf_OceanPolygons.RData")
-rm(pacific, atlantic, atlantic.2, indian, pacific.2)
+rm(pacific, atlantic, atlantic.2, indian, pacific.2, atlantic.1)
 
 ## 2ii. Add column to ldg.p.margo ------------------------------------------
 # calculate the ocean for each point
@@ -111,7 +111,7 @@ setwd("../../../Project/BFD/Environmental/SST_4km/")
 lon <- h5read("month01_combined.h5", "Longitude")
 lat <- h5read("month01_combined.h5", "Latitude")
 
-# calculate the closest coordinates for each margo site
+# calculate the closest coordinates for each site
 long.margo <- sapply(ldg.p.margo$Longitude, match.4km, lon)
 lat.margo <- sapply(ldg.p.margo$Latitude, match.4km, lat)
 
@@ -215,6 +215,8 @@ mld.lat <- sapply(ldg.p.margo$Latitude, match.2deg, unique(mld.2deg$Lat))
 
 # add columns
 ldg.p.margo <- cbind(ldg.p.margo, mld.2deg[mld.long[1, ] + length(unique(mld.2deg$Long)) * (mld.lat[1, ] - 1), grep("\\.mld", names(mld.2deg))])
+
+with(ldg.p.margo, distrib.map(Longitude, Latitude, mean.mld.t))
 
 rm(mld.long, mld.lat, mld.2deg, mld.margo)
 
@@ -392,19 +394,51 @@ for (i in 1:nrow(sal.sd.depth)) {
 rm(i)
 with(ldg.p.margo, distrib.map(Longitude, Latitude, sdSal.0m))
 
-rm(sal.mean.depth, sal.sd.depth)
+rm(sal.mean.depth, sal.sd.depth, sal.margo)
 
 
-# 9. carb_ion ------------------------------------------------------------
+## 9. Oxygen stress --------------------------------------------------------
+setwd("../Oxygen stress/")
+load("150506_oxygen.RData")
+
+# mean oxygen
+ldg.p.margo$meanOxy <- NA
+for (i in 1:nrow(oxy.1deg)) {
+  ldg.p.margo$meanOxy[oxy.1deg$Longitude[i] == ldg.p.margo$Longitude & oxy.1deg$Latitude[i] == ldg.p.margo$Latitude] <- oxy.1deg$meanOxy[i]
+}
+rm(i)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, meanOxy))
+
+# sd oxygen
+ldg.p.margo$sdOxy <- NA
+for (i in 1:nrow(oxy.1deg)) {
+  ldg.p.margo$sdOxy[oxy.1deg$Longitude[i] == ldg.p.margo$Longitude & oxy.1deg$Latitude[i] == ldg.p.margo$Latitude] <- oxy.1deg$sdOxy[i]
+}
+rm(i)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, sdOxy))
+
+# prop oxygen
+ldg.p.margo$prop2.oxy <- NA
+for (i in 1:nrow(oxy.1deg)) {
+  ldg.p.margo$prop2.oxy[oxy.1deg$Longitude[i] == ldg.p.margo$Longitude & oxy.1deg$Latitude[i] == ldg.p.margo$Latitude] <- oxy.1deg$prop2.oxy[i]
+}
+rm(i)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, prop2.oxy))
+
+rm(oxy.1deg, oxy.margo)
+
+
+## 10. delta_carb_ion ------------------------------------------------------------
 # carb_ion
-hist(sort(rsr.margo.mod$carb_ion))
-ldg.p.margo$carb_ion <- 100
+ldg.p.margo$delta_carb_ion <- 0
 # pick this as high values of carbonate ion saturation indicate no dissolution
 
-ldg.p.margo$carb_ion[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+ldg.p.margo$delta_carb_ion[which(point.in.polygon(ldg.p.margo$Longitude, ldg.p.margo$Latitude, land$x, land$y) == 1)] <- NA
+
+with(ldg.p.margo[!is.na(ldg.p.margo$delta_carb_ion), ], distrib.map(Longitude, Latitude, Longitude))
 
 
-# 10. Save the data -------------------------------------------------------
+## 11. Save the data -------------------------------------------------------
 save(ldg.p.margo, file = "../../../../Work/1311 LDGPaper/Reanalysis/Outputs/ldg_p_margo.RData")
 
 rm(land)
