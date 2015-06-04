@@ -1,5 +1,5 @@
 ## Created: 15 / 4 / 2015
-## Last edited: 30 / 5 / 2015
+## Last edited: 3 / 6 / 2015
 ## Isabel Fenton
 ## Reanalysis for LDG paper
 ##
@@ -1954,9 +1954,9 @@ png("Figures/Ana_3x_LRatio_g_OceIf.png", width = 8, height = 6, units = 'in', re
 lr.plot(lr.sar.op0g, lr.sar.atlIfg, lr.sar.indIfg, lr.sar.pacIfg, order = c(6:7, 4, 3, 5, 2:1), leg.txt = c("All", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 15, srt = 50)
 dev.off()
 
-save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, file = "Outputs/Atlantic_simplified.RData")
-save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, file = "Outputs/Indian_simplified.RData")
-save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, file = "Outputs/Pacific_simplified.RData")
+save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, atl.w, file = "Outputs/Atlantic_simplified.RData")
+save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, ind.w, file = "Outputs/Indian_simplified.RData")
+save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, pac.w, file = "Outputs/Pacific_simplified.RData")
 
 rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, op.formula, ind.w, atl.w, pac.w)
 
@@ -2075,8 +2075,8 @@ png("Figures/Ana_5iii_LRatio_g_opdis5op0.png", width = 800)
 lr.plot(lr.dis5.op0g, lr.sar.op0g, lr.dis15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, file = "Outputs/mod_dis5.RData")
-save(rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, file = "Outputs/mod_dis15.RData")
+save(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, op5.w, ldg.coords.5, file = "Outputs/mod_dis5.RData")
+save(rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, op15.w, ldg.coords.15, file = "Outputs/mod_dis15.RData")
 rm(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, ldg.coords.5, ldg.coords.15, op5.nb, op15.nb, op5.w, op15.w)
 
 
@@ -2314,8 +2314,8 @@ png("Figures/Ana_8vi_LRatio_g_op_eve5op0.png", width = 800)
 lr.plot(lr.eve5.op0g, lr.sar.eve0g, lr.eve15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(eve.margo.mod5, mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, file = "Outputs/mod_eve5.RData")
-save(eve.margo.mod15, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, file = "Outputs/mod_eve15.RData")
+save(eve.margo.mod5, mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, op.eve5.S, file = "Outputs/mod_eve5.RData")
+save(eve.margo.mod15, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, op.eve15.S, file = "Outputs/mod_eve15.RData")
 rm(mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, ldg.coords.eve.5, ldg.coords.eve.15, op.eve5.nb, op.eve15.nb, op.eve5.S, op.eve15.S)
 
 
@@ -2399,8 +2399,8 @@ png("Figures/Ana_9ii_LRatio_g_op_lna5op0.png", width = 800)
 lr.plot(lr.lna5.op0g, lr.sar.lna0g, lr.lna15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(eve.margo.mod5, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, file = "Outputs/mod_lna5.RData")
-save(eve.margo.mod15, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, file = "Outputs/mod_lna15.RData")
+save(eve.margo.mod5, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, op.lna5.W, file = "Outputs/mod_lna5.RData")
+save(eve.margo.mod15, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, op.lna15.W, file = "Outputs/mod_lna15.RData")
 rm(eve.margo.mod5, mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, eve.margo.mod15, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, ldg.coords.lna.5, ldg.coords.lna.15, op.lna5.nb, op.lna15.nb, op.lna5.W, op.lna15.W)
 
 
@@ -2577,8 +2577,8 @@ png("Figures/Ana_10iv_LRatio_g_op_fric5op0.png", width = 800)
 lr.plot(lr.fric5.op0g, lr.sar.fric0g, lr.fric15.op0g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Cutoff: -5", "Cutoff: -10.908", "Cutoff: -15"), ylab = "Log Likelihood ratio", star.pos = 20)
 dev.off()
 
-save(fric.margo.mod5, mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, file = "Outputs/mod_fric5.RData")
-save(fric.margo.mod15, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, file = "Outputs/mod_fric15.RData")
+save(fric.margo.mod5, mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, op.fric5.S, file = "Outputs/mod_fric5.RData")
+save(fric.margo.mod15, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, op.fric15.S, file = "Outputs/mod_fric15.RData")
 rm(mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, ldg.coords.fric.5, ldg.coords.fric.15, op.fric5.nb, op.fric15.nb, op.fric5.S, op.fric15.S)
 
 
@@ -2795,9 +2795,11 @@ dev.off()
 
 
 ## 12. Predicting models ---------------------------------------------------
+# at this point, need to run Prediction_environment.R
+# load("Outputs/ldg_p_margo.RData")
 
 ## 12i. Set up the dataset for prediction ----------------------------------
-with(rsr.margo.mod, distrib.map(Longitude, Latitude, predict(mod.sar.op0)))
+with(rsr.margo.mod, distrib.map(Longitude, Latitude, sar.predict(mod.sar.op0)))
 
 # check NAs and remove them
 summary(ldg.p.margo)
@@ -2815,20 +2817,28 @@ ldg.p.margo <- na.omit(ldg.p.margo)
 # if I don't do this, get predictions of -500 species in the north of Russia
 par(ask = TRUE)
 for (i in 4:(ncol(ldg.p.margo) - 1)) {
-  tmp.col <- which(names(rsr.margo.mod) == names(ldg.p.margo)[i])
-  ldg.p.margo[which(ldg.p.margo[, i] < min(rsr.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.margo[, i] > max(rsr.margo.mod[, tmp.col], na.rm = TRUE)), i] <- NA
+  tmp.col <- which(names(eve.margo.mod) == names(ldg.p.margo)[i])
+  ldg.p.margo[which(ldg.p.margo[, i] < min(eve.margo.mod[, tmp.col], na.rm = TRUE) | ldg.p.margo[, i] > max(eve.margo.mod[, tmp.col], na.rm = TRUE)), i] <- NA
   if (sum(is.na(ldg.p.margo[, i])) > 0)
     with(ldg.p.margo[is.na(ldg.p.margo[, i]), ], distrib.map(Longitude, Latitude, Ocean2, pch = 15, cex = 0.5, main = names(ldg.p.margo)[i]))
 }
 par(ask = FALSE)
+# n.b. get warnings where there are no points outside the range
 rm(i, tmp.col)
+
+# simplify ldg.p.margo down to only contain those variables used in the analysis
+names(ldg.p.margo)
+ldg.p.margo <- ldg.p.margo[, names(ldg.p.margo) %in% c("Longitude", "Latitude", env.var)]
 ldg.p.margo <- na.omit(ldg.p.margo)
 
 # plot these up
 for (i in env.var) {
-  png(paste("Figures/Ana_12i_map_", i, ".png", sep = ""), width = 800, height = 450)
-  with(ldg.p.margo, distrib.map(Longitude, Latitude, ldg.p.margo[, i], palette = "matlab.like", pch = 15, cex = 0.5, main = i, col.land = "black", col.water = "white"))
-  dev.off()
+  if (i != "delta_carb_ion" & i != "Ocean2")  # n.b. ignore these as neither plot well
+  {
+    png(paste("Figures/Ana_12i_map_", i, ".png", sep = ""), width = 800, height = 450)
+    with(ldg.p.margo, distrib.map(Longitude, Latitude, ldg.p.margo[, i], palette = "matlab.like", pch = 15, cex = 0.5, main = i, col.land = "black", col.water = "white"))
+    dev.off()
+  }
 }
 rm(i)
 
@@ -2842,7 +2852,7 @@ with(ldg.p.margo[ldg.p.margo$rarefy.sr <= 0, ], distrib.map(Longitude, Latitude,
 
 # compare with observed
 png("Figures/Ana_12ii_rsr_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", min.col = 0, max.col = 27))
+with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0 & ldg.p.margo$rarefy.sr <= 27, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_12ii_rsr_obs.png", 700, 500)
@@ -2853,8 +2863,7 @@ dev.off()
 ldg.p.margo$simpsonEve <- sar.predict(mod.sar.eve0, newdata = ldg.p.margo, olddata = eve.margo.mod)
 summary(ldg.p.margo$simpsonEve)
 
-with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
-with(ldg.p.margo[ldg.p.margo$simpsonEve > 1, ], distrib.map(Longitude, Latitude, simpsonEve, pch = 15, cex = 0.4)) # around arctic / antarctica coastlines - not a problem
+with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4)) 
 
 # compare with observed
 png("Figures/Ana_12iii_eve_pred.png", 700, 500)
@@ -2869,161 +2878,293 @@ dev.off()
 ldg.p.margo$LinAgeAbun <- sar.predict(mod.sar.lna0, newdata = ldg.p.margo, olddata = eve.margo.mod)
 summary(ldg.p.margo$LinAgeAbun)
 
-with(ldg.p.margo, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with evenness outside sensible limits - where are these
+with(ldg.p.margo, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with age outside sensible limits - where are these
 plot(sort(ldg.p.margo$LinAgeAbun))
 summary(eve.margo.mod$LinAgeAbun)
 with(ldg.p.margo[ldg.p.margo$LinAgeAbun < 5, ], distrib.map(Longitude, Latitude, LinAgeAbun, pch = 15, cex = 0.4)) # around coastlines - very few points
 
 # compare with observed
 png("Figures/Ana_12iv_lna_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$LinAgeAbun >= 5 & ldg.p.margo$LinAgeAbun <= 17, ], distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$LinAgeAbun >= 5, ], distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
 dev.off()
 
 png("Figures/Ana_12iv_lna_obs.png", 700, 500)
 with(eve.margo.mod, distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", col.water = "white", col.land = "black"))
 dev.off()
 
-## 12v. Difference maps ----------------------------------------------------
+## 12v. predict functional richness for this dataset --------------------
+ldg.p.margo$FRic <- sar.predict(mod.sar.fric0, newdata = ldg.p.margo, olddata = fric.margo.mod)
+summary(ldg.p.margo$FRic)
+summary(fric.margo.mod$FRic)
+
+with(ldg.p.margo, distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", pch = 15, cex = 0.4)) # get some sites with FRic outside sensible limits - where are these
+with(ldg.p.margo[ldg.p.margo$FRic < 0, ], distrib.map(Longitude, Latitude, FRic, pch = 15, cex = 0.4)) # around coastlines
+
+# compare with observed
+png("Figures/Ana_12v_fric_pred.png", 700, 500)
+with(ldg.p.margo[ldg.p.margo$FRic >= 0, ], distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+dev.off()
+
+png("Figures/Ana_12v_fric_obs.png", 700, 500)
+with(fric.margo.mod, distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", col.water = "white", col.land = "black"))
+dev.off()
+
+## 12vi. Difference maps ----------------------------------------------------
 # set up centred and scaled
 rsr.margo.mod$rarefy.sr.cs <- (rsr.margo.mod$rarefy.sr - mean(rsr.margo.mod$rarefy.sr)) / sd(rsr.margo.mod$rarefy.sr)
 eve.margo.mod$simpsonEve.cs <- (eve.margo.mod$simpsonEve - mean(eve.margo.mod$simpsonEve)) / sd(eve.margo.mod$simpsonEve)
 eve.margo.mod$LinAgeAbun.cs <- (eve.margo.mod$LinAgeAbun - mean(eve.margo.mod$LinAgeAbun)) / sd(eve.margo.mod$LinAgeAbun)
+fric.margo.mod$FRic.cs <- (fric.margo.mod$FRic - mean(fric.margo.mod$FRic)) / sd(fric.margo.mod$FRic)
 
 ldg.p.margo$rarefy.sr.cs <- (ldg.p.margo$rarefy.sr - mean(ldg.p.margo$rarefy.sr)) / sd(ldg.p.margo$rarefy.sr)
 ldg.p.margo$simpsonEve.cs <- (ldg.p.margo$simpsonEve - mean(ldg.p.margo$simpsonEve)) / sd(ldg.p.margo$simpsonEve)
 ldg.p.margo$LinAgeAbun.cs <- (ldg.p.margo$LinAgeAbun - mean(ldg.p.margo$LinAgeAbun)) / sd(ldg.p.margo$LinAgeAbun)
+ldg.p.margo$FRic.cs <- (ldg.p.margo$FRic - mean(ldg.p.margo$FRic)) / sd(ldg.p.margo$FRic)
+
+# can't do most of the comparisons with the raw data, as the datasets are different sizes
 
 ## differences
-# b/w sr and eve
-# red - high sr & low eve
-# blue - low sr & high eve
-png("Figures/Ana_12v_sr_eve.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -10, max.col = 10))
-dev.off()
-
-# b/w sr and lna
-# red - high sr & low lna
-# blue - low sr & high lna
-png("Figures/Ana_12v_sr_lna.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, rarefy.sr.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black"))
-dev.off()
-
 # b/w eve and lna
 # red - high eve & low lna
 # blue - low eve & high lna
-png("Figures/Ana_12v_eve_lna.png", 700, 500)
-with(ldg.margo.mod, distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -8, max.col = 8))
+png("Figures/Ana_12vi_eve_lna.png", 700, 500)
+with(eve.margo.mod, distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -8, max.col = 8))
 dev.off()
 
 # predicted
 # b/w sr and eve
 # red - high sr & low eve
 # blue - low sr & high eve
-png("Figures/Ana_12v_sr_eve_pred.png", 700, 500)
-with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", min.col = -15, max.col = 15, pch = 15, cex = 0.4))
+png("Figures/Ana_12vi_sr_eve_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - simpsonEve.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, min.col = -8, max.col = 8, cex = 0.4))
 dev.off()
 
 # b/w sr and lna
 # red - high sr & low lna
 # blue - low sr & high lna
-png("Figures/Ana_12v_sr_lna_pred.png", 700, 500)
-with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -15, max.col = 15))
+png("Figures/Ana_12vi_sr_lna_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -6, max.col = 6))
+dev.off()
+
+# b/w sr and fric
+# red - high sr & low fric
+# blue - low sr & high fric
+png("Figures/Ana_12vi_sr_fric_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, rarefy.sr.cs - FRic.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -5, max.col = 5))
 dev.off()
 
 # b/w eve and lna
 # red - high eve & low lna
 # blue - low eve & high lna
-png("Figures/Ana_12v_eve_lna_pred.png", 700, 500)
-with(ldg.p.margo[abs(ldg.p.margo$simpsonEve.cs - ldg.p.margo$LinAgeAbun.cs) <= 15, ], distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4))
+png("Figures/Ana_12vi_eve_lna_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve.cs - LinAgeAbun.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -10, max.col = 10))
 dev.off()
 
-## 12vi. Comparison plots --------------------------------------------------
+# b/w eve and fric
+# red - high eve & low fric
+# blue - low eve & high fric
+png("Figures/Ana_12vi_eve_fric_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve.cs - FRic.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -8, max.col = 8))
+dev.off()
+
+# b/w lna and fric
+# red - high lna & low fric
+# blue - low lna & high fric
+png("Figures/Ana_12vi_lna_fric_pred.png", 700, 500)
+with(ldg.p.margo, distrib.map(Longitude, Latitude, LinAgeAbun.cs - FRic.cs, palette = "rwb", col.water = "white", col.land = "black", pch = 15, cex = 0.4, min.col = -6, max.col = 6))
+dev.off()
+
+## 12vii. Comparison plots --------------------------------------------------
+# Don't do these for grouped models, as there are multiple possible variables for the horizontal axis
+
+# for full rarefied model
+lr.calc(mod.sar.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "FullRSR/op0")
+
+# for simplified rarefied model
+lr.calc(mod.sar.opf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "SimpRSR/opf")
+
+
+# for Oceans
 load("Outputs/Atlantic_simplified.RData")
 load("Outputs/Indian_simplified.RData")
 load("Outputs/Pacific_simplified.RData")
-load("Outputs/mod_hres.RData")
 
-# for full rarefied model
-lr.calc(mod.sar.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "op0")
-(tmp <- data.frame(names = model.evs(mod.sar.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.op0g <- lr.calc(mod.sar.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "op0g")
-rm(tmp)
+lr.sar.atlIf <- lr.calc(mod.sar.atlIf, plots = TRUE, pred.data = ldg.p.margo[ldg.p.margo$Ocean2 == "Atlantic",], mod.data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ], file.nm = "Atlantic/atlIf")
 
-# for simplified rarefied model
-lr.calc(mod.sar.opf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "opf")
-(tmp <- data.frame(names = model.evs(mod.sar.opf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.opfg <- lr.calc(mod.sar.opf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "opfg")
-rm(tmp)
+lr.sar.indIf <- lr.calc(mod.sar.indIf, plots = TRUE, pred.data = ldg.p.margo[ldg.p.margo$Ocean2 == "Indian",], mod.data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ], file.nm = "Indian/indIf")
 
-# for Atlantic
-lr.sar.atlIf <- lr.calc(mod.sar.atlIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "atlIf")
-# also for groups of variables
-(tmp <- data.frame(names = model.evs(mod.sar.atlIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.atlIfg <- lr.calc(mod.sar.atlIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "atlIfg")
-rm(tmp)
+lr.sar.pacIf <- lr.calc(mod.sar.pacIf, plots = TRUE, pred.data = ldg.p.margo[ldg.p.margo$Ocean2 == "Pacific",], mod.data = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ], file.nm = "Pacific/pacIf")
 
-# for Indian
-lr.sar.indIf <- lr.calc(mod.sar.indIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "indIf")
-(tmp <- data.frame(names = model.evs(mod.sar.indIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.indIfg <- lr.calc(mod.sar.indIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "indIfg")
-rm(tmp)
+rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, ind.w, atl.w, pac.w)
 
-# for Pacific
-lr.sar.pacIf <- lr.calc(mod.sar.pacIf, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "pacIf")
-(tmp <- data.frame(names = model.evs(mod.sar.pacIf), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.pacIfg <- lr.calc(mod.sar.pacIf, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "pacIfg")
-rm(tmp)
 
-# for lineage age
-lr.calc(mod.sar.lna0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "lna")
-(tmp <- data.frame(names = model.evs(mod.sar.lna0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.lna0g <- lr.calc(mod.sar.lna0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "lnag")
-rm(tmp)
+# for richness dissolution levels
+load("Outputs/mod_dis5.RData")
+load("Outputs/mod_dis15.RData")
+
+lr.calc(mod.dis5.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod5, file.nm = "FullRSR/op05")
+
+lr.calc(mod.dis15.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod15, file.nm = "FullRSR/op015")
+
+rm(rsr.margo.mod5, mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, rsr.margo.mod15, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, ldg.coords.5, ldg.coords.15, op5.w, op15.w)
 
 
 # for evenness
-lr.calc(mod.sar.eve0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "eve")
-(tmp <- data.frame(names = model.evs(mod.sar.eve0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.sar.eve0g <- lr.calc(mod.sar.eve0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "eveg")
-rm(tmp)
+lr.calc(mod.sar.eve0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "Eve/eve")
 
-# for high resolution
-lr.hres.op0 <- lr.calc(mod.hres.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "hres")
-(tmp <- data.frame(names = model.evs(mod.hres.op0), group = c("Stability", "Vertical niche structure", "Vertical niche structure", "Productivity", "Salinity", "Stability", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature")))
-lr.hres.op0g <- lr.calc(mod.hres.op0, tmp, plots = TRUE, pred.data = ldg.p.margo, mod.data = rsr.margo.mod, file.nm = "hresg")
-rm(tmp)
+# evenness dissolution
+load("Outputs/mod_eve5.RData")
+load("Outputs/mod_eve15.RData")
+
+lr.calc(mod.eve5.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod5, file.nm = "Eve/op05")
+
+lr.calc(mod.eve15.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod15, file.nm = "Eve/op015")
+
+rm(mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, op.eve5.S, op.eve15.S)
+
+
+# for lineage age
+lr.calc(mod.sar.lna0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod, file.nm = "Lna/lna")
+
+# lineage age dissolution
+load("Outputs/mod_lna5.RData")
+load("Outputs/mod_lna15.RData")
+
+lr.calc(mod.lna5.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod5, file.nm = "Lna/op05")
+
+lr.calc(mod.lna15.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = eve.margo.mod15, file.nm = "Lna/op015")
+
+rm(mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, op.lna5.W, op.lna15.W)
+
+
+# for FRic
+lr.calc(mod.sar.fric0, plots = TRUE, pred.data = ldg.p.margo, mod.data = fric.margo.mod, file.nm = "FRic/fric")
+
+# functional richness dissolution
+load("Outputs/mod_fric5.RData")
+load("Outputs/mod_fric15.RData")
+
+lr.calc(mod.fric5.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = fric.margo.mod5, file.nm = "FRic/op05")
+
+lr.calc(mod.fric15.op0, plots = TRUE, pred.data = ldg.p.margo, mod.data = fric.margo.mod15, file.nm = "FRic/op015")
+
+rm(mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, op.fric5.S, op.fric15.S)
+
+## 12viii. RMSE ------------------------------------------------------------
+rmse <- function(obs, pred)
+{
+  sqrt(mean((obs - pred)^2, na.rm = TRUE))
+}
+
+## calculate predicted values 
+# for richness
+rsr.margo.mod$rarefy.sr.op0 <- sar.predict(mod.sar.op0, newdata = rsr.margo.mod, olddata = rsr.margo.mod)
+rsr.margo.mod$rarefy.sr.opf <- sar.predict(mod.sar.opf, newdata = rsr.margo.mod, olddata = rsr.margo.mod)
+
+load("Outputs/Atlantic_simplified.RData")
+load("Outputs/Indian_simplified.RData")
+load("Outputs/Pacific_simplified.RData")
+
+rsr.margo.mod$rarefy.sr.atl <- NA
+rsr.margo.mod$rarefy.sr.atl[rsr.margo.mod$Ocean2 == "Atlantic"] <- sar.predict(mod.sar.atlIf, newdata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ], olddata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ])
+
+rsr.margo.mod$rarefy.sr.ind <- NA
+rsr.margo.mod$rarefy.sr.ind[rsr.margo.mod$Ocean2 == "Indian"] <- sar.predict(mod.sar.indIf, newdata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ], olddata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Indian", ])
+
+rsr.margo.mod$rarefy.sr.pac <- NA
+rsr.margo.mod$rarefy.sr.pac[rsr.margo.mod$Ocean2 == "Pacific"] <- sar.predict(mod.sar.pacIf, newdata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ], olddata = rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ])
+
+rm(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, ind.w, atl.w, pac.w)
+
+load("Outputs/mod_dis5.RData")
+load("Outputs/mod_dis15.RData")
+
+rsr.margo.mod5$rarefy.sr.dis5 <- sar.predict(mod.dis5.op0, newdata = rsr.margo.mod5, olddata = rsr.margo.mod5)
+rsr.margo.mod15$rarefy.sr.dis15 <- sar.predict(mod.dis15.op0, newdata = rsr.margo.mod15, olddata = rsr.margo.mod15)
+
+rm(mod.dis5.op0, lr.dis5.op0, lr.dis5.op0g, mod.dis15.op0, lr.dis15.op0, lr.dis15.op0g, ldg.coords.5, ldg.coords.15, op5.w, op15.w)
+
+# for evenness
+eve.margo.mod$simpsonEve.op0 <- sar.predict(mod.sar.eve0, newdata = eve.margo.mod, olddata = eve.margo.mod)
+
+load("Outputs/mod_eve5.RData")
+load("Outputs/mod_eve15.RData")
+load("Outputs/mod_lna5.RData")
+load("Outputs/mod_lna15.RData")
+eve.margo.mod5$simpsonEve.dis5 <- sar.predict(mod.eve5.op0, newdata = eve.margo.mod5, olddata = eve.margo.mod5)
+eve.margo.mod15$simpsonEve.dis15 <- sar.predict(mod.eve15.op0, newdata = eve.margo.mod15, olddata = eve.margo.mod15)
+rm(mod.eve5.op0, lr.eve5.op0, lr.eve5.op0g, mod.eve15.op0, lr.eve15.op0, lr.eve15.op0g, op.eve5.S, op.eve15.S)
+
+# for lineage age
+eve.margo.mod$LinAgeAbun.op0 <- sar.predict(mod.sar.lna0, newdata = eve.margo.mod, olddata = eve.margo.mod)
+eve.margo.mod5$LinAgeAbun.dis5 <- sar.predict(mod.lna5.op0, newdata = eve.margo.mod5, olddata = eve.margo.mod5)
+eve.margo.mod15$LinAgeAbun.dis15 <- sar.predict(mod.lna15.op0, newdata = eve.margo.mod15, olddata = eve.margo.mod15)
+rm(mod.lna5.op0, lr.lna5.op0, lr.lna5.op0g, mod.lna15.op0, lr.lna15.op0, lr.lna15.op0g, op.lna5.W, op.lna15.W)
+
+# for functional richness
+fric.margo.mod$FRic.op0 <- sar.predict(mod.sar.fric0, newdata = fric.margo.mod, olddata = fric.margo.mod)
+load("Outputs/mod_fric5.RData")
+load("Outputs/mod_fric15.RData")
+fric.margo.mod5$FRic.dis5 <- sar.predict(mod.fric5.op0, newdata = fric.margo.mod5, olddata = fric.margo.mod5)
+fric.margo.mod15$FRic.dis15 <- sar.predict(mod.fric15.op0, newdata = fric.margo.mod15, olddata = fric.margo.mod15)
+rm(mod.fric5.op0, lr.fric5.op0, lr.fric5.op0g, mod.fric15.op0, lr.fric15.op0, lr.fric15.op0g, op.fric5.S, op.fric15.S)
+
+save(rsr.margo.mod, rsr.margo.mod5, rsr.margo.mod15, eve.margo.mod, eve.margo.mod5, eve.margo.mod15, fric.margo.mod, fric.margo.mod5, fric.margo.mod15, file = "Outputs/margo_mod_predict.RData")
+
+## calculate rmse for the different models
+# rsr
+with(rsr.margo.mod, rmse(rarefy.sr, rarefy.sr.op0)) # 1.744455
+with(rsr.margo.mod, rmse(rarefy.sr, rarefy.sr.opf)) # 1.773707
+with(rsr.margo.mod, rmse(rarefy.sr, rarefy.sr.atl)) # 1.580459
+with(rsr.margo.mod, rmse(rarefy.sr, rarefy.sr.ind)) # 1.398254
+with(rsr.margo.mod, rmse(rarefy.sr, rarefy.sr.pac)) # 1.922182
+with(rsr.margo.mod5, rmse(rarefy.sr, rarefy.sr.dis5)) # 1.689126
+with(rsr.margo.mod15, rmse(rarefy.sr, rarefy.sr.dis15)) # 1.845448
+
+# evenness
+with(eve.margo.mod, rmse(simpsonEve, simpsonEve.op0)) # 0.09457745
+with(eve.margo.mod5, rmse(simpsonEve, simpsonEve.dis5)) # 0.09199942
+with(eve.margo.mod15, rmse(simpsonEve, simpsonEve.dis15)) # 0.09637737
+
+# lineage age
+with(eve.margo.mod, rmse(LinAgeAbun, LinAgeAbun.op0)) #  2.33272
+with(eve.margo.mod5, rmse(LinAgeAbun, LinAgeAbun.dis5)) # 2.345406
+with(eve.margo.mod15, rmse(LinAgeAbun, LinAgeAbun.dis15)) # 2.352143
+
+# functional richness
+with(fric.margo.mod, rmse(FRic, FRic.op0)) #  0.1512236
+with(fric.margo.mod5, rmse(FRic, FRic.dis5)) # 0.1473754
+with(fric.margo.mod15, rmse(FRic, FRic.dis15)) # 0.1520414
 
 
 ## 13. Adding error bars ---------------------------------------------------
-
-
-duplicated.random = function(x, incomparables = FALSE, ...) 
-{ 
-  if ( is.vector(x) ) 
-  { 
-    permutation = sample(length(x)) 
-    x.perm      = x[permutation] 
-    result.perm = duplicated(x.perm, incomparables, ...) 
-    result      = result.perm[order(permutation)] 
-    return(result) 
-  } 
-  else if ( is.matrix(x) ) 
-  { 
-    permutation = sample(nrow(x)) 
-    x.perm      = x[permutation,] 
-    result.perm = duplicated(x.perm, incomparables, ...) 
-    result      = result.perm[order(permutation)] 
-    return(result) 
-  } 
-  else 
-  { 
-    stop(paste("duplicated.random() only supports vectors", 
-               "matrices for now.")) 
-  } 
-} 
-
-tmp7 <- ldg.tmp[!duplicated.random(ldg.tmp$shift), ]
-tmp7[1:10, 50:57]
+# duplicated.random = function(x, incomparables = FALSE, ...) 
+# { 
+#   if ( is.vector(x) ) 
+#   { 
+#     permutation = sample(length(x)) 
+#     x.perm      = x[permutation] 
+#     result.perm = duplicated(x.perm, incomparables, ...) 
+#     result      = result.perm[order(permutation)] 
+#     return(result) 
+#   } 
+#   else if ( is.matrix(x) ) 
+#   { 
+#     permutation = sample(nrow(x)) 
+#     x.perm      = x[permutation,] 
+#     result.perm = duplicated(x.perm, incomparables, ...) 
+#     result      = result.perm[order(permutation)] 
+#     return(result) 
+#   } 
+#   else 
+#   { 
+#     stop(paste("duplicated.random() only supports vectors", 
+#                "matrices for now.")) 
+#   } 
+# } 
+# 
+# tmp7 <- ldg.tmp[!duplicated.random(ldg.tmp$shift), ]
+# tmp7[1:10, 50:57]
 
 
 ## 14. Metabolic theory of ecology -----------------------------------------
@@ -3078,11 +3219,12 @@ rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mo
 
 
 ## 15. Tidy up -------------------------------------------------------------
-save(rsr.margo.mod, eve.margo.mod, lna.margo.mod,file = "Outputs/margo_mod.RData")
-save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, file = "Outputs/Richness_model.RData")
-save(lr.sar.opf, lr.sar.opfg, ms.lr, ms.lr.group, mod.sar.opf, file = "Outputs/Richness_model_simplified.RData")
-save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, file = "Outputs/Evenness_model.RData")
-save(lr.sar.lna0, lr.sar.lna0g, mod.sar.lna0, file = "Outputs/Lineage_model.RData")
+save(rsr.margo.mod, eve.margo.mod, fric.margo.mod, file = "Outputs/margo_mod.RData")
+save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, op.w, rsr.margo.mod, file = "Outputs/Richness_model.RData")
+save(lr.sar.opf, lr.sar.opfg, mod.sar.opf, rsr.margo.mod, op.w, file = "Outputs/Richness_model_simplified.RData")
+save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, eve.margo.mod, eve.s, file = "Outputs/Evenness_model.RData")
+save(lr.sar.lna0, lr.sar.lna0g, mod.sar.lna0, eve.margo.mod, lna.w, file = "Outputs/Lineage_model.RData")
+save(lr.sar.fric0, lr.sar.fric0g, mod.sar.fric0, fric.margo.mod, fric.s, file = "Outputs/FRic_model.RData")
 
 rm(ldg.coords, stars, env.var, op.w, eve.s, lna.w, mod.sar.eveS, mod.sar.lnaW)
 
