@@ -1,5 +1,5 @@
 ## Created: 15 / 4 / 2015
-## Last edited: 3 / 6 / 2015
+## Last edited: 26 / 8 / 2015
 ## Isabel Fenton
 ## Reanalysis for LDG paper
 ##
@@ -48,11 +48,12 @@ source("../../../Code/maps.R") # for maps
 source("../../../Code/palettes.R") # ditto
 source("../../../Code/lr_calculations.R") # code for calculating likelihood ratios
 source("../../../Code/sar_predict.R") # for predicting with poly
+source("../../../Code/compare.R") # for checking species names
 load("../../../Project/MARGO/Outputs/Environmental_variables.Rdata") # the datasets for the modelling
 
 
 ## 0i. Setting up the datasets -----------------------------------------------
-rm(db.traits, margo.traits)
+rm(db.traits)
 
 # create a dataset for modelling with 
 tmp <- c("Core", "Latitude", "Longitude", "Water.Depth", "Total_Planktics", "Ocean2", "sp.rich", "rarefy.sr", "simpson", "simpsonEve", "FRic", "symbionts_obl", "symbionts_obl_abun", "symbionts_all", "symbionts_all_abun", "surface", "surface_subsurface", "subsurface", "subsurface_deep", "deep", "surfaceAbun", "surface_subsurfaceAbun", "subsurfaceAbun", "subsurface_deepAbun", "deepAbun", "MorphoAge", "LinAge", "MorphoAgeAbun", "LinAgeAbun")
@@ -95,6 +96,8 @@ rm(sal.margo, sal.mean.depth, sal.sd.depth)
 ldg.margo.mod$absMnSal.0m <- abs(ldg.margo.mod$meanSal.0m - 35.1)
 with(ldg.margo.mod, plot(absMnSal.0m, rarefy.sr, pch = 16, col = Ocean2))
 
+## save this dataset
+save(ldg.margo.mod, file = "Outputs/ldg_margo_mod.RData")
 
 ## create three different datasets for Rarefied, Evenness & LineageAge, & FRic
 ## for richness
@@ -1954,6 +1957,146 @@ png("Figures/Ana_3x_LRatio_g_OceIf.png", width = 8, height = 6, units = 'in', re
 lr.plot(lr.sar.op0g, lr.sar.atlIfg, lr.sar.indIfg, lr.sar.pacIfg, order = c(6:7, 4, 3, 5, 2:1), leg.txt = c("All", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 15, srt = 50)
 dev.off()
 
+## 3xi. Comparing randomly subsampled points ---------------------------------------
+table(rsr.margo.mod$Ocean2)
+
+## for the Atlantic
+atl.sample <- lr.sar.atlIf
+atl.sample.g <- lr.sar.atlIfg
+names(atl.sample)[2:4] <- names(atl.sample.g)[2:4] <- paste(names(atl.sample)[2:4], "all", sep = "_")
+
+atl.data <- rsr.margo.mod[rsr.margo.mod$Ocean2 == "Atlantic", ]
+
+(var.dat <- data.frame(names = model.evs(mod.sar.atlIf), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- atl.data[sample(1:nrow(atl.data), 168), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long,tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.opW$dist, longlat = TRUE)
+  tmp.w <- nb2listw(tmp.nb, glist = NULL, style = "W", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.atlIf$call$formula, listw = tmp.w, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  atl.sample <- cbind(atl.sample, tmp2[2:4])
+  atl.sample.g <- cbind(atl.sample.g, tmp3[2:4])
+  names(atl.sample)[(3 * i + 2):(3 * i + 4)] <- names(atl.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.w, tmp2, tmp3, tmp.mod, i)
+
+atl.final <- lr.sar.atlIf
+atl.final$lr <- rowMeans(atl.sample[, seq(5, ncol(atl.sample), by = 3)])
+atl.final$p <- rowMeans(atl.sample[, seq(6, ncol(atl.sample), by = 3)])
+atl.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  atl.final$stars[which(atl.final$p <= stars[i] & is.na(atl.final$stars))] <- names(stars)[i]
+}
+
+se.atl <- apply(atl.sample[, seq(5, ncol(atl.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+lr.plot(atl.final, order = c(9:7, 10:11, 1, 4, 2:3, 5:6), ylab = "Log Likelihood ratio", star.pos = 10, se.val = se.atl)
+
+atl.final.g <- lr.sar.atlIfg
+atl.final.g$lr <- rowMeans(atl.sample.g[, seq(5, ncol(atl.sample.g), by = 3)])
+atl.final.g$p <- rowMeans(atl.sample.g[, seq(6, ncol(atl.sample.g), by = 3)])
+atl.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  atl.final.g$stars[which(atl.final.g$p <= stars[i] & is.na(atl.final.g$stars))] <- names(stars)[i]
+}
+
+se.atl.g <- apply(atl.sample.g[, seq(5, ncol(atl.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.atl.g <- apply(atl.sample.g[, seq(5, ncol(atl.sample.g), by = 3)], 1, sd)
+
+
+lr.plot(atl.final.g, ylab = "Log Likelihood ratio", order = c(5:6, 1:4), star.pos = 10, se.val = se.atl.g)
+
+rm(atl.data)
+
+## for the Pacific
+pac.sample <- lr.sar.pacIf
+pac.sample.g <- lr.sar.pacIfg
+names(pac.sample)[2:4] <- names(pac.sample.g)[2:4] <- paste(names(pac.sample)[2:4], "all", sep = "_")
+
+pac.data <- rsr.margo.mod[rsr.margo.mod$Ocean2 == "Pacific", ]
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- pac.data[sample(1:nrow(pac.data), 168), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long,tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.opW$dist, longlat = TRUE)
+  tmp.w <- nb2listw(tmp.nb, glist = NULL, style = "W", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.pacIf$call$formula, listw = tmp.w, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  pac.sample <- cbind(pac.sample, tmp2[2:4])
+  pac.sample.g <- cbind(pac.sample.g, tmp3[2:4])
+  names(pac.sample)[(3 * i + 2):(3 * i + 4)] <- names(pac.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.w, tmp2, tmp3, tmp.mod, i)
+
+pac.final <- lr.sar.pacIf
+pac.final$lr <- rowMeans(pac.sample[, seq(5, ncol(pac.sample), by = 3)])
+pac.final$p <- rowMeans(pac.sample[, seq(6, ncol(pac.sample), by = 3)])
+pac.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  pac.final$stars[which(pac.final$p <= stars[i] & is.na(pac.final$stars))] <- names(stars)[i]
+}
+
+se.pac <- apply(pac.sample[, seq(5, ncol(pac.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.pac <- apply(pac.sample[, seq(5, ncol(pac.sample), by = 3)], 1, sd)
+
+lr.plot(pac.final, ylab = "Log Likelihood ratio", order = c(9:7, 10:11, 1, 4, 2:3, 5:6), star.pos = 5, se.val = se.pac)
+
+pac.final.g <- lr.sar.pacIfg
+pac.final.g$lr <- rowMeans(pac.sample.g[, seq(5, ncol(pac.sample.g), by = 3)])
+pac.final.g$p <- rowMeans(pac.sample.g[, seq(6, ncol(pac.sample.g), by = 3)])
+pac.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  pac.final.g$stars[which(pac.final.g$p <= stars[i] & is.na(pac.final.g$stars))] <- names(stars)[i]
+}
+
+se.pac.g <- apply(pac.sample.g[, seq(5, ncol(pac.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+lr.plot(pac.final.g, ylab = "Log Likelihood ratio", order = c(5:6, 1:4), star.pos = 10, se.val = se.pac.g)
+
+
+# plot the whole set up
+sd.val <- rbind(sd.atl, rep(0, nrow(lr.sar.indIf)), sd.pac)
+colnames(sd.val) <- atl.final$names
+sd.val <- cbind(sd.val, Ocean2 = rep(0, 3))
+sd.val <- sd.val[, order(colnames(sd.val))]
+sd.val <- rbind(sd.rsr[order(rsr.sample$names)], sd.val)
+
+png("Figures/Ana_3xi_LRatio_OceR.png", width = 8, height = 6, units = 'in', res = 300)
+lr.plot(lr.sar.op0, atl.final, lr.sar.indIf, pac.final, order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), leg.txt = c("Full", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 10, se.val = sd.val)
+dev.off()
+
+sd.val.g <- rbind(sd.atl.g, rep(0, nrow(lr.sar.indIfg)), sd.pac.g)
+colnames(sd.val.g) <- atl.final.g$names
+sd.val.g <- cbind(sd.val.g, Ocean = rep(0, 3))
+sd.val.g <- sd.val.g[, order(colnames(sd.val.g))]
+sd.val.g <- rbind(sd.rsr.g[order(rsr.sample.g$names)], sd.val.g)
+
+
+png("Figures/Ana_3xi_LRatio_g_OceR_sd.png", width = 8, height = 6, units = 'in', res = 300)
+lr.plot(lr.sar.op0g, atl.final.g, lr.sar.indIfg, pac.final.g, order = c(6:7, 4:3, 5, 2:1), leg.txt = c("Full", "Atlantic", "Indian", "Pacific"), ylab = "Log Likelihood ratio", star.pos = 10, se.val = sd.val.g)
+dev.off()
+
+rm(pac.data)
+
+## 3xii. Tidy up the results -----------------------------------------------
 save(lr.sar.atlIf, lr.sar.atlIfg, mod.sar.atlIf, atl.w, file = "Outputs/Atlantic_simplified.RData")
 save(lr.sar.indIf, lr.sar.indIfg, mod.sar.indIf, ind.w, file = "Outputs/Indian_simplified.RData")
 save(lr.sar.pacIf, lr.sar.pacIfg, mod.sar.pacIf, pac.w, file = "Outputs/Pacific_simplified.RData")
@@ -2852,7 +2995,7 @@ with(ldg.p.margo[ldg.p.margo$rarefy.sr <= 0, ], distrib.map(Longitude, Latitude,
 
 # compare with observed
 png("Figures/Ana_12ii_rsr_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0 & ldg.p.margo$rarefy.sr <= 27, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$rarefy.sr > 0 & ldg.p.margo$rarefy.sr <= 27, ], distrib.map(Longitude, Latitude, rarefy.sr, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", maintitle = "Rarefied species richness"))
 dev.off()
 
 png("Figures/Ana_12ii_rsr_obs.png", 700, 500)
@@ -2867,7 +3010,7 @@ with(ldg.p.margo, distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab
 
 # compare with observed
 png("Figures/Ana_12iii_eve_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$simpsonEve <= 1, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$simpsonEve <= 1, ], distrib.map(Longitude, Latitude, simpsonEve, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", maintitle = "Simpson's evenness"))
 dev.off()
 
 png("Figures/Ana_12iii_eve_obs.png", 700, 500)
@@ -2885,7 +3028,7 @@ with(ldg.p.margo[ldg.p.margo$LinAgeAbun < 5, ], distrib.map(Longitude, Latitude,
 
 # compare with observed
 png("Figures/Ana_12iv_lna_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$LinAgeAbun >= 5, ], distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$LinAgeAbun >= 5, ], distrib.map(Longitude, Latitude, LinAgeAbun, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", maintitle = "Average community age"))
 dev.off()
 
 png("Figures/Ana_12iv_lna_obs.png", 700, 500)
@@ -2902,7 +3045,7 @@ with(ldg.p.margo[ldg.p.margo$FRic < 0, ], distrib.map(Longitude, Latitude, FRic,
 
 # compare with observed
 png("Figures/Ana_12v_fric_pred.png", 700, 500)
-with(ldg.p.margo[ldg.p.margo$FRic >= 0, ], distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black"))
+with(ldg.p.margo[ldg.p.margo$FRic >= 0, ], distrib.map(Longitude, Latitude, FRic, palette = "matlab.like", pch = 15, cex = 0.4, col.water = "white", col.land = "black", maintitle = "Functional richness"))
 dev.off()
 
 png("Figures/Ana_12v_fric_obs.png", 700, 500)
@@ -3138,33 +3281,294 @@ with(fric.margo.mod15, rmse(FRic, FRic.dis15)) # 0.1520414
 
 
 ## 13. Adding error bars ---------------------------------------------------
-# duplicated.random = function(x, incomparables = FALSE, ...) 
-# { 
-#   if ( is.vector(x) ) 
-#   { 
-#     permutation = sample(length(x)) 
-#     x.perm      = x[permutation] 
-#     result.perm = duplicated(x.perm, incomparables, ...) 
-#     result      = result.perm[order(permutation)] 
-#     return(result) 
-#   } 
-#   else if ( is.matrix(x) ) 
-#   { 
-#     permutation = sample(nrow(x)) 
-#     x.perm      = x[permutation,] 
-#     result.perm = duplicated(x.perm, incomparables, ...) 
-#     result      = result.perm[order(permutation)] 
-#     return(result) 
-#   } 
-#   else 
-#   { 
-#     stop(paste("duplicated.random() only supports vectors", 
-#                "matrices for now.")) 
-#   } 
-# } 
-# 
-# tmp7 <- ldg.tmp[!duplicated.random(ldg.tmp$shift), ]
-# tmp7[1:10, 50:57]
+duplicated.random <- function(x, incomparables = FALSE, ...) 
+{ 
+  if ( is.vector(x) ) 
+  { 
+    permutation <- sample(length(x)) 
+    x.perm      <- x[permutation] 
+    result.perm <- duplicated(x.perm, incomparables, ...) 
+    result      <- result.perm[order(permutation)] 
+    return(result) 
+  } 
+  else if ( is.matrix(x) ) 
+  { 
+    permutation <- sample(nrow(x)) 
+    x.perm      <- x[permutation,] 
+    result.perm <- duplicated(x.perm, incomparables, ...) 
+    result      <- result.perm[order(permutation)] 
+    return(result) 
+  } 
+  else 
+  { 
+    stop(paste("duplicated.random() only supports vectors & matrices for now.")) 
+  } 
+} 
+
+## 13i. Rarefied richness models -------------------------------------------
+rsr.sample <- lr.sar.op0
+rsr.sample.g <- lr.sar.op0g
+names(rsr.sample)[2:4] <- names(rsr.sample.g)[2:4] <- paste(names(rsr.sample)[2:4], "all", sep = "_")
+
+(var.dat <- data.frame(names = model.evs(mod.sar.op0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+
+load("150601 rsr_margo_dup.RData")
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- rsr.margo.dup[!duplicated.random(as.numeric(rsr.margo.dup$uni)), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long, tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.opW$dist, longlat = TRUE)
+  tmp.w <- nb2listw(tmp.nb, glist = NULL, style = "W", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.opW$mod, listw = tmp.w, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  rsr.sample <- cbind(rsr.sample, tmp2[2:4])
+  rsr.sample.g <- cbind(rsr.sample.g, tmp3[2:4])
+  names(rsr.sample)[(3 * i + 2):(3 * i + 4)] <- names(rsr.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.w, tmp2, tmp3, tmp.mod, i)
+
+rsr.final <- lr.sar.op0
+rsr.final$lr <- rowMeans(rsr.sample[, seq(5, ncol(rsr.sample), by = 3)])
+rsr.final$p <- rowMeans(rsr.sample[, seq(6, ncol(rsr.sample), by = 3)])
+rsr.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  rsr.final$stars[which(rsr.final$p <= stars[i] & is.na(rsr.final$stars))] <- names(stars)[i]
+}
+
+se.rsr <- apply(rsr.sample[, seq(5, ncol(rsr.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.rsr <- apply(rsr.sample[, seq(5, ncol(rsr.sample), by = 3)], 1, sd)
+
+
+lr.plot(rsr.final, order = c(9:7, 10:11, 1, 4, 2:3, 5:6), ylab = "Log Likelihood ratio", star.pos = 10, se.val = sd.rsr)
+
+rsr.final.g <- lr.sar.op0g
+rsr.final.g$lr <- rowMeans(rsr.sample.g[, seq(5, ncol(rsr.sample.g), by = 3)])
+rsr.final.g$p <- rowMeans(rsr.sample.g[, seq(6, ncol(rsr.sample.g), by = 3)])
+rsr.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  rsr.final.g$stars[which(rsr.final.g$p <= stars[i] & is.na(rsr.final.g$stars))] <- names(stars)[i]
+}
+
+se.rsr.g <- apply(rsr.sample.g[, seq(5, ncol(rsr.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.rsr.g <- apply(rsr.sample.g[, seq(5, ncol(rsr.sample.g), by = 3)], 1, sd)
+
+lr.plot(rsr.final.g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 25, se.val = se.rsr.g)
+
+lr.plot(lr.sar.op0g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 25, se.val = se.rsr.g)
+
+
+lr.plot(lr.sar.op0g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 25, se.val = sd.rsr.g)
+
+save(rsr.sample, rsr.sample.g, rsr.final, rsr.final.g, file = "Outputs/RSR_resampling.RData")
+
+## 13ii. Evenness models ---------------------------------------------------
+eve.sample <- lr.sar.eve0
+eve.sample.g <- lr.sar.eve0g
+names(eve.sample)[2:4] <- names(eve.sample.g)[2:4] <- paste(names(eve.sample)[2:4], "all", sep = "_")
+
+(var.dat <- data.frame(names = model.evs(mod.sar.eve0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+
+load("150601 eve_margo_dup.RData")
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- eve.margo.dup[!duplicated.random(as.numeric(eve.margo.dup$uni)), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long, tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.eveS$dist, longlat = TRUE)
+  tmp.S <- nb2listw(tmp.nb, glist = NULL, style = "S", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.eveS$mod, listw = tmp.S, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  eve.sample <- cbind(eve.sample, tmp2[2:4])
+  eve.sample.g <- cbind(eve.sample.g, tmp3[2:4])
+  names(eve.sample)[(3 * i + 2):(3 * i + 4)] <- names(eve.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.S, tmp2, tmp3, tmp.mod, i)
+
+eve.final <- lr.sar.eve0
+eve.final$lr <- rowMeans(eve.sample[, seq(5, ncol(eve.sample), by = 3)])
+eve.final$p <- rowMeans(eve.sample[, seq(6, ncol(eve.sample), by = 3)])
+eve.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  eve.final$stars[which(eve.final$p <= stars[i] & is.na(eve.final$stars))] <- names(stars)[i]
+}
+
+se.eve <- apply(eve.sample[, seq(5, ncol(eve.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.eve <- apply(eve.sample[, seq(5, ncol(eve.sample), by = 3)], 1, sd)
+
+lr.plot(eve.final, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, se.val = sd.eve)
+
+lr.plot(lr.sar.eve0, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, se.val = sd.eve)
+
+eve.final.g <- lr.sar.eve0g
+eve.final.g$lr <- rowMeans(eve.sample.g[, seq(5, ncol(eve.sample.g), by = 3)])
+eve.final.g$p <- rowMeans(eve.sample.g[, seq(6, ncol(eve.sample.g), by = 3)])
+eve.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  eve.final.g$stars[which(eve.final.g$p <= stars[i] & is.na(eve.final.g$stars))] <- names(stars)[i]
+}
+
+se.eve.g <- apply(eve.sample.g[, seq(5, ncol(eve.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.eve.g <- apply(eve.sample.g[, seq(5, ncol(eve.sample.g), by = 3)], 1, sd)
+
+lr.plot(eve.final.g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 10, se.val = sd.eve.g)
+
+lr.plot(lr.sar.eve0g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 10, se.val = sd.eve.g)
+
+save(eve.sample, eve.sample.g, eve.final, eve.final.g, file = "Outputs/Eve_resampling.RData")
+
+## 13iii. Lineage age models -----------------------------------------------
+lna.sample <- lr.sar.lna0
+lna.sample.g <- lr.sar.lna0g
+names(lna.sample)[2:4] <- names(lna.sample.g)[2:4] <- paste(names(lna.sample)[2:4], "all", sep = "_")
+
+(var.dat <- data.frame(names = model.evs(mod.sar.lna0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- eve.margo.dup[!duplicated.random(as.numeric(eve.margo.dup$uni)), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long, tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.lnaW$dist, longlat = TRUE)
+  tmp.W <- nb2listw(tmp.nb, glist = NULL, style = "W", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.lnaW$mod, listw = tmp.W, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  lna.sample <- cbind(lna.sample, tmp2[2:4])
+  lna.sample.g <- cbind(lna.sample.g, tmp3[2:4])
+  names(lna.sample)[(3 * i + 2):(3 * i + 4)] <- names(lna.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.S, tmp2, tmp3, tmp.mod, i)
+
+lna.final <- lr.sar.lna0
+lna.final$lr <- rowMeans(lna.sample[, seq(5, ncol(lna.sample), by = 3)])
+lna.final$p <- rowMeans(lna.sample[, seq(6, ncol(lna.sample), by = 3)])
+lna.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  lna.final$stars[which(lna.final$p <= stars[i] & is.na(lna.final$stars))] <- names(stars)[i]
+}
+
+se.lna <- apply(lna.sample[, seq(5, ncol(lna.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.lna <- apply(lna.sample[, seq(5, ncol(lna.sample), by = 3)], 1, sd)
+
+lr.plot(lna.final, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, se.val = se.lna)
+
+lna.final.g <- lr.sar.lna0g
+lna.final.g$lr <- rowMeans(lna.sample.g[, seq(5, ncol(lna.sample.g), by = 3)])
+lna.final.g$p <- rowMeans(lna.sample.g[, seq(6, ncol(lna.sample.g), by = 3)])
+lna.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  lna.final.g$stars[which(lna.final.g$p <= stars[i] & is.na(lna.final.g$stars))] <- names(stars)[i]
+}
+
+se.lna.g <- apply(lna.sample.g[, seq(5, ncol(lna.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.lna.g <- apply(lna.sample.g[, seq(5, ncol(lna.sample.g), by = 3)], 1, sd)
+
+lr.plot(lna.final.g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 10, se.val = se.lna.g)
+
+save(lna.sample, lna.sample.g, lna.final, lna.final.g, file = "Outputs/lna_resampling.RData")
+
+## 13iv. Functional richness models ----------------------------------------
+fric.sample <- lr.sar.fric0
+fric.sample.g <- lr.sar.fric0g
+names(fric.sample)[2:4] <- names(fric.sample.g)[2:4] <- paste(names(fric.sample)[2:4], "all", sep = "_")
+
+(var.dat <- data.frame(names = model.evs(mod.sar.fric0), group = c("Stability", "Productivity", "Stress", "Stability", "Stress", "Ocean", "Dissolution", "Temperature", "Temperature", "Temperature", "Vertical niche structure", "Vertical niche structure")))
+
+load("150601 fric_margo_dup.RData")
+
+# repeat 100 times
+for (i in 1:100) {
+  # create a subsample of the dataset
+  tmp <- fric.margo.dup[!duplicated.random(as.numeric(fric.margo.dup$uni)), ]
+  # run the model & calculate the lr values
+  ldg.coords.tmp <- as.matrix(cbind(tmp$Long, tmp$Lat))
+  tmp.nb <- dnearneigh(ldg.coords.tmp, 0, mod.sar.fricS$dist, longlat = TRUE)
+  tmp.S <- nb2listw(tmp.nb, glist = NULL, style = "S", zero.policy = TRUE)
+  tmp.mod <- errorsarlm(mod.sar.fricS$mod, listw = tmp.S, zero.policy = TRUE, tol.solve = 1e-18, data = tmp)
+  tmp2 <- lr.calc(tmp.mod)
+  tmp3 <- lr.calc(tmp.mod, var.dat)
+  # add to the table
+  fric.sample <- cbind(fric.sample, tmp2[2:4])
+  fric.sample.g <- cbind(fric.sample.g, tmp3[2:4])
+  names(fric.sample)[(3 * i + 2):(3 * i + 4)] <- names(fric.sample.g)[(3 * i + 2):(3 * i + 4)] <- paste(names(tmp2)[2:4], i, sep = "_")
+}
+rm(tmp, ldg.coords.tmp, tmp.nb, tmp.S, tmp2, tmp3, tmp.mod, i)
+
+fric.final <- lr.sar.fric0
+fric.final$lr <- rowMeans(fric.sample[, seq(5, ncol(fric.sample), by = 3)])
+fric.final$p <- rowMeans(fric.sample[, seq(6, ncol(fric.sample), by = 3)])
+fric.final$stars <- NA
+
+for (i in 1:length(stars)) {
+  fric.final$stars[which(fric.final$p <= stars[i] & is.na(fric.final$stars))] <- names(stars)[i]
+}
+
+se.fric <- apply(fric.sample[, seq(5, ncol(fric.sample), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.fric <- apply(fric.sample[, seq(5, ncol(fric.sample), by = 3)], 1, sd)
+
+lr.plot(fric.final, order = c(8:12, 1, 4, 2:3, 5:7), ylab = "Log Likelihood ratio", star.pos = 10, se.val = se.fric)
+
+fric.final.g <- lr.sar.fric0g
+fric.final.g$lr <- rowMeans(fric.sample.g[, seq(5, ncol(fric.sample.g), by = 3)])
+fric.final.g$p <- rowMeans(fric.sample.g[, seq(6, ncol(fric.sample.g), by = 3)])
+fric.final.g$stars <- NA
+
+for (i in 1:length(stars)) {
+  fric.final.g$stars[which(fric.final.g$p <= stars[i] & is.na(fric.final.g$stars))] <- names(stars)[i]
+}
+
+se.fric.g <- apply(fric.sample.g[, seq(5, ncol(fric.sample.g), by = 3)], 1, function (x) sqrt(var(x) / length(x)))
+
+sd.fric.g <- apply(fric.sample.g[, seq(5, ncol(fric.sample.g), by = 3)], 1, sd)
+
+
+lr.plot(fric.final.g, ylab = "Log Likelihood ratio", order = c(6:7, 1:5), star.pos = 10, se.val = se.fric.g)
+
+save(fric.sample, fric.sample.g, fric.final, fric.final.g, file = "Outputs/FRic_resampling.RData")
+
+sd.val <- rbind(sd.rsr, sd.eve, sd.lna, sd.fric)
+colnames(sd.val) <- rsr.final$names
+
+png("Figures/Ana_13iv_LRatio_all_sd.png", 1200, 500)
+lr.plot(rsr.final, eve.final, lna.final, fric.final, ylab = "Log Likelihood ratio", order = c(9:7, 4:3, 12:11, 5, 1, 10, 6, 2), star.pos = 20, se.val = sd.val, leg.txt = c("Species richness", "Evenness", "Lineage Age", "Functional richness"))
+dev.off()
+
+
+sd.val.g <- rbind(sd.rsr.g, sd.eve.g, sd.lna.g, sd.fric.g)
+colnames(sd.val.g) <- rsr.final.g$names
+
+png("Figures/Ana_13iv_LRatio_g_all_sd.png", 800, 500)
+lr.plot(rsr.final.g, eve.final.g, lna.final.g, fric.final.g, ylab = "Log Likelihood ratio", order = c(6:7, 4:3, 5, 2:1), star.pos = 20, se.val = sd.val.g, leg.txt = c("Species richness", "Evenness", "Lineage Age", "Functional richness"), srt = 45)
+dev.off()
+
+png("Figures/Ana_13iv_LRatio_g_lna_sd.png", width = 6, height = 6, units = 'in', res = 300)
+lr.plot(lna.final.g, ylab = "Log Likelihood ratio", star.pos = 20, order = c(6, 1, 3, 2, 7, 4, 5),  se.val = sd.val.g[3, ], cex.names = 1.2, cex.lab = 1.2, cex.axis = 1.2, legend = FALSE, col = "navyblue", las = 3)
+dev.off()
+
 
 
 ## 14. Metabolic theory of ecology -----------------------------------------
@@ -3218,6 +3622,127 @@ save(Ln_SR, MTE_SST, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, file = "Outputs/M
 rm(Ln_SR, MTE_SST, MTE_oce, mn.Ln_SR, mn.MTE_SST, mte.Ln_SR, mte.mod, mte.oce.mod, p.Ln_SR, p.MTE_SST, p.ocean)
 
 
+## 15. Speciation rates ----------------------------------------------------
+# some morphospecies are in the same lineage, so need a trimmed down trait dataset that only has unique lineages
+
+sp.traits <- unique(margo.traits[, c(21, 32:33, 35)])
+sp.all.traits <- unique(pf.traits[, c(21, 25:26, 32:33)])
+
+# 15i. Add up the total length of ALL the extant species (#1) ------------------
+total.extant <- sum(sp.traits$aL.age)
+
+# 15ii. Number of species they’ve given rise to  ---------------------------
+# Tot up the number of species they’ve given rise to (#2) 
+# and the number of those that are still extant (#3).
+speciations <- sum(sp.traits$spec)
+ext.speciations <- sum(sp.traits$extant.spec)
+
+# 15iii. Get an average speciation rate for the extant species ---------------
+# (#2) / (#1)
+speciations / total.extant
+# 0.073 speciations / Ma
+
+# how does this compare with the total?
+load("../../../Project/Foraminifera/Outputs/150318_pf_traits.RData")
+load("../../../Project/Foraminifera/Data/2011-04-11 aL.Rdata")
+
+# total speciation rate is 2.97 sp / Ma (across the entire clade)
+length(aL$nm) / max(sp.all.traits$aL.start)
+
+# this differs from a lineage speciation rate as if there are multiple lineages present then their individual speciation rate at any one time must sum to produce the total speciation rate
+# lineage speciation rate is 0.126 sp / Ma (for an individual lineage)
+sum(sp.all.traits$spec) / sum(sp.all.traits$aL.start - sp.all.traits$aL.end)
+
+# so Recent is lower than average 
+
+# 15iv. Get an average net diversification rate for the extant spec --------
+# (#3) / (#1)
+ext.speciations / total.extant
+# diversification rate of 0.033 sp / Ma
+
+# how does this compare with the total?
+# total diversification rate is 0.453 sp / Ma (across the entire clade)
+sum(aL$en == 0) / max(sp.all.traits$aL.start)
+
+# this differs from a lineage diversification rate as if there are multiple lineages present then their individual diversification rate at any one time must sum to produce the total diversification rate
+# lineage diversification rate is 0.018 sp / Ma (for an individual lineage)
+sum(sp.all.traits$extant.spec) / sum(sp.all.traits$aL.start - sp.all.traits$aL.end)
+
+# Recent is higher but I would expect that, as extant species are more likely to have extant offspring.
+
+# 15v. Are subpolar assemblages particularly different? -------------------------
+# Now do the same set of steps for just the species that are in, or perhaps just those that are dominant within, the subpolar assemblages.
+
+# n.b. I got these lists from BFD/Code/Zones.R
+polar <- "Neogloboquadrina pachyderma"
+sapply(polar, compare)
+
+subpolar <- c("Neogloboquadrina incompta","Globigerina quinqueloba","Globigerina bulloides","Globigerinita bradyi","Globorotalia scitula")
+sapply(subpolar, compare)
+subpolar <- as.character(sapply(subpolar, compare))
+subpolar[1] <- "Neogloboquadrina incompta"
+subpolar <- subpolar[subpolar != "Micro"]
+
+temperate <- "Globorotalia inflata"
+sapply(temperate, compare)
+temperate <- as.character(sapply(temperate, compare))
+
+subtropical <- c("Globigerinoides ruber","Globigerinoides conglobatus","Hastigerina pelagica","Globigerinita glutinata","Globorotalia truncatulinoides", "Globorotalia hirsuta","Globigerina rubescens","Globigerinella aequilateralis","Orbulina universa","Globoquadrina dutertrei","Globigerina falconensis","Globorotalia crassaformis")
+sapply(subtropical, compare)
+subtropical <- as.character(sapply(subtropical, compare))
+subtropical <- subtropical[subtropical != "Micro"]
+
+tropical <- c("Globigerinoides sacculifer","Sphaeroidinella dehiscens","Globorotalia menardii","Globorotalia tumida","Pulleniatina obliquiloculata","Candeina nitida", "Hastigerinella digitata","Globoquadrina conglomerata","Globigerinella adamsi","Globoquadrina hexagona")
+sapply(tropical, compare)
+tropical <- as.character(sapply(tropical, compare))
+tropical <- tropical[tropical != "Micro"]
+
+# create a set of traits for each zone
+polar.traits <- margo.traits[rownames(margo.traits) %in% polar,]
+subpolar.traits <- margo.traits[rownames(margo.traits) %in% subpolar,]
+temperate.traits <- margo.traits[rownames(margo.traits) %in% temperate,]
+subtropical.traits <- margo.traits[rownames(margo.traits) %in% subtropical,]
+tropical.traits <- margo.traits[rownames(margo.traits) %in% tropical,]
+
+# create a dataframe to hold this information
+zone.spec <- data.frame(zone = c("polar", "subpolar", "temperate", "subtropical", "tropical", "extant", "macroperforates"), no.spec = c(length(polar), length(subpolar), length(temperate), length(subtropical), length(tropical), nrow(sp.traits), length(aL$nm)))
+
+# column of total extant lineage length
+zone.spec$total.age <- c(sum(polar.traits$aL.age), sum(subpolar.traits$aL.age), sum(temperate.traits$aL.age), sum(subtropical.traits$aL.age), sum(tropical.traits$aL.age), total.extant, sum(sp.all.traits$aL.start - sp.all.traits$aL.end))
+
+# column of number of speciations
+zone.spec$spec <- c(sum(polar.traits$spec), sum(subpolar.traits$spec), sum(temperate.traits$spec), sum(subtropical.traits$spec), sum(tropical.traits$spec), speciations, 211)
+
+# cheated for the all species values, as there is too much duplication, which i was finding it hard to track down, so I used an excel spreadsheet to removed duplicated (I think) rows. 
+
+# column of number of extant speciations
+zone.spec$ext.spec <- c(sum(polar.traits$extant.spec), sum(subpolar.traits$extant.spec), sum(temperate.traits$extant.spec), sum(subtropical.traits$extant.spec), sum(tropical.traits$extant.spec), ext.speciations, 29)
+
+# calculate column of speciation rates
+zone.spec$spec.rate <- zone.spec$spec / zone.spec$total.age
+
+# calculate column of extant specation rate
+zone.spec$ext.spec.rate <- zone.spec$ext.spec / zone.spec$total.age
+
+# how do speciation rates compare
+zone.spec
+# 0 for polar; 0.061 for subpolar; 0 for temperate; 0.081 for subtropical; 0.085 for tropical
+# for extant species 0.072 speciations / Ma
+# total speciation rate is 2.97 sp / Ma (across the entire clade)
+# lineage speciation rate is 0.109 sp / Ma (for an individual lineage)
+# rates are lower today (?are species more likely to speciate later in life)
+with(zone.spec, plot(zone, spec.rate))
+
+# what about diversification rates
+zone.spec
+# 0; for polar; 0.030 for subpolar; 0 for temperate; 0.37 for subtropical; 0.26 for tropical
+# for extant species diversification rate of 0.032 sp / Ma
+# total diversification rate is 0.453 sp / Ma (across the entire clade)
+# lineage diversification rate is 0.017 sp / Ma (for an individual lineage)
+with(zone.spec, plot(zone, ext.spec.rate))
+
+# tropical might have higher speciation rate than subpolar, but it has fewer extant offspring
+
 ## 15. Tidy up -------------------------------------------------------------
 save(rsr.margo.mod, eve.margo.mod, fric.margo.mod, file = "Outputs/margo_mod.RData")
 save(lr.sar.op0, lr.sar.op0g, mod.l0.sac, mod.sar.op0, mod.sar.opW, op.w, rsr.margo.mod, file = "Outputs/Richness_model.RData")
@@ -3225,6 +3750,8 @@ save(lr.sar.opf, lr.sar.opfg, mod.sar.opf, rsr.margo.mod, op.w, file = "Outputs/
 save(lr.sar.eve0, lr.sar.eve0g, mod.eve.l0, mod.eve.l0.sac, mod.sar.eve0, eve.margo.mod, eve.s, file = "Outputs/Evenness_model.RData")
 save(lr.sar.lna0, lr.sar.lna0g, mod.sar.lna0, eve.margo.mod, lna.w, file = "Outputs/Lineage_model.RData")
 save(lr.sar.fric0, lr.sar.fric0g, mod.sar.fric0, fric.margo.mod, fric.s, file = "Outputs/FRic_model.RData")
+save(ldg.p.margo, file = "Outputs/ldg_p_margo_pred.RData")
 
-rm(ldg.coords, stars, env.var, op.w, eve.s, lna.w, mod.sar.eveS, mod.sar.lnaW)
+
+rm(ldg.coords, stars, env.var, op.w, eve.s, lna.w, fric.s, mod.sar.eveS, mod.sar.lnaW)
 
