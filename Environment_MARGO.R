@@ -1174,3 +1174,6 @@ setwd("C:/Documents/Science/PhD/Work/1311 LDGPaper/")
 save.image(file = "Output/140522_Environment_ws.Rdata")
 # save ldg.env
 save(ldg.env, file = "Output/140522_ldg_env.Rdata")
+# save a file with both environmental and species data
+comb <- merge(ldg.env, ldg.data)
+write.csv(comb, "data_env.csv", row.names = FALSE)
