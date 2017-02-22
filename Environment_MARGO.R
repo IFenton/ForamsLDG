@@ -1,3 +1,9 @@
+###################################
+# N.B. this is not the code I used in the LDG paper, that's in the MARGO project code folder
+###################################
+
+
+
 ## 26 / 3 / 2015
 ## Isabel Fenton
 ## Collecting the Environmental data from the ldg analysis for the MARGO points
