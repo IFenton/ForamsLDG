@@ -7,7 +7,7 @@
 ## Next file: 1311 LDGPaper/Reanalysis/Prediction_environment.R
 
 ## Inputs ------------------------------------------------------------------
-## Environmental_variables.Rdata - containing ldg.margo.data, ldg.margo.env
+## Environmental_variables.Rdata - containing ldg.margo.data, ldg.margo.env and other files
 
 ## Outputs ----------------------------------------------------------------
 ## 150601 ldg_margo_dup.RData - the dataset with duplicates (on a 1degree scale) included
@@ -3742,6 +3742,7 @@ zone.spec
 with(zone.spec, plot(zone, ext.spec.rate))
 
 # tropical might have higher speciation rate than subpolar, but it has fewer extant offspring
+write.csv(zone.spec, file = "../Reanalysis2/Outputs/speciation_rates.csv")
 
 ## 15. Tidy up -------------------------------------------------------------
 save(rsr.margo.mod, eve.margo.mod, fric.margo.mod, file = "Outputs/margo_mod.RData")
